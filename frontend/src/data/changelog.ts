@@ -22,6 +22,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Public story reader at /adventure/:slug/read/:sceneId rendered from typed scene fixtures.",
+        "Scene view shows adventure title, optional chapter label, scene title, story body, scene number, and either numbered choices or an ending panel.",
+        "Reader actions: Back one scene, Restart, Story map, Bookmark, Add a branch (when contributions are open), Report, and Help.",
+        "Local reading history per adventure powers the Back button and the resume marker.",
+        "Local bookmarks and discovered-ending counts stored per adventure in the browser.",
+        "Explore another path action at endings that jumps back to the most recent branching scene in the reader's trail.",
+        "Clear local progress control that erases reading history, bookmarks, and discovered endings for the adventure.",
+        "Invalid-scene state when the URL references a scene that does not exist in the adventure, with a link back to the start.",
+        "Empty-reader state when an adventure has no readable scenes yet.",
+        "Help topic covering the reader and its local-only storage model.",
+        "Story fixtures for The Lantern Road (seven scenes, three endings) and The Inn at the Crossing (two scenes, one ending).",
+      ],
+      Changed: [
+        "Adventure landing page Read and Resume links now target /adventure/:slug/read and /adventure/:slug/read/:sceneId respectively.",
+        "Local progress record extended with history, bookmarks, and discoveredEndings while remaining backwards-compatible with the v0.6.0 shape.",
+      ],
+    },
+  },
+  {
     version: "0.6.0",
     date: "2026-07-19",
     sections: {

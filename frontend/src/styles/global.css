@@ -1743,3 +1743,72 @@ html[data-contrast="high"] body::before { display: none; }
   font-size: 0.85rem;
   margin: 0;
 }
+
+/* ── v0.7.0 — Reader ─────────────────────────────────────────────── */
+.bp-reader {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+.bp-reader__masthead {
+  border-bottom: 1px solid var(--bp-rule);
+  padding-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.bp-reader__adventure {
+  font-family: var(--bp-font-sans);
+  font-size: 0.75rem;
+  letter-spacing: var(--bp-tracking-caps);
+  text-transform: uppercase;
+  color: var(--bp-ink-2);
+  margin: 0;
+}
+.bp-reader__adventure a {
+  color: inherit;
+  text-decoration: none;
+}
+.bp-reader__adventure a:hover { text-decoration: underline; }
+.bp-reader__scene-meta {
+  font-family: var(--bp-font-sans);
+  font-size: 0.8rem;
+  color: var(--bp-ink-2);
+  margin: 0;
+}
+.bp-reader__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-top: 1px solid var(--bp-rule);
+  padding-top: 1rem;
+}
+.bp-reader__ending-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+.bp-reader__local {
+  border-top: 1px solid var(--bp-rule);
+  padding-top: 0.75rem;
+  font-family: var(--bp-font-sans);
+  font-size: 0.85rem;
+}
+.bp-reader__local summary {
+  cursor: pointer;
+  color: var(--bp-ink-2);
+  letter-spacing: var(--bp-tracking-caps);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+.bp-reader__local-summary {
+  list-style: none;
+  padding: 0.5rem 0 0.75rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
