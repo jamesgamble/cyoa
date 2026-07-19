@@ -19,11 +19,8 @@ This project uses [Semantic Versioning](https://semver.org/).
 - Public, account, adventure management, and master layouts now apply their layout mode automatically, adjusting container width and chrome.
 - Footer, header, and navigation restyled to the editorial visual language.
 
-### Accessibility
-- Visible focus rings on all interactive elements.
-- Respects `prefers-reduced-motion` and `prefers-contrast: more`.
-- Explicit high-contrast opt-in via `data-contrast="high"` and increased text size via `data-text-size="large" | "x-large"`.
-- Minimum 44px tap targets on primary controls; keyboard-reachable dialog and help drawer.
+- Interactive elements show a visible keyboard focus ring, honor `prefers-reduced-motion` and `prefers-contrast: more`, support an increased text size setting via `data-text-size`, and meet a 44px minimum tap target on primary controls.
+
 
 
 ## 0.1.0 — 2026-07-19
