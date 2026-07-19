@@ -188,12 +188,14 @@ describe("RichTextEditor paste", () => {
     const onChange = vi.fn();
     render(<RichTextEditor value="" onChange={onChange} ariaLabel="Editor" />);
     const surface = screen.getByRole("textbox");
-    const evt = firePaste(surface, {
+    const notCancelled = firePaste(surface, {
       "text/html":
         '<p style="color:red">Read <a href="https://evil.example">here</a>' +
         '<img src="x"><script>alert(1)</script></p>',
     });
-    expect(evt.defaultPrevented).toBe(true);
+    // fireEvent returns false when the handler called preventDefault().
+    expect(notCancelled).toBe(false);
+
     // Reflect the sanitized paste into the DOM ourselves — jsdom's
     // execCommand("insertHTML") is a no-op, but the sanitizer is
     // what we're actually testing. Trigger an input event so the
