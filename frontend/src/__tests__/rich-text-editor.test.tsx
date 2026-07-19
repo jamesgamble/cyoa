@@ -232,11 +232,7 @@ describe("RichTextEditor paste", () => {
     expect(notCancelled).toBe(false);
   });
 });
-    const evt = new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt });
-    surface.dispatchEvent(evt);
-    expect(evt.defaultPrevented).toBe(true);
-  });
-});
+
 
 describe("RichTextEditor accessibility and containment", () => {
   it("renders a toolbar with role=toolbar and an accessible name", () => {
