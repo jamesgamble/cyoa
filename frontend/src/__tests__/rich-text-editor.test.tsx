@@ -175,14 +175,14 @@ describe("RichTextEditor toolbar", () => {
 
 describe("RichTextEditor paste", () => {
   function firePaste(target: Element, data: Record<string, string>) {
-    const dt = new DataTransfer();
-    for (const [type, value] of Object.entries(data)) {
-      dt.setData(type, value);
-    }
-    const evt = new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true });
-    target.dispatchEvent(evt);
+    const clipboardData = {
+      getData: (type: string) => data[type] ?? "",
+      types: Object.keys(data),
+    };
+    const evt = fireEvent.paste(target, { clipboardData });
     return evt;
   }
+
 
   it("strips <a>, images, styles, and scripts from pasted HTML", () => {
     const onChange = vi.fn();
