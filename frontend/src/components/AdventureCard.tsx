@@ -13,18 +13,42 @@ export type Genre =
   | "contemporary"
   | "folklore";
 
+/**
+ * Editorial completion state of the story itself, distinct from the
+ * publication `status`. "In progress" and "Complete" are the common
+ * states; "On hold" and "Archived" cover paused or retired stories.
+ */
+export type StoryStatus = "in-progress" | "complete" | "on-hold" | "archived";
+
+/**
+ * How new contributions are accepted:
+ *  - "immediate" — approved contributors publish branches directly
+ *  - "approval"  — every contribution is queued for the creator's review
+ *  - "closed"    — the story does not accept new contributions
+ */
+export type ContributionState = "immediate" | "approval" | "closed";
+
 export interface AdventureSummary {
   slug: string;
   title: string;
   author: string;
   synopsis?: string;
+  /** Longer editorial description shown on the adventure landing page. */
+  description?: string;
   status?: AdventureStatus;
+  storyStatus?: StoryStatus;
   sceneCount?: number;
   endingCount?: number;
   genre?: Genre;
   contentRating?: ContentRating;
+  /** Author-authored content warnings. Rendered as plain text. */
+  contentWarnings?: ReadonlyArray<string>;
+  /** Author-authored guidelines for contributors. Plain text. */
+  writingGuidelines?: string;
   /** True when the adventure accepts new branch contributions. */
   contributionsOpen?: boolean;
+  /** Precise contribution flow. Overrides `contributionsOpen` when both set. */
+  contributionState?: ContributionState;
   /** Editorial phrase, e.g. "yesterday". */
   updatedAt?: string;
   /** ISO-8601 timestamp used for sorting; presentation uses updatedAt. */
