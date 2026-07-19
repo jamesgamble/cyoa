@@ -22,6 +22,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.5.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Public Discover page listing the current library of adventures from typed fixtures.",
+        "Keyword search across title, author, and synopsis.",
+        "Filters for genre, content rating, adventure status, and contribution status.",
+        "Sorting by recently updated, newest, title, scene count, and ending count.",
+        "Clear-filters control that resets the view to defaults.",
+        "Mobile filter panel rendered in the shared dialog on narrow screens.",
+        "Empty-result state with a clear-filters shortcut.",
+        "URL-backed filter state so a filtered view can be bookmarked or shared.",
+        "Contribution-availability tag and ending-count metadata on adventure cards.",
+        "Help topic explaining how to browse the library.",
+      ],
+      Changed: [
+        "AdventureSummary gained optional genre, content rating, ending count, contribution flag, and ISO timestamp fields; existing cards continue to render without them.",
+      ],
+    },
+  },
+  {
     version: "0.4.0",
     date: "2026-07-19",
     sections: {
