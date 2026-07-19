@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 
+use App\AccountService;
 use App\AdminSession;
 use App\AuthService;
 use App\Csrf;
