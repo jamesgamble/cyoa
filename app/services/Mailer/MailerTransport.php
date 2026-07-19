@@ -23,4 +23,3 @@ interface MailerTransport
     public function send(array $message): void;
 }
 
-class MailerException extends \RuntimeException {}
