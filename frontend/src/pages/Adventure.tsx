@@ -39,7 +39,19 @@ function resolveStoryStatus(a: AdventureSummary): StoryStatus {
 
 export function Adventure() {
   const { slug = "" } = useParams();
-  const adventure = findAdventureBySlug(slug);
+  const fixture = findAdventureBySlug(slug);
+  // Progressive enhancement: start with the fixture (or undefined) and
+  // upgrade to the API record when it arrives. Fixture stays as a
+  // fallback so tests, offline reloads, and API outages still render.
+  const [adventure, setAdventure] = useState<AdventureSummary | undefined>(fixture);
+  useEffect(() => {
+    if (!slug) return;
+    const ctrl = new AbortController();
+    fetchAdventure(slug, ctrl.signal).then((remote) => {
+      if (remote) setAdventure(remote);
+    });
+    return () => ctrl.abort();
+  }, [slug]);
   useHelpContext({
     section: "adventure",
     adventureStatus: adventure ? resolveStoryStatus(adventure) : undefined,
