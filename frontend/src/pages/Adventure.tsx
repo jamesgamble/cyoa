@@ -39,6 +39,10 @@ function resolveStoryStatus(a: AdventureSummary): StoryStatus {
 export function Adventure() {
   const { slug = "" } = useParams();
   const adventure = findAdventureBySlug(slug);
+  useHelpContext({
+    section: "adventure",
+    adventureStatus: adventure ? resolveStoryStatus(adventure) : undefined,
+  });
 
   if (!adventure) {
     return (
