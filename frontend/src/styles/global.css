@@ -1586,3 +1586,85 @@ html[data-contrast="high"] body::before { display: none; }
   .bp-home { gap: var(--bp-s-7, 2rem); }
   .bp-home__section-head { flex-direction: column; gap: var(--bp-s-2); align-items: flex-start; }
 }
+
+/* ---------- Discover (v0.5.0) ---------- */
+.bp-discover { display: flex; flex-direction: column; gap: var(--bp-s-5); }
+.bp-discover__header { display: flex; flex-direction: column; gap: var(--bp-s-2); }
+.bp-discover__lede {
+  font-family: var(--bp-font-story);
+  color: var(--bp-ink-2);
+  max-width: 60ch;
+  margin: 0;
+}
+.bp-discover__filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bp-s-3);
+  padding: var(--bp-s-4);
+  border: 1px solid var(--bp-rule);
+  background: var(--bp-cream-2, var(--bp-cream));
+  border-radius: var(--bp-radius, 2px);
+}
+.bp-discover__filter-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--bp-s-3);
+}
+.bp-discover__actions {
+  display: flex;
+  gap: var(--bp-s-2);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.bp-discover__mobile-toggle { display: none; }
+.bp-discover__count {
+  color: var(--bp-muted);
+  font-size: var(--bp-fs-sm);
+  margin: 0;
+}
+.bp-discover__grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--bp-s-4);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.bp-discover__grid > li { display: block; }
+.bp-discover__mobile-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bp-s-3);
+  min-width: min(90vw, 22rem);
+}
+
+.bp-adv-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bp-s-1);
+  margin: 0 0 var(--bp-s-2);
+}
+.bp-tag {
+  display: inline-block;
+  font-family: var(--bp-font-ui);
+  font-size: var(--bp-fs-xs);
+  letter-spacing: var(--bp-tracking-caps);
+  text-transform: uppercase;
+  color: var(--bp-ink-2);
+  background: var(--bp-cream);
+  border: 1px solid var(--bp-rule);
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+}
+.bp-tag--accent {
+  color: var(--bp-red);
+  border-color: var(--bp-red);
+}
+.bp-tag--muted {
+  color: var(--bp-muted);
+}
+
+@media (max-width: 720px) {
+  .bp-discover__filter-row { display: none; }
+  .bp-discover__mobile-toggle { display: inline-flex; }
+}
