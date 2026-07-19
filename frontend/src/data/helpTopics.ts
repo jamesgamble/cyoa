@@ -218,6 +218,20 @@ export const HELP_TOPICS: HelpTopic[] = [
     related: ["reading", "discovering", "privacy-and-security"],
     match: { sections: ["error"] },
   },
+  {
+    slug: "hosting-and-health",
+    title: "Hosting and health",
+    summary:
+      "How Branching Paths runs on plain PHP and SQLite, and what the health endpoint exposes.",
+    body: [
+      "Branching Paths runs on plain PHP 8.2 or newer with a single SQLite database. There is no external cache, queue, or third-party service required to serve the site.",
+      "The SQLite database is opened in WAL mode with foreign keys enforced, a ten-second busy timeout, and synchronous journaling in NORMAL mode. Writers acquire a bounded file-based lock so a stalled writer cannot block the site indefinitely.",
+      "The /api/health endpoint reports only four things: whether the API is responsive, whether the database is reachable, the current schema version, and the deployed application version. It never exposes filesystem paths, secret values, stack traces, or raw SQL error text.",
+      "Operators can run scripts/system-check.php on the server for a fuller pre-flight report covering PHP extensions, filesystem permissions, and lock behaviour. That script is intentionally CLI-only and is never reachable over HTTP.",
+    ],
+    related: ["privacy-and-security", "common-errors", "changelog"],
+    match: { sections: ["hosting", "health"] },
+  },
 ];
 
 /** Topic slugs surfaced first when no more specific context matches. */

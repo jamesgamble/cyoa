@@ -22,6 +22,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.9.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Plain-PHP application bootstrap with a namespaced autoloader and JSON-only error handlers that log full detail privately and return an opaque payload to clients.",
+        "Centralised configuration with environment-variable overrides for APP_ENV, APP_URL, DATABASE_PATH, and WRITE_LOCK_PATH.",
+        "SQLite adapter that enforces WAL journaling, foreign-key checks, a 10-second busy timeout, and synchronous=NORMAL on every connection.",
+        "Bounded file-based write lock built on flock() with a configurable timeout, guaranteed release, and non-blocking polling so writes cannot hang indefinitely.",
+        "Migration runner that tracks applied versions in a schema_migrations table and applies each SQL file inside its own transaction with automatic rollback on failure.",
+        "Public API entry point at /api/index.php exposing GET /api/health that returns only api status, database status, schema version, and application version.",
+        "CLI scripts for first-time initialisation, applying migrations under the write lock, and running operator diagnostics against the runtime.",
+        "Frontend API pathing helper with a Vite dev proxy from /api to the local PHP server and a VITE_API_BASE_URL override for staging.",
+        "Help topic covering the health endpoint and what it deliberately does and does not expose.",
+        "Focused PHP tests for pragmas, foreign keys, WAL persistence, migration tracking and rollback, lock acquire/release, bounded contention timeout, and the health payload shape.",
+      ],
+      Security: [
+        "Health endpoint whitelists response keys so filesystem paths, PDO error strings, and stack frames cannot be enumerated over HTTP.",
+        "PHP display_errors is disabled at runtime; uncaught errors are logged privately and returned to clients as a generic JSON error.",
+      ],
+    },
+  },
+  {
     version: "0.8.0",
     date: "2026-07-19",
     sections: {
