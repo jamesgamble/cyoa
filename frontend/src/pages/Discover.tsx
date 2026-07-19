@@ -17,6 +17,7 @@ import type {
   Genre,
 } from "../components/AdventureCard";
 import { DISCOVER_ADVENTURES } from "../data/discover";
+import { useHelpContext } from "../components/GlobalHelp";
 
 /* ---------------- filter state ---------------- */
 
