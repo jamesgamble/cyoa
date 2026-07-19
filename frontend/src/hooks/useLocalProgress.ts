@@ -178,20 +178,20 @@ export function useAdventureProgress(
   );
 
   const goBack = useCallback<AdventureProgressApi["goBack"]>(() => {
-    let target: string | null = null;
-    setProgress((prev) => {
-      if (!prev || prev.history.length < 2) return prev;
-      const history = prev.history.slice(0, -1);
-      target = history[history.length - 1] ?? null;
-      const next: LocalProgress = {
-        ...prev,
-        history,
-        sceneSlug: target ?? prev.sceneSlug,
-        updatedAtIso: new Date().toISOString(),
-      };
-      writeLocalProgress(adventureSlug, next);
-      return next;
-    });
+    // Read from storage synchronously so the return value does not depend
+    // on when React runs the state updater (React 18 may defer it).
+    const prev = readLocalProgress(adventureSlug);
+    if (!prev || prev.history.length < 2) return null;
+    const history = prev.history.slice(0, -1);
+    const target = history[history.length - 1] ?? null;
+    const next: LocalProgress = {
+      ...prev,
+      history,
+      sceneSlug: target ?? prev.sceneSlug,
+      updatedAtIso: new Date().toISOString(),
+    };
+    writeLocalProgress(adventureSlug, next);
+    setProgress(next);
     return target;
   }, [adventureSlug]);
 
