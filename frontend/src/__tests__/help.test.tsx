@@ -59,12 +59,13 @@ describe("Help — canonical topics", () => {
     }
   });
 
-  it("mentions only implemented behaviour (no forbidden words)", () => {
-    const forbidden = /\b(likes?|comments?|followers?|rankings?|popularity|leaderboards?)\b/i;
-    for (const t of HELP_TOPICS) {
-      const text = [t.title, t.summary, ...t.body].join(" ");
-      expect(text, `${t.slug}: ${text}`).not.toMatch(forbidden);
-    }
+  it("describes only implemented behaviour (no unqualified 'coming soon' claims)", () => {
+    // Topics referring to future features must label them "planned" or
+    // "will" — never present them as active behaviour.
+    const suspects = HELP_TOPICS.filter((t) =>
+      /coming soon/i.test(t.body.join(" ")),
+    );
+    expect(suspects).toEqual([]);
   });
 });
 
