@@ -261,9 +261,24 @@ export function Discover() {
     setSearchParams(new URLSearchParams(), { replace: true });
   }, [setSearchParams]);
 
+  // Progressive enhancement: start from fixtures so tests and offline
+  // reloads render immediately, then swap to the API response when it
+  // arrives. `fetchDiscover` returns null on any error, in which case
+  // we simply keep the fixtures.
+  const [source, setSource] = useState<ReadonlyArray<AdventureSummary>>(
+    DISCOVER_ADVENTURES,
+  );
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetchDiscover(ctrl.signal).then((remote) => {
+      if (remote && remote.length > 0) setSource(remote);
+    });
+    return () => ctrl.abort();
+  }, []);
+
   const results = useMemo(
-    () => applyFilters(DISCOVER_ADVENTURES, filters),
-    [filters],
+    () => applyFilters(source, filters),
+    [source, filters],
   );
 
   const active = !filtersAreDefault(filters);
