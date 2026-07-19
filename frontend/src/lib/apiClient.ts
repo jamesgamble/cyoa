@@ -292,3 +292,106 @@ export async function fetchEmailQueue(status?: string): Promise<QueueResponse | 
 export async function cancelQueuedMessage(id: number) {
   return masterMutate<{ status: string }>(`/master/email-queue/${id}/cancel`, "POST", {});
 }
+
+
+/* ------------------------------------------------------------------ */
+/* Authentication (v0.13.0)                                            */
+/*                                                                     */
+/* All mutating requests are protected by the double-submit CSRF       */
+/* cookie: this module fetches a fresh token first and sends it in     */
+/* X-CSRF-Token. On success, the session cookie (`bp_session`) is set  */
+/* by the server as HttpOnly, SameSite=Lax; JavaScript cannot read it, */
+/* and every subsequent request includes it via `credentials`.         */
+/* ------------------------------------------------------------------ */
+
+export type AuthOutcome =
+  | "ok"
+  | "invalid"
+  | "pending_verification"
+  | "suspended"
+  | "not_active"
+  | "token_invalid"
+  | "csrf_failed"
+  | "rate_limited"
+  | "unauthenticated"
+  | "service_unavailable";
+
+export interface AuthResult {
+  status: number;
+  outcome: AuthOutcome;
+  redirect?: string;
+  fields?: Record<string, string>;
+}
+
+async function authMutate(
+  path: string,
+  body: unknown,
+): Promise<AuthResult> {
+  const token = await fetchCsrfToken();
+  if (!token) return { status: 0, outcome: "csrf_failed" };
+  try {
+    const res = await fetch(apiUrl(path), {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-CSRF-Token": token,
+      },
+      body: JSON.stringify(body ?? {}),
+    });
+    let parsed: {
+      status?: string; error?: string; redirect?: string;
+      fields?: Record<string, string>;
+    } = {};
+    try { parsed = await res.json(); } catch { /* empty */ }
+    if (res.ok && (parsed.status === "ok" || res.status === 200)) {
+      return { status: res.status, outcome: "ok", redirect: parsed.redirect };
+    }
+    const err = parsed.error ?? "service_unavailable";
+    // Map server outcomes to the union above.
+    const outcome: AuthOutcome =
+      err === "invalid" || err === "pending_verification" || err === "suspended"
+        || err === "not_active" || err === "token_invalid" || err === "csrf_failed"
+        || err === "rate_limited" || err === "unauthenticated"
+        ? err as AuthOutcome
+        : "service_unavailable";
+    return { status: res.status, outcome, fields: parsed.fields };
+  } catch {
+    return { status: 0, outcome: "service_unavailable" };
+  }
+}
+
+export async function fetchAuthSession(): Promise<{ authenticated: boolean; user_id: number | null }> {
+  const data = await getJson<{ authenticated: boolean; user_id: number | null }>("/auth/session");
+  return data ?? { authenticated: false, user_id: null };
+}
+
+export async function submitLogin(email: string, password: string, redirect?: string) {
+  return authMutate("/auth/login", { email, password, redirect });
+}
+
+export async function submitLogout() {
+  return authMutate("/auth/logout", {});
+}
+
+export async function submitVerifyEmail(token: string) {
+  return authMutate("/auth/verify-email", { token });
+}
+
+export async function submitResendVerification(email: string) {
+  return authMutate("/auth/resend-verification", { email });
+}
+
+export async function submitForgotPassword(email: string) {
+  return authMutate("/auth/forgot-password", { email });
+}
+
+export async function submitResetPassword(token: string, password: string, password_confirmation: string) {
+  return authMutate("/auth/reset-password", { token, password, password_confirmation });
+}
+
+export async function submitChangePassword(current_password: string, new_password: string, new_password_confirmation: string) {
+  return authMutate("/auth/change-password", { current_password, new_password, new_password_confirmation });
+}
+
