@@ -20,6 +20,16 @@ const TOPICS: Record<string, { title: string; body: string[] }> = {
       "The full guidelines will grow alongside the contribution system in later releases.",
     ],
   },
+  discover: {
+    title: "Discovering adventures",
+    body: [
+      "The Discover page lists every published adventure in the library. Reading does not require an account.",
+      "Use the search field to look for a title, author, or a phrase from a synopsis. Combine it with filters for genre, content rating, adventure status, and whether the adventure currently accepts new branch contributions.",
+      "Sort the list by recently updated, newest, title, scene count, or ending count. Every choice you make is stored in the page URL, so you can bookmark or share a specific view of the library.",
+      "On narrow screens, tap Filter & sort to open the filter panel. Use Clear filters to return to the default view.",
+      "Branching Paths intentionally does not display popularity scores, public ratings, likes, comments, or follower counts. Discovery is by content, not by numbers.",
+    ],
+  },
   privacy: {
     title: "Privacy",
     body: [
