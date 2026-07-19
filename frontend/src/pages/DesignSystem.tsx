@@ -471,6 +471,40 @@ export function DesignSystem() {
           action={<Button variant="secondary">Try again</Button>}
         />
       </div>
+
+      <div className="bp-ds-section" aria-labelledby="ds-rte">
+        <h2 id="ds-rte">Restricted WYSIWYG editor</h2>
+        <p>
+          The story editor exposes only paragraphs, bold, italic, underline, H2, H3, lists,
+          blockquote, horizontal rule, and undo/redo. Pasting from another source strips
+          links, images, embeds, and styles.
+        </p>
+        <RichTextEditorDemo />
+      </div>
     </section>
+  );
+}
+
+function RichTextEditorDemo() {
+  const [html, setHtml] = useState<string>(
+    "<h2>Chapter one</h2><p>The lantern <strong>flickered</strong> and the corridor grew colder.</p>",
+  );
+  return (
+    <>
+      <label id="rte-demo-label" className="bp-ds-label">
+        Story body
+      </label>
+      <RichTextEditor
+        value={html}
+        onChange={setHtml}
+        ariaLabelledBy="rte-demo-label"
+        maxPlainTextLength={500}
+        data-testid="ds-rte"
+      />
+      <details style={{ marginTop: "0.75rem" }}>
+        <summary>Sanitized HTML</summary>
+        <pre style={{ whiteSpace: "pre-wrap", fontSize: "0.8rem" }}>{html}</pre>
+      </details>
+    </>
   );
 }
