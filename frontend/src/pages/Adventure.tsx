@@ -18,6 +18,7 @@ import type {
 import { findAdventureBySlug } from "../data/discover";
 import { useLocalProgress } from "../hooks/useLocalProgress";
 import { useSignedIn } from "../hooks/useSignedIn";
+import { useHelpContext } from "../components/GlobalHelp";
 
 /**
  * Derive contribution state from the older `contributionsOpen` boolean
