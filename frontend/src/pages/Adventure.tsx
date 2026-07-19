@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Badge,
   Panel,
@@ -16,6 +16,7 @@ import type {
   StoryStatus,
 } from "../components/AdventureCard";
 import { findAdventureBySlug } from "../data/discover";
+import { fetchAdventure } from "../lib/apiClient";
 import { useLocalProgress } from "../hooks/useLocalProgress";
 import { useSignedIn } from "../hooks/useSignedIn";
 import { useHelpContext } from "../components/GlobalHelp";
