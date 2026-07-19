@@ -22,6 +22,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.10.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Initial public data model migration creating users, adventures, scenes, choices, and content warnings with schema-level CHECK constraints on every state, visibility, scene-type, and content-rating column.",
+        "Discovery and traversal indexes covering adventure state and visibility, genre, content rating, contribution state, updated-at ordering, per-adventure scene lookup, choice edges by source and target, and content-warning ordering.",
+        "Read-only public repository enforcing the visibility rules end to end: draft and suspended adventures are never returned, unlisted adventures are excluded from Discover but readable by direct link, hidden and draft scenes are never returned, and choices pointing to unpublished destinations are filtered out of every response.",
+        "Public read-only API endpoints for the Discover list, an adventure by slug, the public story outline, and a published scene with its choices.",
+        "Development seed data populating the fixture library plus additional suspended and unlisted adventures used to exercise the visibility rules.",
+        "Frontend API client with progressive enhancement on the Discover, Adventure, and Reader pages: fixtures render immediately, and the API response replaces them when it arrives.",
+        "Focused migration, visibility, endpoint, and integration tests running the built-in PHP server against a seeded database and asserting that hidden and draft scenes are never exposed, directly or through choice targets.",
+      ],
+      Changed: [
+        "Frontend fixtures are now the offline fallback for the public pages; live rendering prefers API data when available.",
+      ],
+      Security: [
+        "Choice destinations are filtered against the set of published scenes so a caller cannot enumerate hidden or draft scene identifiers by inspecting a public scene.",
+        "API responses never surface PDO error text, filesystem paths, or stack traces; failures are logged privately and returned as generic 503 or 404 responses.",
+      ],
+    },
+  },
+  {
     version: "0.9.0",
     date: "2026-07-19",
     sections: {

@@ -2,6 +2,24 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.10.0 — 2026-07-19
+
+### Added
+- Initial public data model migration `private/migrations/0001_public_adventure_data.sql` creating `users`, `adventures`, `scenes`, `choices`, and `content_warnings` with CHECK constraints on every state, visibility, scene-type, and content-rating column so invalid enum values are rejected at the schema level.
+- Discovery and traversal indexes covering adventure state/visibility, genre, content rating, contribution state, updated-at ordering, per-adventure scene lookup by state and by scene number, choice edges by source and target, and content-warning ordering.
+- Read-only `App\PublicRepository` implementing the v0.10.0 visibility rules: draft and suspended adventures are never returned; unlisted adventures are excluded from the Discover list but readable by slug; hidden and draft scenes are never returned; choices pointing to unpublished destinations are filtered out so the response cannot leak the existence of unpublished scenes.
+- New read-only HTTP endpoints on `public/api/index.php`: `GET /api/adventures` (Discover list with `q`, `genre`, `rating`, `status`, `contributions`, `sort`), `GET /api/adventures/{slug}`, `GET /api/adventures/{slug}/outline`, and `GET /api/adventures/{slug}/scenes/{sceneId}`. Non-GET requests return `405`; unknown routes and private records return a generic `404`; database failures return `503` without leaking the underlying error.
+- Development seed script `scripts/seed-dev-data.php` populating twelve fixture-parity adventures plus one suspended and one unlisted adventure, full scene / choice / ending content for *The Lantern Road* and *The Inn at the Crossing*, and a hidden scene inside *The Lantern Road* referenced by a choice so the visibility rules can be exercised end to end.
+- Frontend API client `frontend/src/lib/apiClient.ts` with `fetchDiscover`, `fetchAdventure`, `fetchScene`, and `fetchOutline`; every call resolves to `null` on any error so callers fall back to fixtures.
+- `Discover`, `Adventure`, and `Reader` pages progressively enhanced: initial render uses the typed fixtures so tests and offline reloads continue to work, and the API response replaces the fixture data when it arrives.
+
+### Changed
+- Fixtures under `frontend/src/data/discover.ts` and `frontend/src/data/scenes.ts` are now the offline fallback; live public pages prefer API data.
+
+### Security
+- Every response filters unpublished destinations at the query layer so a caller cannot enumerate hidden or draft scene slugs by inspecting choice targets on a published scene.
+- HTTP responses never surface PDO error text, filesystem paths, or stack traces; failures are logged privately and returned as `503 service_unavailable` or `404 not_found`.
+
 ## 0.9.0 — 2026-07-19
 
 ### Added

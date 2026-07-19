@@ -232,6 +232,19 @@ export const HELP_TOPICS: HelpTopic[] = [
     related: ["privacy-and-security", "common-errors", "changelog"],
     match: { sections: ["hosting", "health"] },
   },
+  {
+    slug: "public-data-and-visibility",
+    title: "Public data and visibility",
+    summary:
+      "What Branching Paths shows publicly, what stays hidden, and how the reader falls back to fixtures when the API is unavailable.",
+    body: [
+      "Only adventures whose state is published, on hold, complete, or archived are readable publicly. Drafts and suspended adventures are never returned by the public API and cannot be discovered by browsing.",
+      "The Discover list additionally excludes unlisted adventures, which remain readable at their direct link. Hidden and draft scenes are never returned, and choices whose destination is not a published scene are removed from the response so unpublished scene identifiers cannot be inferred.",
+      "The public pages render immediately from typed fixtures and then upgrade to live API data when it arrives. If the backend is unavailable, the fixtures remain visible so reading is not blocked.",
+    ],
+    related: ["reading", "discovering", "hosting-and-health"],
+    match: { sections: ["discover", "adventure", "reader"] },
+  },
 ];
 
 /** Topic slugs surfaced first when no more specific context matches. */
