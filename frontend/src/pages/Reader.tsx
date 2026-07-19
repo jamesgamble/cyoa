@@ -33,16 +33,35 @@ export function Reader() {
   const navigate = useNavigate();
   useHelpContext({ section: "reader" });
 
-  const adventure = findAdventureBySlug(slug);
-  const scenes = useMemo(() => scenesFor(slug), [slug]);
+  const fixtureAdventure = findAdventureBySlug(slug);
+  const fixtureScenes = useMemo(() => scenesFor(slug), [slug]);
   const opener = useMemo(() => startScene(slug), [slug]);
 
-  // Route parameter → scene resolution. When no sceneId is given we
-  // redirect to the canonical start scene so the URL always reflects
-  // the current scene id (useful for bookmarks and share).
-  const currentScene: Scene | undefined = sceneId
+  // Progressive enhancement: adventure metadata + current scene body
+  // come from the API when available, otherwise from fixtures.
+  const [adventure, setAdventure] = useState<AdventureSummary | undefined>(
+    fixtureAdventure,
+  );
+  useEffect(() => {
+    if (!slug) return;
+    const ctrl = new AbortController();
+    fetchAdventure(slug, ctrl.signal).then((r) => { if (r) setAdventure(r); });
+    return () => ctrl.abort();
+  }, [slug]);
+
+  const fixtureScene: Scene | undefined = sceneId
     ? findScene(slug, sceneId)
     : opener;
+  const [remoteScene, setRemoteScene] = useState<Scene | null>(null);
+  useEffect(() => {
+    if (!slug || !sceneId) { setRemoteScene(null); return; }
+    const ctrl = new AbortController();
+    fetchScene(slug, sceneId, ctrl.signal).then((s) => setRemoteScene(s));
+    return () => ctrl.abort();
+  }, [slug, sceneId]);
+
+  const currentScene: Scene | undefined = remoteScene ?? fixtureScene;
+  const scenes = fixtureScenes;
 
   const progress = useAdventureProgress(slug);
 
