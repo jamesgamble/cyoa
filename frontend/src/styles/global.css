@@ -1421,3 +1421,9 @@ html[data-contrast="high"] body::before { display: none; }
 .bp-story__body,
 .bp-ending__body,
 .bp-scene-title { width: auto !important; }
+
+/* Preserve the decorative drop cap after the containment safety net. */
+.bp-story__body p:first-child::first-letter {
+  font-family: var(--bp-font-display) !important;
+  color: var(--bp-red) !important;
+}
