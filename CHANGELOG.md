@@ -24,6 +24,7 @@ All notable, public-safe changes to Branching Paths. Newest release first.
 - `frontend/src/App.tsx` wires the seven account sub-routes; the placeholder `Account` component in `pages/protected.tsx` has been removed.
 
 
+## 0.13.0 — 2026-07-19
 
 ### Added
 - Migration `private/migrations/0004_authentication_and_sessions.sql` creating `sessions` (hashed token, user, created/rotated/expiry timestamps, revocation reason, IP/user-agent columns) and `auth_tokens` (hashed token, purpose enum with CHECK `email_verification`/`password_reset`, target user, single-use `consumed_at`, expiry). Extends `users` with `password_changed_at` and `last_login_at`, and seeds a `canonical_url` setting.
