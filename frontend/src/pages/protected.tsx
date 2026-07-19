@@ -36,13 +36,15 @@ export function Account() {
 }
 
 export function Manage() {
+  const { slug } = useParams();
   return (
     <section>
-      <h1>Manage adventure</h1>
+      <h1>Manage {slug ?? "adventure"}</h1>
       <UnauthorizedState />
     </section>
   );
 }
+
 
 /* ---------------- MasterLogin ---------------- */
 
