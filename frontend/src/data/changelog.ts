@@ -22,6 +22,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.12.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Administrator-configurable SMTP settings at /master/settings/email with host, port, encryption, username, password, from address, from name, reply-to, retry limit, batch size, and an enabled toggle.",
+        "Encrypted password storage: SMTP credentials are encrypted at rest with an application key kept outside the database and never returned to the browser.",
+        "Durable email queue with pending, sending, sent, failed, and cancelled states, exponential retry with jitter capped at one hour, and abandoned-worker recovery.",
+        "A queue viewer at /master/email-queue showing counts, per-message status, attempt count, next-attempt time, and a Cancel action for pending rows.",
+        "A test-email action on the settings page that queues the operator_test template so operators can confirm delivery without opening a raw send endpoint.",
+        "An email worker script (scripts/process-email-queue.php) guarded by a dedicated file lock so overlapping cron ticks never spawn duplicate workers.",
+        "An administrator bootstrap script (scripts/bootstrap-admin.php) that creates or promotes the initial admin account under the write lock.",
+        "Master sign-in at /master/login with HMAC-signed session cookies (HttpOnly, SameSite=Strict) that re-check the admin role on every request so revocation is instant.",
+      ],
+      Security: [
+        "SMTP passwords never leave the server unredacted; the API always sends a sentinel placeholder in place of the plaintext.",
+        "Queue error messages are constrained to an allow-list of short tokens so raw provider replies containing recipient addresses cannot reach an operator's browser.",
+        "The test-email path only enqueues the fixed operator_test template — the endpoint cannot be repurposed as an open relay.",
+        "Every mutating master endpoint requires both an authenticated session and a fresh double-submit CSRF token.",
+        "Tests exclusively use an in-memory mock transport; no test path can accidentally contact a live SMTP server.",
+      ],
+    },
+  },
+
+  {
     version: "0.11.0",
     date: "2026-07-19",
     sections: {
