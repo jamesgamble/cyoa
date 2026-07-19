@@ -337,6 +337,21 @@ export const HELP_TOPICS: HelpTopic[] = [
     related: ["account-recovery", "signing-in", "accounts"],
     match: { routes: [/^\/change-password$/], sections: ["auth"] },
   },
+  {
+    slug: "account-dashboard",
+    title: "Account dashboard",
+    summary: "Manage your profile, security, notifications, adventures, and bookmarks.",
+    body: [
+      "The account dashboard at /account groups everything you can do as a signed-in reader. Every section requires a live session cookie; if you were signed out in the background you will see a prompt to sign in again instead of the page content.",
+      "Profile edits change your display name, short bio, and whether other readers can see your profile. Nothing you enter here can control the layout of another reader's screen — story containment rules still apply.",
+      "Change email requests a single-use, expiring link to the new address. Your current email stays on file until you open that link. If you never confirm, the request quietly expires after 24 hours.",
+      "Notifications toggles what we email you about. Everything except password-change alerts is optional.",
+      "Security lists your active sessions and lets you sign out every session except the current one with a single action. Use it as soon as you suspect a device is compromised.",
+      "My adventures, contributions, and bookmarks read from the server so the same data appears on every device you sign in from. Local bookmarks and history collected before you signed up can be imported after an explicit confirmation.",
+    ],
+    related: ["account-security", "signing-in", "privacy-and-security"],
+    match: { routes: [/^\/account(\/.*)?$/], sections: ["account"], signedIn: true },
+  },
 ];
 
 
