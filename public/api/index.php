@@ -54,10 +54,17 @@ if ($method === 'POST' && $route === '/register') {
     exit;
 }
 
+// ── Master (admin) routes ──────────────────────────────────────────
+if (strncmp($route, '/master', 7) === 0) {
+    handle_master($method, substr($route, 7));
+    exit;
+}
+
 if ($method !== 'GET') {
     respond_error(405, 'method_not_allowed');
     exit;
 }
+
 
 // ── CSRF token issuance ────────────────────────────────────────────
 if ($route === '/csrf-token') {
