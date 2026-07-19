@@ -15,8 +15,14 @@ export function Dialog({ open, onClose, title, children, actions, labelledById }
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (open && !d.open) d.showModal();
-    if (!open && d.open) d.close();
+    if (open && !d.open) {
+      if (typeof d.showModal === "function") d.showModal();
+      else d.setAttribute("open", "");
+    }
+    if (!open && d.open) {
+      if (typeof d.close === "function") d.close();
+      else d.removeAttribute("open");
+    }
   }, [open]);
 
   const titleId = labelledById ?? "bp-dialog-title";
