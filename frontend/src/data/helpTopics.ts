@@ -288,7 +288,57 @@ export const HELP_TOPICS: HelpTopic[] = [
     related: ["email-settings", "master-sign-in", "common-errors"],
     match: { routes: [/^\/master\/email-queue$/], sections: ["master"] },
   },
+  {
+    slug: "verifying-your-email",
+    title: "Verifying your email",
+    summary:
+      "Why we send a verification link and what to do if it expired or is missing.",
+    body: [
+      "After you register we send a single-use link to the address you gave us. Opening the link marks your account active. Until then, sign-in is refused with a clear pending-verification message rather than an incorrect-password error.",
+      "Verification links expire twenty-four hours after they are issued and can only be opened once. If the link has expired, has already been used, or never arrived, request a new one from the verify-email page — the response is the same whether or not an unverified account exists at that address, so nothing about your account is leaked to a third party.",
+    ],
+    related: ["signing-in", "account-security", "common-errors"],
+    match: { routes: [/^\/verify$/], sections: ["auth"] },
+  },
+  {
+    slug: "signing-in",
+    title: "Signing in and out",
+    summary: "What sign-in requires, how sessions are protected, and how to sign out safely.",
+    body: [
+      "Sign in with the email address and password you registered with. Pending, suspended, and deleted accounts cannot sign in even with the correct password, and the failure message deliberately does not distinguish those cases from a wrong password.",
+      "A successful sign-in issues a session cookie that is HttpOnly, SameSite=Lax, marked Secure on HTTPS, and expires after fourteen days. Any earlier session for your account is revoked before the new cookie is issued, so a device that was left signed-in elsewhere will be signed out.",
+      "Signing out revokes the session on the server and clears the cookie in your browser. If you are worried a session is still active on another device, change your password — that revokes every session and forces every device to sign in again.",
+    ],
+    related: ["password-recovery", "account-security", "verifying-your-email"],
+    match: { routes: [/^\/login$/, /^\/change-password$/], sections: ["auth"] },
+  },
+  {
+    slug: "password-recovery",
+    title: "Password recovery",
+    summary:
+      "How the forgot-password and reset-password flow works and why the messages look the same either way.",
+    body: [
+      "Enter your email on the forgot-password page and we email a reset link. The response you see is identical whether or not an active account exists at that address — this prevents a stranger from probing which addresses are registered.",
+      "Reset links are single-use and expire sixty minutes after they are issued. Opening the link takes you to a page that sets a new password (minimum twelve characters, matching confirmation) and then revokes every session for your account, so any device still signed in is dropped.",
+      "If a reset link has already been used or has expired, request a new one — the old link cannot be replayed.",
+    ],
+    related: ["signing-in", "account-security", "common-errors"],
+    match: { routes: [/^\/forgot-password$/, /^\/reset-password$/], sections: ["auth"] },
+  },
+  {
+    slug: "account-security",
+    title: "Account security",
+    summary: "Password hygiene, session revocation, and how change-password protects you.",
+    body: [
+      "Passwords must be at least twelve characters. Choose a phrase you use nowhere else; a password manager makes this easy. Passwords are stored only as Argon2id hashes — the plaintext is never written to the database.",
+      "The change-password page requires your current password before it will accept a new one. On success, every session other than the one making the request is revoked, and the current cookie is rotated to a fresh value. This makes change-password the fastest way to lock out a device you no longer control.",
+      "We email you whenever your password is changed via the reset flow or the change-password page. If you ever see that notification without having initiated it, use forgot-password immediately to lock the account.",
+    ],
+    related: ["password-recovery", "signing-in", "privacy-security"],
+    match: { routes: [/^\/change-password$/], sections: ["auth"] },
+  },
 ];
+
 
 
 /** Topic slugs surfaced first when no more specific context matches. */
