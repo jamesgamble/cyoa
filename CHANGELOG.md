@@ -2,6 +2,24 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.9.0 — 2026-07-19
+
+### Added
+- Plain-PHP application bootstrap under `app/`: `bootstrap.php` with a namespaced autoloader and JSON-only error and exception handlers that log full detail to `private/logs/php-error.log` and return an opaque payload to clients.
+- Centralised configuration in `app/config/config.php` with environment-variable overrides for `APP_ENV`, `APP_URL`, `DATABASE_PATH`, and `WRITE_LOCK_PATH`, plus a memoised `bp_config()` helper.
+- SQLite adapter `App\Database` that enforces WAL journaling, foreign-key checks, a 10-second `busy_timeout`, and `synchronous = NORMAL` on every connection.
+- Bounded file-based `App\WriteLock` built on `flock()` with a configurable timeout, non-blocking polling, guaranteed release via `withLock()`, and a destructor safety net.
+- Migration runner `App\Migrator` that tracks applied versions in a `schema_migrations` table and applies each `private/migrations/NNNN_*.sql` file inside its own transaction with automatic rollback on failure.
+- Public HTTP entry point `public/api/index.php` exposing `GET /api/health` that returns only api status, database status, schema version, and application version, with `no-store` caching and `X-Content-Type-Options: nosniff`.
+- CLI scripts: `scripts/initialize.php` (create private directories and warm the database), `scripts/migrate.php` (apply or list migrations, holding the write lock), and `scripts/system-check.php` (operator diagnostics for PHP version, extensions, filesystem, pragmas, and locking).
+- React API pathing via `frontend/src/config/api.ts` (`API_BASE_URL`, `apiUrl`, `HEALTH_URL`) with `VITE_API_BASE_URL` override, and a Vite dev proxy from `/api` to the local PHP server.
+- Help topic "Hosting and health" describing what the health endpoint reveals and the guarantee that it never exposes paths, secrets, stack traces, or raw SQL errors.
+- PHP test harness at `tests/php/run.php` with focused tests covering pragma enforcement, foreign-key rejection, WAL survival across reopen, migration tracking and rollback, lock acquire/release, idempotent release, `withLock` release on throw, bounded acquire timeout under contention, health payload shape, and error-leak containment.
+
+### Security
+- The health endpoint whitelists response keys and swallows the underlying exception message on failure so filesystem paths, PDO error strings, and stack frames cannot be enumerated over HTTP.
+- PHP `display_errors` is disabled at runtime; every uncaught error and exception is logged privately and returned to clients as a generic JSON error.
+
 ## 0.8.0 — 2026-07-19
 
 ### Added
