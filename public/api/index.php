@@ -235,6 +235,12 @@ function handle_register(): void
         $lock = new WriteLock();
         $result = $lock->withLock(static function () use ($pdo, $payload, $ip, $csrfOk): array {
             $svc = new RegistrationService($pdo);
+            // Wire the verification / welcome email into a successful
+            // insert. The RegistrationService always returns the
+            // same opaque outcome regardless of whether the hook ran.
+            $svc->setOnRegistered(static function (int $uid, string $email, string $name) use ($pdo): void {
+                (new AuthService($pdo))->onRegistered($uid, $email, $name);
+            });
             return $svc->handle($payload, $ip, $csrfOk);
         });
     } catch (\Throwable $e) {
