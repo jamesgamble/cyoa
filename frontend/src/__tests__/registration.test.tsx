@@ -73,8 +73,8 @@ describe("registration form — v0.11.0", () => {
     expect(screen.getByLabelText(/^username$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/display name/i)).toBeInTheDocument();
     // Two password fields exist; both are exposed via unique labels.
-    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Password", { selector: "input" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Confirm password", { selector: "input" })).toBeInTheDocument();
   });
 
   it("blocks submission when required fields are empty", async () => {
@@ -92,9 +92,9 @@ describe("registration form — v0.11.0", () => {
     await user.type(screen.getByLabelText(/^email$/i), "alice@example.com");
     await user.type(screen.getByLabelText(/^username$/i), "alice");
     await user.type(screen.getByLabelText(/display name/i), "Alice");
-    await user.type(screen.getByLabelText(/^password$/i), "a very long password value");
+    await user.type(screen.getByLabelText("Password", { selector: "input" }), "a very long password value");
     await user.type(
-      screen.getByLabelText(/confirm password/i),
+      screen.getByLabelText("Confirm password", { selector: "input" }),
       "a very long password value",
     );
     await user.click(screen.getByRole("button", { name: /create account/i }));
@@ -132,11 +132,11 @@ describe("registration form — v0.11.0", () => {
     await user.type(screen.getByLabelText(/^username$/i), "alice_reader");
     await user.type(screen.getByLabelText(/display name/i), "Alice");
     await user.type(
-      screen.getByLabelText(/^password$/i),
+      screen.getByLabelText("Password", { selector: "input" }),
       "a very long password value",
     );
     await user.type(
-      screen.getByLabelText(/confirm password/i),
+      screen.getByLabelText("Confirm password", { selector: "input" }),
       "a very long password value",
     );
     await user.click(
@@ -188,11 +188,11 @@ describe("registration form — v0.11.0", () => {
     await user.type(screen.getByLabelText(/^username$/i), "bob_reader");
     await user.type(screen.getByLabelText(/display name/i), "Bob");
     await user.type(
-      screen.getByLabelText(/^password$/i),
+      screen.getByLabelText("Password", { selector: "input" }),
       "another long password value",
     );
     await user.type(
-      screen.getByLabelText(/confirm password/i),
+      screen.getByLabelText("Confirm password", { selector: "input" }),
       "another long password value",
     );
     await user.click(
@@ -230,11 +230,11 @@ describe("registration form — v0.11.0", () => {
     await user.type(screen.getByLabelText(/^username$/i), "cara_reader");
     await user.type(screen.getByLabelText(/display name/i), "Cara");
     await user.type(
-      screen.getByLabelText(/^password$/i),
+      screen.getByLabelText("Password", { selector: "input" }),
       "a very long password value",
     );
     await user.type(
-      screen.getByLabelText(/confirm password/i),
+      screen.getByLabelText("Confirm password", { selector: "input" }),
       "a very long password value",
     );
     await user.click(
