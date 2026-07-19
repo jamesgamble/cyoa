@@ -22,13 +22,20 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 
+use App\AdminSession;
 use App\Csrf;
 use App\Database;
+use App\EmailQueueRepository;
+use App\EmailQueueService;
+use App\EmailTemplateRepository;
+use App\Mailer\SmtpTransport;
 use App\Migrator;
 use App\PublicRepository;
 use App\RegistrationService;
 use App\SettingsRepository;
+use App\SmtpSettingsRepository;
 use App\WriteLock;
+
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
