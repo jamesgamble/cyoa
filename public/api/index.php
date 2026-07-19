@@ -2,18 +2,20 @@
 /**
  * Public HTTP API entry point.
  *
- * This file is the ONLY PHP file exposed under the web root at
- * `public/api/`. Every request is dispatched from here so we can
- * apply consistent headers, error handling, and safety guarantees.
+ * Every request is dispatched from here so we can apply consistent
+ * headers, error handling, and safety guarantees.
  *
- * v0.9.0 exposes a single route: `GET /api/health`. It intentionally
- * returns only:
- *   - api status
- *   - database status
- *   - schema version
- *   - application version
+ * v0.10.0 exposes these read-only endpoints in addition to /health:
  *
- * It never leaks paths, secrets, stack traces, or raw SQL error text.
+ *   GET /api/adventures                         — Discover list
+ *   GET /api/adventures/{slug}                  — Adventure landing data
+ *   GET /api/adventures/{slug}/outline          — Public story outline
+ *   GET /api/adventures/{slug}/scenes/{sceneId} — Published scene + choices
+ *
+ * Draft and suspended adventures are never returned. Unlisted
+ * adventures are excluded from the Discover list but remain readable
+ * by slug. Hidden and draft scenes are never returned. Choices are
+ * filtered to hide unpublished destinations.
  */
 
 declare(strict_types=1);
@@ -22,6 +24,7 @@ require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 
 use App\Database;
 use App\Migrator;
+use App\PublicRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -30,51 +33,114 @@ header('Cache-Control: no-store');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $uri    = $_SERVER['REQUEST_URI'] ?? '/';
 $path   = parse_url($uri, PHP_URL_PATH) ?: '/';
+$route  = preg_replace('#^/api#', '', $path) ?: '/';
+$route  = rtrim($route, '/');
+if ($route === '') { $route = '/'; }
 
-// Strip an /api prefix so both /api/health and /health resolve.
-$route = preg_replace('#^/api#', '', $path) ?: '/';
+if ($method !== 'GET') {
+    respond_error(405, 'method_not_allowed');
+    exit;
+}
 
-if ($method === 'GET' && ($route === '/health' || $route === '/health/')) {
+// ── Health ─────────────────────────────────────────────────────────
+if ($route === '/health') {
     respond_health();
     exit;
 }
 
-http_response_code(404);
-echo json_encode(['error' => 'not_found']);
+// ── Discover list ──────────────────────────────────────────────────
+if ($route === '/adventures') {
+    with_repo(static function (PublicRepository $repo): void {
+        $filters = [];
+        foreach (['q','genre','rating','status','contributions','sort'] as $key) {
+            if (isset($_GET[$key]) && is_string($_GET[$key])) {
+                $filters[$key] = $_GET[$key];
+            }
+        }
+        echo json_encode(['adventures' => $repo->discover($filters)]);
+    });
+    exit;
+}
+
+// ── /adventures/{slug}, /adventures/{slug}/outline,
+//    /adventures/{slug}/scenes/{sceneSlug} ─────────────────────────
+if (preg_match('#^/adventures/([A-Za-z0-9\-]+)(/.*)?$#', $route, $m)) {
+    $slug = $m[1];
+    $tail = $m[2] ?? '';
+
+    with_repo(static function (PublicRepository $repo) use ($slug, $tail): void {
+        if ($tail === '' || $tail === '/') {
+            $adv = $repo->adventureBySlug($slug);
+            if ($adv === null) { respond_error(404, 'not_found'); return; }
+            echo json_encode(['adventure' => $adv]);
+            return;
+        }
+        if ($tail === '/outline') {
+            $out = $repo->outline($slug);
+            if ($out === null) { respond_error(404, 'not_found'); return; }
+            echo json_encode($out);
+            return;
+        }
+        if (preg_match('#^/scenes/([A-Za-z0-9\-]+)$#', $tail, $sm)) {
+            $scene = $repo->scene($slug, $sm[1]);
+            if ($scene === null) { respond_error(404, 'not_found'); return; }
+            echo json_encode(['scene' => $scene]);
+            return;
+        }
+        respond_error(404, 'not_found');
+    });
+    exit;
+}
+
+respond_error(404, 'not_found');
 exit;
 
-/**
- * Emit the health payload. Any failure while gathering it downgrades
- * the corresponding status but never surfaces the underlying error.
- */
+// ────────────────────────────────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────────────────────────────────
+
+function respond_error(int $status, string $code): void
+{
+    http_response_code($status);
+    echo json_encode(['error' => $code]);
+}
+
+/** Open the DB and pass a PublicRepository to $fn, mapping any error to 503. */
+function with_repo(callable $fn): void
+{
+    try {
+        $pdo = Database::open();
+        $repo = new PublicRepository($pdo);
+        $fn($repo);
+    } catch (\Throwable $e) {
+        error_log('[bp] api error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+    }
+}
+
 function respond_health(): void
 {
     $config = bp_config();
-
     $dbStatus = 'unknown';
     $schemaVersion = '0';
     try {
         $pdo = Database::open();
-        // Trivial round-trip to confirm the connection works.
         $pdo->query('SELECT 1');
         $dbStatus = 'ok';
         try {
             $migrator = new Migrator($pdo);
             $schemaVersion = $migrator->currentVersion();
         } catch (\Throwable $_) {
-            // Tracking table not yet initialised — that is fine and
-            // is reported as schema version 0 rather than an error.
             $schemaVersion = '0';
         }
     } catch (\Throwable $e) {
         error_log('[bp] health db error: ' . $e->getMessage());
         $dbStatus = 'unavailable';
     }
-
     echo json_encode([
-        'api'             => 'ok',
-        'database'        => $dbStatus,
-        'schema_version'  => $schemaVersion,
-        'app_version'     => (string) $config['app']['version'],
+        'api'            => 'ok',
+        'database'       => $dbStatus,
+        'schema_version' => $schemaVersion,
+        'app_version'    => (string) $config['app']['version'],
     ]);
 }
