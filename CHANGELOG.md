@@ -1,41 +1,42 @@
 # Changelog
 
-All notable changes to Branching Paths are documented in this file.
-This project uses [Semantic Versioning](https://semver.org/).
+All notable, public-safe changes to Branching Paths. Newest release first.
+
+## 0.3.0 — 2026-07-19
+
+### Added
+- Shared component library covering navigation, story, discovery, forms, management, and state.
+- Literary masthead with an inline text wordmark and a fine editorial rule.
+- Mobile navigation drawer with Escape-close, focus containment, and reduced tab order when hidden.
+- Text-based wordmark component.
+- Colophon-style footer with attribution line, editorial rule, and directory of secondary links.
+- Story components: story page container, scene title, story body, numbered choice, choice list, and ending panel.
+- Adventure card and featured adventure card for the discovery experience.
+- Form components: search field, select, checkbox, radio group, toggle, text area with counter, password field with reveal, form section, step indicator, validation message, and inline help.
+- Management components: management navigation rail, queue item, activity item, warning panel, danger zone, administrative table, and search-and-filter bar.
+- Empty state and error state components with optional actions.
+- Every documented component is exhibited on the internal design system preview.
+
+### Changed
+- Legacy Footer and PrimaryNav names now transparently render the new Colophon and Masthead components.
+- Empty state and error state accept an optional action node.
+
+### Security
+- User-authored story content flows exclusively through the sanitizing story components. It cannot control font, color, width, alignment, background, border, or position; every string is escaped and rendered inside fixed presentational elements owned by the design system.
 
 ## 0.2.0 — 2026-07-19
 
 ### Added
-- Complete design system: tokens for colors, typography, spacing, borders, shadows, reading widths, statuses, buttons, forms, story pages, management panels, and administrative tables.
-- Three layout modes: public reading, creation and management, master administration.
-- Internal design system preview at `/design-system` displaying typography, colors, buttons, inputs, checkboxes, radios, toggles, status badges, story page with numbered choices, cards, alerts, dialogs, help drawer, management panels, and administrative tables.
-- Reusable primitives: Button, Badge, Alert, Dialog, HelpDrawer, Panel.
-- Subtle local paper texture rendered in CSS (no imagery, no parchment novelty).
-- Editorial ornament between story sections and a decorative drop capital for opening passages.
-- Numbered choice styling with a numbered-list counter and hover affordance.
-- Design system documentation at `docs/DESIGN-SYSTEM.md`.
+- Complete design system tokens, three layout modes, and internal design system preview.
+- Primitives: Button, Badge, Alert, Dialog, HelpDrawer, Panel.
+- Subtle local paper texture and numbered choice styling.
+- Design system documentation.
 
 ### Changed
-- Public, account, adventure management, and master layouts now apply their layout mode automatically, adjusting container width and chrome.
-- Footer, header, and navigation restyled to the editorial visual language.
-
-- Interactive elements show a visible keyboard focus ring, honor `prefers-reduced-motion` and `prefers-contrast: more`, support an increased text size setting via `data-text-size`, and meet a 44px minimum tap target on primary controls.
-
-
+- Layouts adopt their respective modes; header, footer, and navigation restyled.
+- Accessibility: visible focus ring, reduced-motion and high-contrast support, increased text size setting, 44px minimum tap targets.
 
 ## 0.1.0 — 2026-07-19
 
 ### Added
-- Initial project scaffolding for the Branching Paths application.
-- Directory layout for the React frontend, PHP backend, private runtime data, scripts, and documentation.
-- React + TypeScript + Vite + React Router application shell.
-- Public routes: Home, Discover, Start, Help (index and topic), Changelog (index and version), Login, Register.
-- Placeholder protected routes: Account, Adventure management, Master login, Master administration.
-- Shared layouts for public pages, account pages, adventure management, and master administration.
-- Reusable state components: Loading, Empty, Error, Unauthorized, Not found, Service unavailable.
-- Primary navigation with Home, Discover, Create, Help, Changelog, and Sign In.
-- Footer showing version, Changelog, Help, Community Guidelines, Privacy, and About.
-- Reusable version component sourced from the `VERSION` file.
-- Typed changelog data source and public changelog pages.
-- Initial documentation set: architecture, database, security, hosting, help, QA, and roadmap outlines.
-- Focused tests for routing, primary navigation, changelog links, version display, not-found page, responsive navigation, and keyboard navigation.
+- Initial project scaffolding, application shell, public routes, placeholder protected routes, layouts, state primitives, primary navigation, footer, version component, changelog data source and pages, documentation set, and initial tests.
