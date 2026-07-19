@@ -22,9 +22,13 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 
+use App\Csrf;
 use App\Database;
 use App\Migrator;
 use App\PublicRepository;
+use App\RegistrationService;
+use App\SettingsRepository;
+use App\WriteLock;
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -37,8 +41,39 @@ $route  = preg_replace('#^/api#', '', $path) ?: '/';
 $route  = rtrim($route, '/');
 if ($route === '') { $route = '/'; }
 
+// ── Registration (POST) ────────────────────────────────────────────
+if ($method === 'POST' && $route === '/register') {
+    handle_register();
+    exit;
+}
+
 if ($method !== 'GET') {
     respond_error(405, 'method_not_allowed');
+    exit;
+}
+
+// ── CSRF token issuance ────────────────────────────────────────────
+if ($route === '/csrf-token') {
+    $token = Csrf::issue();
+    echo json_encode(['token' => $token]);
+    exit;
+}
+
+// ── Public registration settings ───────────────────────────────────
+if ($route === '/registration/settings') {
+    try {
+        $repo = new SettingsRepository(Database::open());
+        $s = $repo->registrationSettings();
+        echo json_encode([
+            'registration_enabled'    => $s['registration_enabled'],
+            'minimum_password_length' => $s['minimum_password_length'],
+            'requires_email_verification' => $s['require_email_verification'],
+            'requires_admin_approval'     => $s['require_admin_approval'],
+        ]);
+    } catch (\Throwable $e) {
+        error_log('[bp] api error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+    }
     exit;
 }
 
@@ -47,6 +82,7 @@ if ($route === '/health') {
     respond_health();
     exit;
 }
+
 
 // ── Discover list ──────────────────────────────────────────────────
 if ($route === '/adventures') {
