@@ -3,6 +3,29 @@
 All notable changes to Branching Paths are documented in this file.
 This project uses [Semantic Versioning](https://semver.org/).
 
+## 0.2.0 — 2026-07-19
+
+### Added
+- Complete design system: tokens for colors, typography, spacing, borders, shadows, reading widths, statuses, buttons, forms, story pages, management panels, and administrative tables.
+- Three layout modes: public reading, creation and management, master administration.
+- Internal design system preview at `/design-system` displaying typography, colors, buttons, inputs, checkboxes, radios, toggles, status badges, story page with numbered choices, cards, alerts, dialogs, help drawer, management panels, and administrative tables.
+- Reusable primitives: Button, Badge, Alert, Dialog, HelpDrawer, Panel.
+- Subtle local paper texture rendered in CSS (no imagery, no parchment novelty).
+- Editorial ornament between story sections and a decorative drop capital for opening passages.
+- Numbered choice styling with a numbered-list counter and hover affordance.
+- Design system documentation at `docs/DESIGN-SYSTEM.md`.
+
+### Changed
+- Public, account, adventure management, and master layouts now apply their layout mode automatically, adjusting container width and chrome.
+- Footer, header, and navigation restyled to the editorial visual language.
+
+### Accessibility
+- Visible focus rings on all interactive elements.
+- Respects `prefers-reduced-motion` and `prefers-contrast: more`.
+- Explicit high-contrast opt-in via `data-contrast="high"` and increased text size via `data-text-size="large" | "x-large"`.
+- Minimum 44px tap targets on primary controls; keyboard-reachable dialog and help drawer.
+
+
 ## 0.1.0 — 2026-07-19
 
 ### Added
