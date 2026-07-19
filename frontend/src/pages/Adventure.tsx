@@ -160,7 +160,7 @@ function AdventureView({ adventure }: ViewProps) {
         </h2>
         <div className="bp-adv-landing__action-row">
           <LinkButton
-            to={`/read/${slug}`}
+            href={`/read/${slug}`}
             variant="primary"
             data-testid="action-read"
           >
@@ -168,7 +168,7 @@ function AdventureView({ adventure }: ViewProps) {
           </LinkButton>
           {progress && (
             <LinkButton
-              to={`/read/${slug}/scene/${progress.sceneSlug}`}
+              href={`/read/${slug}/scene/${progress.sceneSlug}`}
               variant="secondary"
               data-testid="action-resume"
             >
@@ -176,7 +176,7 @@ function AdventureView({ adventure }: ViewProps) {
             </LinkButton>
           )}
           <LinkButton
-            to={`/adventure/${slug}/map`}
+            href={`/adventure/${slug}/map`}
             variant="secondary"
             data-testid="action-map"
           >
@@ -184,7 +184,7 @@ function AdventureView({ adventure }: ViewProps) {
           </LinkButton>
           {contributionsAllowed && (
             <LinkButton
-              to={`/adventure/${slug}/branch`}
+              href={`/adventure/${slug}/branch`}
               variant="secondary"
               data-testid="action-add-branch"
             >
