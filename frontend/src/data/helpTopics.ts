@@ -309,11 +309,11 @@ export const HELP_TOPICS: HelpTopic[] = [
       "A successful sign-in issues a session cookie that is HttpOnly, SameSite=Lax, marked Secure on HTTPS, and expires after fourteen days. Any earlier session for your account is revoked before the new cookie is issued, so a device that was left signed-in elsewhere will be signed out.",
       "Signing out revokes the session on the server and clears the cookie in your browser. If you are worried a session is still active on another device, change your password — that revokes every session and forces every device to sign in again.",
     ],
-    related: ["password-recovery", "account-security", "verifying-your-email"],
+    related: ["account-recovery", "account-security", "verifying-your-email"],
     match: { routes: [/^\/login$/, /^\/change-password$/], sections: ["auth"] },
   },
   {
-    slug: "password-recovery",
+    slug: "account-recovery",
     title: "Password recovery",
     summary:
       "How the forgot-password and reset-password flow works and why the messages look the same either way.",
@@ -334,7 +334,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       "The change-password page requires your current password before it will accept a new one. On success, every session other than the one making the request is revoked, and the current cookie is rotated to a fresh value. This makes change-password the fastest way to lock out a device you no longer control.",
       "We email you whenever your password is changed via the reset flow or the change-password page. If you ever see that notification without having initiated it, use forgot-password immediately to lock the account.",
     ],
-    related: ["password-recovery", "signing-in", "privacy-security"],
+    related: ["account-recovery", "signing-in", "accounts"],
     match: { routes: [/^\/change-password$/], sections: ["auth"] },
   },
 ];
