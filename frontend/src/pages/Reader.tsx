@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
@@ -18,6 +18,8 @@ import {
   startScene,
   type Scene,
 } from "../data/scenes";
+import { fetchAdventure, fetchScene } from "../lib/apiClient";
+import type { AdventureSummary } from "../components/AdventureCard";
 import { useAdventureProgress } from "../hooks/useLocalProgress";
 import { useHelpContext } from "../components/GlobalHelp";
 
