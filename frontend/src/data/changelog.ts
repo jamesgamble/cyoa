@@ -22,6 +22,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.4.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Public homepage with three primary reader actions: read, create, or continue someone else's story.",
+        "Featured adventure and recently-updated adventure fixtures on the homepage.",
+        "Three-step explanation of how Branching Paths works.",
+        "Notice that reading published adventures does not require an account.",
+        "Registration call to action alongside an existing-account shortcut.",
+        "Summary of the community guidelines with a link to the full help topic.",
+        "Directory linking to Discover, Create, Help, and Changelog.",
+        "Expanded community-guidelines help topic to match the homepage summary.",
+      ],
+      Changed: [
+        "Homepage stylesheet extends existing design tokens; no new colors or typefaces were introduced.",
+      ],
+    },
+  },
+  {
     version: "0.3.0",
     date: "2026-07-19",
     sections: {

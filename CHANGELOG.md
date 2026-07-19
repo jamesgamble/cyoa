@@ -2,6 +2,21 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.4.0 — 2026-07-19
+
+### Added
+- Public homepage with a concise introduction and three primary reader actions: read an adventure, create an adventure, or continue someone else's story.
+- Featured adventure and recently-updated adventure fixtures rendered with the established literary card components.
+- Three-step explanation of how the library works.
+- Notice that reading published adventures does not require an account.
+- Registration call to action alongside an existing-account shortcut.
+- Summary of the community guidelines with a link to the full help topic.
+- Directory of the primary public destinations: Discover, Create, Help, and Changelog.
+- Expanded community-guidelines help topic to match the homepage summary.
+
+### Changed
+- Homepage stylesheet extends the existing design tokens; no new colors or typefaces were introduced.
+
 ## 0.3.0 — 2026-07-19
 
 ### Added

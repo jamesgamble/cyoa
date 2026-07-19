@@ -1,17 +1,7 @@
 import { Link } from "react-router-dom";
 
-export function Home() {
-  return (
-    <section>
-      <h1>Branching Paths</h1>
-      <p>A collaborative library of choose-your-own-adventure stories.</p>
-      <p>
-        <Link to="/discover">Discover adventures</Link> or{" "}
-        <Link to="/start">start writing one</Link>.
-      </p>
-    </section>
-  );
-}
+export { Home } from "./Home";
+
 
 export function Discover() {
   return (

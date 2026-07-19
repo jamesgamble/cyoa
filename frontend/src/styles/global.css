@@ -1427,3 +1427,162 @@ html[data-contrast="high"] body::before { display: none; }
   font-family: var(--bp-font-display) !important;
   color: var(--bp-red) !important;
 }
+
+/* ============================================================
+   Homepage (v0.4.0)
+   ============================================================ */
+.bp-home { display: flex; flex-direction: column; gap: var(--bp-s-9, 3rem); }
+.bp-home__hero { text-align: center; padding: var(--bp-s-6) 0 var(--bp-s-4); }
+.bp-home__eyebrow {
+  font-family: var(--bp-font-display);
+  font-style: italic;
+  color: var(--bp-red);
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  margin: 0 0 var(--bp-s-3);
+}
+.bp-home__title {
+  font-family: var(--bp-font-display);
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  line-height: 1.05;
+  margin: 0 0 var(--bp-s-4);
+  color: var(--bp-ink);
+}
+.bp-home__lede {
+  max-width: 42rem;
+  margin: 0 auto var(--bp-s-5);
+  font-size: var(--bp-fs-lg, 1.15rem);
+  line-height: 1.6;
+  color: var(--bp-ink-soft, var(--bp-ink));
+}
+.bp-home__primary-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bp-s-3);
+  justify-content: center;
+}
+.bp-home__primary-actions > li { margin: 0; }
+
+.bp-home__section-title {
+  font-family: var(--bp-font-display);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin: 0 0 var(--bp-s-4);
+  color: var(--bp-ink);
+}
+.bp-home__section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--bp-s-4);
+  margin-bottom: var(--bp-s-4);
+}
+.bp-home__section-head .bp-home__section-title { margin: 0; }
+.bp-home__section-more {
+  font-family: var(--bp-font-display);
+  font-style: italic;
+  color: var(--bp-red);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.bp-home__section-more:hover { text-decoration: underline; }
+
+.bp-home__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--bp-s-4);
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+}
+.bp-home__grid > li { margin: 0; }
+
+.bp-home__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--bp-s-5);
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  counter-reset: bp-step;
+}
+.bp-home__steps > li {
+  position: relative;
+  padding: var(--bp-s-5) var(--bp-s-4);
+  background: var(--bp-parchment, transparent);
+  border: 1px solid var(--bp-rule, currentColor);
+  border-radius: var(--bp-radius-md, 4px);
+}
+.bp-home__step-number {
+  display: inline-block;
+  font-family: var(--bp-font-display);
+  font-size: 2rem;
+  color: var(--bp-red);
+  margin-bottom: var(--bp-s-2);
+}
+.bp-home__step-title {
+  font-family: var(--bp-font-display);
+  font-size: 1.25rem;
+  margin: 0 0 var(--bp-s-2);
+}
+
+.bp-home__account .bp-panel { padding: var(--bp-s-6); }
+.bp-home__account-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bp-s-3);
+  margin-top: var(--bp-s-4);
+}
+
+.bp-home__guidelines-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--bp-s-3);
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+.bp-home__guidelines-list li {
+  padding: var(--bp-s-3) var(--bp-s-4);
+  border-left: 2px solid var(--bp-red);
+  background: color-mix(in oklab, var(--bp-red) 4%, transparent);
+}
+.bp-home__guidelines-more { margin-top: var(--bp-s-4); }
+.bp-home__guidelines-more a { color: var(--bp-red); }
+
+.bp-home__directory ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--bp-s-3);
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+.bp-home__directory a {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bp-s-1);
+  padding: var(--bp-s-4);
+  border: 1px solid var(--bp-rule, currentColor);
+  border-radius: var(--bp-radius-md, 4px);
+  text-decoration: none;
+  color: var(--bp-ink);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.bp-home__directory a:hover {
+  border-color: var(--bp-red);
+  background: color-mix(in oklab, var(--bp-red) 4%, transparent);
+}
+.bp-home__dir-title {
+  font-family: var(--bp-font-display);
+  font-size: 1.15rem;
+  color: var(--bp-ink);
+}
+.bp-home__dir-desc { color: var(--bp-ink-soft, var(--bp-ink)); font-size: 0.95rem; }
+
+@media (max-width: 720px) {
+  .bp-home { gap: var(--bp-s-7, 2rem); }
+  .bp-home__section-head { flex-direction: column; gap: var(--bp-s-2); align-items: flex-start; }
+}
