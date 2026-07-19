@@ -180,3 +180,84 @@ function respond_health(): void
         'app_version'    => (string) $config['app']['version'],
     ]);
 }
+
+/**
+ * Handle POST /api/register.
+ *
+ * The full transaction runs while holding the file-based write lock
+ * so a duplicate email or username can never sneak in via a race.
+ * The response body is intentionally opaque — see RegistrationService
+ * for the enumeration-safety rationale.
+ */
+function handle_register(): void
+{
+    $raw = file_get_contents('php://input') ?: '';
+    $payload = [];
+    if ($raw !== '') {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $payload = $decoded;
+        }
+    }
+    // Support form-encoded bodies too so the honeypot still works
+    // even if a scraper strips the Content-Type header.
+    if ($payload === [] && !empty($_POST)) {
+        $payload = $_POST;
+    }
+
+    $csrfOk = Csrf::validate();
+    $ip     = client_ip();
+
+    try {
+        $pdo  = Database::open();
+        $lock = new WriteLock();
+        $result = $lock->withLock(static function () use ($pdo, $payload, $ip, $csrfOk): array {
+            $svc = new RegistrationService($pdo);
+            return $svc->handle($payload, $ip, $csrfOk);
+        });
+    } catch (\Throwable $e) {
+        error_log('[bp] register error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    [$outcome, $errors] = $result;
+    switch ($outcome) {
+        case RegistrationService::OUTCOME_ACCEPTED:
+            http_response_code(202);
+            echo json_encode(['status' => 'accepted']);
+            return;
+        case RegistrationService::OUTCOME_DISABLED:
+            http_response_code(403);
+            echo json_encode(['error' => 'registration_disabled']);
+            return;
+        case RegistrationService::OUTCOME_RATE_LIMITED:
+            http_response_code(429);
+            echo json_encode(['error' => 'rate_limited']);
+            return;
+        case RegistrationService::OUTCOME_CSRF_FAILED:
+            http_response_code(403);
+            echo json_encode(['error' => 'csrf_failed']);
+            return;
+        case RegistrationService::OUTCOME_INVALID:
+        default:
+            http_response_code(422);
+            echo json_encode(['error' => 'invalid', 'fields' => $errors]);
+            return;
+    }
+}
+
+/**
+ * Best-effort client IP. We deliberately do NOT trust
+ * X-Forwarded-For unless the operator has configured the site behind
+ * a reverse proxy; for now the remote address wins.
+ */
+function client_ip(): string
+{
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    if (!is_string($ip) || $ip === '') {
+        $ip = '0.0.0.0';
+    }
+    return $ip;
+}
+
