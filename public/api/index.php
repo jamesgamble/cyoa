@@ -586,3 +586,114 @@ function auth_clear_cookie(): void
 }
 
 
+/**
+ * Handle every `/api/account/*` request.
+ *
+ * Every route requires an authenticated session cookie. Mutating
+ * routes additionally require a valid CSRF token, and writes execute
+ * under the WriteLock so a race can never leave user rows in an
+ * inconsistent shape.
+ */
+function handle_account(string $method, string $tail): void
+{
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] account db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+    $auth   = new AuthService($pdo);
+    $cookie = $_COOKIE[AuthService::SESSION_COOKIE] ?? null;
+    $userId = $auth->authenticate($cookie);
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+    $sessionId = AccountService::sessionIdFromCookie($cookie);
+
+    $svc = new AccountService($pdo);
+
+    if ($method === 'GET' && ($tail === '' || $tail === '/' || $tail === '/profile')) {
+        echo json_encode(['profile' => $svc->profile($userId)]);
+        return;
+    }
+    if ($method === 'GET' && $tail === '/security') {
+        echo json_encode([
+            'profile'  => $svc->profile($userId),
+            'sessions' => $svc->listSessions($userId, $sessionId),
+        ]);
+        return;
+    }
+    if ($method === 'GET' && $tail === '/adventures') {
+        echo json_encode(['adventures' => $svc->myAdventures($userId)]);
+        return;
+    }
+    if ($method === 'GET' && $tail === '/contributions') {
+        echo json_encode(['contributions' => $svc->myContributions($userId)]);
+        return;
+    }
+    if ($method === 'GET' && $tail === '/bookmarks') {
+        echo json_encode(['bookmarks' => $svc->listBookmarks($userId)]);
+        return;
+    }
+
+    // ── All mutating routes below ──
+    if ($method !== 'PUT' && $method !== 'POST') { respond_error(405, 'method_not_allowed'); return; }
+    if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+    $body = read_json_body();
+
+    try {
+        $lock = new WriteLock();
+        if ($method === 'PUT' && $tail === '/profile') {
+            $r = $lock->withLock(static fn () => $svc->updateProfile($userId, $body));
+            [$outcome, $errors] = $r;
+            if ($outcome === AccountService::OK) { echo json_encode(['status' => 'ok']); return; }
+            http_response_code(422);
+            echo json_encode(['error' => 'invalid', 'fields' => $errors]);
+            return;
+        }
+        if ($method === 'PUT' && $tail === '/notifications') {
+            $lock->withLock(static function () use ($svc, $userId, $body) { $svc->updateNotifications($userId, $body); });
+            echo json_encode(['status' => 'ok']);
+            return;
+        }
+        if ($method === 'POST' && $tail === '/email-change') {
+            $newEmail = (string) ($body['email'] ?? '');
+            $r = $lock->withLock(static fn () => $svc->requestEmailChange($userId, $newEmail));
+            [$outcome, $errors] = $r;
+            if ($outcome === AccountService::OK) { echo json_encode(['status' => 'ok']); return; }
+            $code = $outcome === AccountService::EMAIL_IN_USE ? 409 : 422;
+            http_response_code($code);
+            echo json_encode(['error' => $outcome, 'fields' => $errors]);
+            return;
+        }
+        if ($method === 'POST' && $tail === '/email-change/confirm') {
+            $token = (string) ($body['token'] ?? '');
+            $r = $lock->withLock(static fn () => $svc->confirmEmailChange($userId, $token));
+            [$outcome, $newEmail] = $r;
+            if ($outcome === AccountService::OK) { echo json_encode(['status' => 'ok', 'email' => $newEmail]); return; }
+            $code = $outcome === AccountService::EMAIL_IN_USE ? 409 : 400;
+            http_response_code($code);
+            echo json_encode(['error' => $outcome]);
+            return;
+        }
+        if ($method === 'POST' && $tail === '/sessions/revoke-others') {
+            $revoked = $lock->withLock(static fn () => $svc->revokeOtherSessions($userId, $sessionId));
+            echo json_encode(['status' => 'ok', 'revoked' => $revoked]);
+            return;
+        }
+        if ($method === 'POST' && $tail === '/bookmarks/import') {
+            $entries = isset($body['entries']) && is_array($body['entries']) ? $body['entries'] : [];
+            $counts = $lock->withLock(static fn () => $svc->importLocalProgress($userId, $entries));
+            echo json_encode(['status' => 'ok'] + $counts);
+            return;
+        }
+    } catch (\Throwable $e) {
+        error_log('[bp] account error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    respond_error(404, 'not_found');
+}
+
+
+
