@@ -180,3 +180,115 @@ export async function submitRegistration(
   }
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Master (administrator) console                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * v0.12.0 — client helpers for the master console.
+ *
+ * Every mutating request re-fetches a CSRF token first; this matches
+ * the server-side double-submit check and avoids stashing tokens in
+ * component state where they might leak into logs or error reports.
+ * The password field is redacted server-side, so the settings form
+ * receives the sentinel string `__unchanged__` — see SmtpSettings.
+ */
+
+export interface SmtpSettings {
+  host: string;
+  port: number;
+  encryption: "none" | "starttls" | "tls";
+  username: string;
+  /** Redacted sentinel from the server: "__unchanged__" or "". */
+  password: string;
+  from_email: string;
+  from_name: string;
+  reply_to: string;
+  enabled: boolean;
+  retry_limit: number;
+  batch_size: number;
+  has_password: boolean;
+  updated_at: string;
+}
+export const PASSWORD_UNCHANGED = "__unchanged__" as const;
+
+export interface QueueMessage {
+  id: number;
+  template_key: string;
+  to_email: string;
+  status: "pending" | "sending" | "sent" | "failed" | "cancelled";
+  attempts: number;
+  last_error: string | null;
+  next_attempt_at: string;
+  sent_at: string | null;
+  created_at: string;
+}
+export interface QueueResponse {
+  counts: Record<string, number>;
+  messages: QueueMessage[];
+}
+
+async function masterMutate<T>(
+  path: string,
+  method: "POST" | "PUT",
+  body: unknown,
+): Promise<{ ok: boolean; status: number; data: T | null; error?: string; fields?: Record<string, string> }> {
+  const token = await fetchCsrfToken();
+  if (!token) return { ok: false, status: 0, data: null, error: "csrf_unavailable" };
+  try {
+    const res = await fetch(apiUrl(path), {
+      method,
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-CSRF-Token": token,
+      },
+      body: JSON.stringify(body ?? {}),
+    });
+    let parsed: unknown = null;
+    try { parsed = await res.json(); } catch { /* empty */ }
+    if (res.ok) return { ok: true, status: res.status, data: parsed as T };
+    const err = (parsed as { error?: string } | null)?.error;
+    const fields = (parsed as { fields?: Record<string, string> } | null)?.fields;
+    return { ok: false, status: res.status, data: null, error: err, fields };
+  } catch {
+    return { ok: false, status: 0, data: null, error: "network_error" };
+  }
+}
+
+export async function fetchMasterSession(): Promise<{ authenticated: boolean; user_id: number | null }> {
+  const data = await getJson<{ authenticated: boolean; user_id: number | null }>("/master/session");
+  return data ?? { authenticated: false, user_id: null };
+}
+
+export async function masterLogin(email: string, password: string) {
+  return masterMutate<{ status: string; user_id: number }>("/master/login", "POST", { email, password });
+}
+
+export async function masterLogout() {
+  return masterMutate<{ status: string }>("/master/logout", "POST", {});
+}
+
+export async function fetchSmtpSettings(): Promise<SmtpSettings | null> {
+  const data = await getJson<{ settings: SmtpSettings }>("/master/settings/email");
+  return data?.settings ?? null;
+}
+
+export async function saveSmtpSettings(settings: SmtpSettings) {
+  return masterMutate<{ status: string }>("/master/settings/email", "PUT", settings);
+}
+
+export async function sendTestEmail(to: string) {
+  return masterMutate<{ status: string }>("/master/settings/email/test", "POST", { to });
+}
+
+export async function fetchEmailQueue(status?: string): Promise<QueueResponse | null> {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  return await getJson<QueueResponse>(`/master/email-queue${qs}`);
+}
+
+export async function cancelQueuedMessage(id: number) {
+  return masterMutate<{ status: string }>(`/master/email-queue/${id}/cancel`, "POST", {});
+}
