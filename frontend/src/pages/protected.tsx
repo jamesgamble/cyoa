@@ -133,30 +133,36 @@ export function Master() {
     });
   }, [navigate]);
 
-  if (!ready) return <p>Loading…</p>;
-  if (!authed) return <UnauthorizedState />;
-
   return (
     <section aria-labelledby="master-h">
       <h1 id="master-h">Master administration</h1>
-      <nav aria-label="Master sections">
-        <ul>
-          <li><Link to="/master/settings/email">Email settings</Link></li>
-          <li><Link to="/master/email-queue">Email queue</Link></li>
-        </ul>
-      </nav>
-      <button
-        type="button"
-        onClick={async () => {
-          await masterLogout();
-          navigate("/master/login", { replace: true });
-        }}
-      >
-        Sign out
-      </button>
+      {!ready ? (
+        <p>Loading…</p>
+      ) : !authed ? (
+        <UnauthorizedState />
+      ) : (
+        <>
+          <nav aria-label="Master sections">
+            <ul>
+              <li><Link to="/master/settings/email">Email settings</Link></li>
+              <li><Link to="/master/email-queue">Email queue</Link></li>
+            </ul>
+          </nav>
+          <button
+            type="button"
+            onClick={async () => {
+              await masterLogout();
+              navigate("/master/login", { replace: true });
+            }}
+          >
+            Sign out
+          </button>
+        </>
+      )}
     </section>
   );
 }
+
 
 /* ---------------- Email settings ---------------- */
 
