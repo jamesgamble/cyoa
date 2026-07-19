@@ -127,20 +127,22 @@ export const HELP_TOPICS: HelpTopic[] = [
     slug: "accounts",
     title: "Accounts",
     summary:
-      "What accounts will be for, and what you can do today without one.",
+      "How to register an account, what it currently unlocks, and what is still planned.",
     body: [
-      "Accounts are planned for a later release. Today the sign-in, register, and account pages describe what an account will unlock without asking for a password or personal information.",
-      "An account will be required to create an adventure, contribute a branch, follow an adventure, and manage adventures you have created. Reading, searching, and bookmarking will continue to work without one.",
-      "Signed-in visitors will see a Follow placeholder on adventure pages, an Account area for their own adventures and drafts, and personal reading history synced across browsers.",
-      "Until accounts ship, the Follow, Manage, and Master areas render as placeholders. No credentials are collected and no data is stored on any server.",
+      "You can register an account today at /register. Registration collects an email address, a username, a display name, a password, a confirmation of that password, and your acceptance of the community guidelines. Reading, searching, and bookmarking continue to work without an account.",
+      "Email and username are matched case-insensitively. \"Alice\" and \"alice\" are the same account; so are \"Alice@Example.com\" and \"alice@example.com\". The username must be between three and thirty-two characters and may contain letters, digits, hyphens, and underscores. Passwords must meet the minimum length set by the operator (twelve characters by default).",
+      "After you submit the form the site always shows the same acknowledgement whether the email or username was new, was already taken, or triggered the spam-protection honeypot. This is deliberate: the endpoint is designed so that it cannot be used to check whether a specific email or username exists.",
+      "The operator can require email verification, administrator approval, or both before an account becomes active. Email delivery and sign-in are planned for later releases, so today the account is stored in a pending state and Follow, Manage, and Master areas remain placeholders.",
+      "If registration is temporarily closed, the /register page will say so. If too many attempts come from your network in a short time, the site will pause new registrations from that network for an hour.",
     ],
-    related: ["managing-adventures", "privacy-and-security", "getting-started"],
+    related: ["privacy-and-security", "managing-adventures", "getting-started"],
     match: {
       routes: [/^\/account/, /^\/login/, /^\/register/],
-      sections: ["account"],
+      sections: ["account", "register"],
       roles: ["author"],
     },
   },
+
   {
     slug: "managing-adventures",
     title: "Managing adventures",

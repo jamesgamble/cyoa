@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export { Home } from "./Home";
 export { Discover } from "./Discover";
-
+export { Register } from "./RegisterPage";
 
 export function Start() {
   return (
@@ -23,11 +23,3 @@ export function Login() {
   );
 }
 
-export function Register() {
-  return (
-    <section>
-      <h1>Create an account</h1>
-      <p>Registration opens in a later release.</p>
-    </section>
-  );
-}

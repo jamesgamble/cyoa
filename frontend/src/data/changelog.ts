@@ -22,9 +22,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.11.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Self-service account registration at /register collecting email, username, display name, password, password confirmation, and community-guidelines acceptance.",
+        "Server-side settings for registration availability, minimum password length, per-IP hourly ceiling, email-verification requirement, and administrator-approval requirement.",
+        "Password hashing with Argon2id when the PHP build supports it, and bcrypt as a portable fallback.",
+        "Public help topic covering how registration works, what the response means, and why the site does not tell you whether an address is already taken.",
+      ],
+      Security: [
+        "Registration responses are the same whether the account is new, the email is already taken, the username is already taken, or the honeypot fired — the endpoint cannot be used to enumerate existing accounts.",
+        "Every unsafe request is protected by a double-submit CSRF token scoped to the site with SameSite=Strict; requests without a matching token are rejected before any business logic runs.",
+        "Per-IP hourly rate limiting is enforced on the server; attempts are counted regardless of outcome so bots cannot avoid the limit by intentionally sending invalid payloads.",
+        "Passwords are hashed with Argon2id or bcrypt through PHP's built-in password hashing; raw passwords are never written to disk or logs.",
+      ],
+    },
+  },
+  {
     version: "0.10.0",
     date: "2026-07-19",
     sections: {
+
       Added: [
         "Initial public data model migration creating users, adventures, scenes, choices, and content warnings with schema-level CHECK constraints on every state, visibility, scene-type, and content-rating column.",
         "Discovery and traversal indexes covering adventure state and visibility, genre, content rating, contribution state, updated-at ordering, per-adventure scene lookup, choice edges by source and target, and content-warning ordering.",

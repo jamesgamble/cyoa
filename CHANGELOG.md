@@ -2,6 +2,27 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.11.0 — 2026-07-19
+
+### Added
+- Registration migration `private/migrations/0002_registration.sql` extending `users` with `email`, `email_normalized`, `username_normalized`, `password_hash`, `password_algo` (CHECK `argon2id` or `bcrypt`), `status` (CHECK `pending_verification` / `active` / `suspended` / `deleted`), `terms_accepted_at`, `email_verified_at`, `approved_at`, and `updated_at`; unique partial indexes on the normalized columns; a `settings` key/value table seeded with `registration_enabled`, `minimum_password_length`, `registrations_per_ip_per_hour`, `require_email_verification`, and `require_admin_approval`; and a `registration_attempts` ledger indexed by `(ip, occurred_at)`.
+- `App\PasswordHasher` selects Argon2id when available and falls back to bcrypt; the chosen algorithm is stored per row for future silent upgrades.
+- `App\Csrf` double-submit cookie helper (`bp_csrf`, SameSite=Strict) issued by `GET /api/csrf-token` and verified on every unsafe request through a timing-safe compare.
+- `App\RegistrationRateLimiter` records every attempt in `registration_attempts` and blocks further submissions from an IP once the configured hourly ceiling is reached.
+- `App\SettingsRepository`, `App\UserRepository`, and `App\RegistrationService` orchestrating gate checks, validation, case-insensitive duplicate detection, and Argon2id/bcrypt hashing under the write lock.
+- HTTP endpoints on `public/api/index.php`: `GET /api/csrf-token`, `GET /api/registration/settings`, and `POST /api/register`. Successful registrations respond `202 Accepted`; validation errors return `422` with per-field codes; disabled registration returns `403 registration_disabled`; missing CSRF returns `403 csrf_failed`; ceiling exceeded returns `429 rate_limited`; unexpected failures return `503 service_unavailable`.
+- React registration page at `/register` (`frontend/src/pages/RegisterPage.tsx`) with client-side validation mirroring the server rules, a visually-hidden honeypot (`nickname_url`), and settings-driven copy for verification/approval flows.
+- Frontend API client additions: `fetchRegistrationSettings`, `fetchCsrfToken`, and `submitRegistration` with a normalized outcome discriminator.
+- Focused PHP tests (`tests/php/registration_test.php`): happy path, case-insensitive duplicate email and username, missing fields, short password, password mismatch, missing terms, invalid email shape, invalid username characters, honeypot, missing CSRF, disabled registration, per-IP rate limit, `PasswordHasher` round-trip, `Csrf` double-submit and short-token gate, `UserRepository` normalisation, and rate-limiter counting.
+- Focused frontend tests (`frontend/src/__tests__/registration.test.tsx`): form skeleton, empty submission, terms enforcement, CSRF header and body payload on success, server 422 field surfacing, 429 banner, disabled state, and hidden honeypot.
+
+### Security
+- Registration responses are enumeration-safe: duplicate email, duplicate username, honeypot triggers, and fresh signups all return the same `202 accepted` payload so the endpoint cannot be used to probe existing accounts.
+- Passwords are always hashed with Argon2id or bcrypt through `password_hash`; the raw value never touches disk or logs.
+- The write lock spans the duplicate check and insert so a race cannot squeeze a second row through the unique-index gap.
+- The honeypot silently records a rejection and returns the same accepted payload so a scripted attacker cannot detect the trap by response shape.
+- The CSRF cookie is scoped to the site origin with `SameSite=Strict`; validation uses `hash_equals` and a strict length gate before comparison.
+
 ## 0.10.0 — 2026-07-19
 
 ### Added

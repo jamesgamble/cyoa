@@ -22,9 +22,13 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 
+use App\Csrf;
 use App\Database;
 use App\Migrator;
 use App\PublicRepository;
+use App\RegistrationService;
+use App\SettingsRepository;
+use App\WriteLock;
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -37,8 +41,39 @@ $route  = preg_replace('#^/api#', '', $path) ?: '/';
 $route  = rtrim($route, '/');
 if ($route === '') { $route = '/'; }
 
+// ── Registration (POST) ────────────────────────────────────────────
+if ($method === 'POST' && $route === '/register') {
+    handle_register();
+    exit;
+}
+
 if ($method !== 'GET') {
     respond_error(405, 'method_not_allowed');
+    exit;
+}
+
+// ── CSRF token issuance ────────────────────────────────────────────
+if ($route === '/csrf-token') {
+    $token = Csrf::issue();
+    echo json_encode(['token' => $token]);
+    exit;
+}
+
+// ── Public registration settings ───────────────────────────────────
+if ($route === '/registration/settings') {
+    try {
+        $repo = new SettingsRepository(Database::open());
+        $s = $repo->registrationSettings();
+        echo json_encode([
+            'registration_enabled'    => $s['registration_enabled'],
+            'minimum_password_length' => $s['minimum_password_length'],
+            'requires_email_verification' => $s['require_email_verification'],
+            'requires_admin_approval'     => $s['require_admin_approval'],
+        ]);
+    } catch (\Throwable $e) {
+        error_log('[bp] api error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+    }
     exit;
 }
 
@@ -47,6 +82,7 @@ if ($route === '/health') {
     respond_health();
     exit;
 }
+
 
 // ── Discover list ──────────────────────────────────────────────────
 if ($route === '/adventures') {
@@ -144,3 +180,84 @@ function respond_health(): void
         'app_version'    => (string) $config['app']['version'],
     ]);
 }
+
+/**
+ * Handle POST /api/register.
+ *
+ * The full transaction runs while holding the file-based write lock
+ * so a duplicate email or username can never sneak in via a race.
+ * The response body is intentionally opaque — see RegistrationService
+ * for the enumeration-safety rationale.
+ */
+function handle_register(): void
+{
+    $raw = file_get_contents('php://input') ?: '';
+    $payload = [];
+    if ($raw !== '') {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $payload = $decoded;
+        }
+    }
+    // Support form-encoded bodies too so the honeypot still works
+    // even if a scraper strips the Content-Type header.
+    if ($payload === [] && !empty($_POST)) {
+        $payload = $_POST;
+    }
+
+    $csrfOk = Csrf::validate();
+    $ip     = client_ip();
+
+    try {
+        $pdo  = Database::open();
+        $lock = new WriteLock();
+        $result = $lock->withLock(static function () use ($pdo, $payload, $ip, $csrfOk): array {
+            $svc = new RegistrationService($pdo);
+            return $svc->handle($payload, $ip, $csrfOk);
+        });
+    } catch (\Throwable $e) {
+        error_log('[bp] register error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    [$outcome, $errors] = $result;
+    switch ($outcome) {
+        case RegistrationService::OUTCOME_ACCEPTED:
+            http_response_code(202);
+            echo json_encode(['status' => 'accepted']);
+            return;
+        case RegistrationService::OUTCOME_DISABLED:
+            http_response_code(403);
+            echo json_encode(['error' => 'registration_disabled']);
+            return;
+        case RegistrationService::OUTCOME_RATE_LIMITED:
+            http_response_code(429);
+            echo json_encode(['error' => 'rate_limited']);
+            return;
+        case RegistrationService::OUTCOME_CSRF_FAILED:
+            http_response_code(403);
+            echo json_encode(['error' => 'csrf_failed']);
+            return;
+        case RegistrationService::OUTCOME_INVALID:
+        default:
+            http_response_code(422);
+            echo json_encode(['error' => 'invalid', 'fields' => $errors]);
+            return;
+    }
+}
+
+/**
+ * Best-effort client IP. We deliberately do NOT trust
+ * X-Forwarded-For unless the operator has configured the site behind
+ * a reverse proxy; for now the remote address wins.
+ */
+function client_ip(): string
+{
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    if (!is_string($ip) || $ip === '') {
+        $ip = '0.0.0.0';
+    }
+    return $ip;
+}
+
