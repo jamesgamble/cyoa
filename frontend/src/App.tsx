@@ -10,7 +10,7 @@ import { Adventure } from "./pages/Adventure";
 import { Reader } from "./pages/Reader";
 import { Help, HelpTopic } from "./pages/help";
 import { ChangelogIndex, ChangelogVersion } from "./pages/changelog";
-import { Account, Manage, MasterLogin, Master } from "./pages/protected";
+import { Account, Manage, MasterLogin, Master, MasterEmailSettings, MasterEmailQueue } from "./pages/protected";
 import { DesignSystem } from "./pages/DesignSystem";
 
 export default function App() {
@@ -42,7 +42,10 @@ export default function App() {
       <Route element={<MasterLayout />}>
         <Route path="/master/login" element={<MasterLogin />} />
         <Route path="/master" element={<Master />} />
+        <Route path="/master/settings/email" element={<MasterEmailSettings />} />
+        <Route path="/master/email-queue" element={<MasterEmailQueue />} />
       </Route>
+
     </Routes>
     </HelpProvider>
   );

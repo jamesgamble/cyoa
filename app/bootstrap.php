@@ -28,6 +28,9 @@ spl_autoload_register(static function (string $class): void {
         BP_ROOT . '/app/repositories/' . $relative . '.php',
         BP_ROOT . '/app/security/' . $relative . '.php',
     ];
+    // Also try each candidate's last path segment inside any of these
+    // directories (so e.g. App\Mailer\MockTransport resolves as
+    // app/services/Mailer/MockTransport.php).
     foreach ($candidates as $file) {
         if (is_file($file)) {
             require_once $file;
@@ -35,6 +38,7 @@ spl_autoload_register(static function (string $class): void {
         }
     }
 });
+
 
 // ── Error and exception handling ────────────────────────────────────
 // Never reveal file paths, SQL error text, or stack traces to the

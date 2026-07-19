@@ -2,7 +2,36 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.12.0 — 2026-07-19
+
+### Added
+- SMTP configuration and email queue migration `private/migrations/0003_smtp_and_email_queue.sql` adding `user_roles` (with CHECK on `admin`/`moderator` and unique `(user_id, role)`), a single-row `smtp_settings` table with CHECK constraints on `encryption`, `retry_limit`, and `batch_size`, an `email_templates` table seeded with `verify_email`, `welcome`, `admin_approved`, and `operator_test`, and an `email_queue` outbox with CHECK-constrained `status` (`pending`/`sending`/`sent`/`failed`/`cancelled`), `attempts`, `next_attempt_at`, `claimed_at`, `sent_at`, and readiness / status indexes.
+- `App\Encryption` service reading a 32-byte application key from `private/keys/app.key` (created on first use, mode 0600) and providing authenticated symmetric encryption via libsodium `crypto_secretbox` when available, falling back to OpenSSL AES-256-GCM. The key file lives outside SQLite so a database dump alone cannot recover any password.
+- `App\SmtpSettingsRepository` with `load()`, `loadForApi()` (redacts the password to a sentinel), and `save()` that validates every field, only rewrites the ciphertext when the sentinel is missing, and encrypts the plaintext before writing.
+- `App\EmailTemplateRepository` rendering `{placeholder}` templates with HTML escaping for the HTML body and pass-through for the text body; unknown placeholders are preserved so gaps are visible.
+- `App\EmailQueueRepository` with `enqueue`, `claimBatch` (atomic transactional flip to `sending`), `markSent`, `markFailedOrRetry` (exponential backoff plus jitter, capped at one hour), `recoverStale` (returns abandoned `sending` rows to `pending`), `cancel`, `recent`, and `counts`.
+- `App\Mailer\MailerTransport` interface with a bundled `App\Mailer\SmtpTransport` implementing EHLO / optional STARTTLS / AUTH LOGIN / MAIL FROM / RCPT TO / DATA against real servers, and `App\Mailer\MockTransport` used by every test.
+- `App\EmailQueueService` orchestrating the worker pass: recover stale, claim batch, render template, call transport, and record outcome. Every persisted error is normalised through `EmailQueueService::redact()` so raw provider replies never reach `email_queue.last_error`.
+- `App\AdminSession` — HMAC-SHA-256 signed cookies (`bp_admin`, HttpOnly, SameSite=Strict, Secure when HTTPS) keyed off a random 32-byte secret at `private/keys/session.key`. Every authenticated request re-checks the `user_roles` row so admin revoke is instant.
+- HTTP endpoints on `public/api/index.php`: `POST /api/master/login`, `POST /api/master/logout`, `GET /api/master/session`, `GET/PUT /api/master/settings/email`, `POST /api/master/settings/email/test`, `GET /api/master/email-queue`, and `POST /api/master/email-queue/{id}/cancel`. All mutating routes require a fresh CSRF token; every route beyond login also requires an administrator session.
+- CLI script `scripts/bootstrap-admin.php` creating or promoting the initial administrator account. Accepts a password on the command line or from stdin, refuses passwords shorter than twelve characters, and holds the write lock while it inserts or updates.
+- CLI script `scripts/process-email-queue.php` — the email worker. Guarded by a dedicated `flock()` lock file at `private/locks/email-worker.lock` so overlapping cron ticks never spawn duplicate workers. Reports claimed/sent/retried/failed/recovered on stdout.
+- React pages for `/master/login`, `/master`, `/master/settings/email`, and `/master/email-queue` (`frontend/src/pages/protected.tsx`) driving the new API. The password field displays only a placeholder when a password is on file; typing a value rotates it, clicking "Clear stored password" removes it.
+- Frontend API client additions in `frontend/src/lib/apiClient.ts`: `fetchMasterSession`, `masterLogin`, `masterLogout`, `fetchSmtpSettings`, `saveSmtpSettings`, `sendTestEmail`, `fetchEmailQueue`, and `cancelQueuedMessage`, together with a `PASSWORD_UNCHANGED` sentinel constant.
+- Contextual help topics for email settings, the email queue, and administrator sign-in.
+- Focused PHP tests (`tests/php/email_queue_test.php`): password ciphertext never contains plaintext, redaction round-trip through `loadForApi`, unchanged-password preserves the stored value, validation rejects invalid input, `claimBatch` is bounded and ordering-stable, retry uses backoff and hits the final-fail branch, `recoverStale` reclaims abandoned `sending` rows, cancel only affects `pending`, template render substitutes and HTML-escapes, unknown placeholders survive, worker happy path sends and marks `sent`, worker retries a transient failure, worker redacts a raw provider reply, worker is a no-op when SMTP is disabled, redactor rejects whitespace and symbols, and admin session login requires the `admin` role.
+
+### Security
+- SMTP passwords are encrypted at rest with an application key kept outside SQLite; a database dump alone cannot recover them. The API always returns a redaction sentinel; only the server-side `load()` decrypts.
+- The queue's `last_error` column is populated exclusively from an allow-list of `smtp_\d+`-style tokens through `EmailQueueService::redact()`. Recipient addresses, credentials, and free-form provider strings can never leak into an operator's browser through the queue view.
+- The email worker uses a dedicated file lock separate from the database write lock, so it cannot stall reads while sending, and a second cron tick backs off immediately instead of spawning a duplicate worker.
+- Administrator cookies are HMAC-signed with a random secret and validated with `hash_equals`; role revocation invalidates the cookie on the very next request through a `user_roles` re-check.
+- The test-email endpoint queues the operator-only `operator_test` template — it never accepts an arbitrary body from the browser, so the endpoint cannot be turned into an open relay.
+- Tests exclusively use `MockTransport`; no test path can accidentally open a socket to a real SMTP server.
+
 ## 0.11.0 — 2026-07-19
+
+
 
 ### Added
 - Registration migration `private/migrations/0002_registration.sql` extending `users` with `email`, `email_normalized`, `username_normalized`, `password_hash`, `password_algo` (CHECK `argon2id` or `bcrypt`), `status` (CHECK `pending_verification` / `active` / `suspended` / `deleted`), `terms_accepted_at`, `email_verified_at`, `approved_at`, and `updated_at`; unique partial indexes on the normalized columns; a `settings` key/value table seeded with `registration_enabled`, `minimum_password_length`, `registrations_per_ip_per_hour`, `require_email_verification`, and `require_admin_approval`; and a `registration_attempts` ledger indexed by `(ip, occurred_at)`.
