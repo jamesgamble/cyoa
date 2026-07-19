@@ -1,8 +1,13 @@
-import { Link } from "react-router-dom";
-
 export { Home } from "./Home";
 export { Discover } from "./Discover";
 export { Register } from "./RegisterPage";
+export {
+  Login,
+  ForgotPassword,
+  ResetPassword,
+  VerifyEmail,
+  ChangePassword,
+} from "./AuthPages";
 
 export function Start() {
   return (
@@ -12,14 +17,3 @@ export function Start() {
     </section>
   );
 }
-
-export function Login() {
-  return (
-    <section>
-      <h1>Sign in</h1>
-      <p>Sign-in is not yet available. It arrives with the account system.</p>
-      <p><Link to="/register">Create an account</Link></p>
-    </section>
-  );
-}
-

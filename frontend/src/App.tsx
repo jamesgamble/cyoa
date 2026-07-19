@@ -5,7 +5,10 @@ import { AccountLayout } from "./layouts/AccountLayout";
 import { ManageLayout } from "./layouts/ManageLayout";
 import { MasterLayout } from "./layouts/MasterLayout";
 import { NotFoundState } from "./states";
-import { Home, Discover, Start, Login, Register } from "./pages/public";
+import {
+  Home, Discover, Start, Login, Register,
+  ForgotPassword, ResetPassword, VerifyEmail, ChangePassword,
+} from "./pages/public";
 import { Adventure } from "./pages/Adventure";
 import { Reader } from "./pages/Reader";
 import { Help, HelpTopic } from "./pages/help";
@@ -30,6 +33,10 @@ export default function App() {
         <Route path="/changelog/:version" element={<ChangelogVersion />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify" element={<VerifyEmail />} />
+        <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/design-system" element={<DesignSystem />} />
         <Route path="*" element={<NotFoundState />} />
       </Route>
