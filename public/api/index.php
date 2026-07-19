@@ -55,6 +55,13 @@ if ($method === 'POST' && $route === '/register') {
     exit;
 }
 
+// ── Authentication (login, logout, verify, reset, change) ──────────
+if (strncmp($route, '/auth', 5) === 0) {
+    handle_auth($method, substr($route, 5));
+    exit;
+}
+
+
 // ── Master (admin) routes ──────────────────────────────────────────
 if (strncmp($route, '/master', 7) === 0) {
     handle_master($method, substr($route, 7));
