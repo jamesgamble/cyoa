@@ -149,32 +149,34 @@ export function Home() {
         aria-labelledby="home-account-heading"
         data-testid="home-account"
       >
-        <Panel>
-          <h2 id="home-account-heading" className="bp-home__section-title">
-            Reading does not require an account
-          </h2>
-          <p>
-            Every published adventure on Branching Paths is free to read
-            without signing in. Accounts are only needed to author
-            adventures, submit branches, or save your place across devices.
-          </p>
-          <p className="bp-home__account-cta">
-            <Link
-              to="/register"
-              className="bp-btn bp-btn--primary"
-              data-testid="cta-register"
-            >
-              Create an account to write
-            </Link>
-            <Link
-              to="/login"
-              className="bp-btn bp-btn--ghost"
-              data-testid="cta-signin"
-            >
-              I already have one
-            </Link>
-          </p>
-        </Panel>
+        <div className="bp-panel">
+          <div className="bp-panel__body">
+            <h2 id="home-account-heading" className="bp-home__section-title">
+              Reading does not require an account
+            </h2>
+            <p>
+              Every published adventure on Branching Paths is free to read
+              without signing in. Accounts are only needed to author
+              adventures, submit branches, or save your place across devices.
+            </p>
+            <p className="bp-home__account-cta">
+              <Link
+                to="/register"
+                className="bp-btn bp-btn--primary"
+                data-testid="cta-register"
+              >
+                Create an account to write
+              </Link>
+              <Link
+                to="/login"
+                className="bp-btn bp-btn--ghost"
+                data-testid="cta-signin"
+              >
+                I already have one
+              </Link>
+            </p>
+          </div>
+        </div>
       </section>
 
       <section
