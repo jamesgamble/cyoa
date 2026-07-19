@@ -34,6 +34,7 @@ use App\Migrator;
 use App\PublicRepository;
 use App\RegistrationService;
 use App\SettingsRepository;
+use App\SessionRepository;
 use App\SmtpSettingsRepository;
 use App\WriteLock;
 
