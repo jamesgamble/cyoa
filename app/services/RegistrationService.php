@@ -39,12 +39,28 @@ final class RegistrationService
     private SettingsRepository $settings;
     private RegistrationRateLimiter $limiter;
 
+    /**
+     * Optional post-registration hook invoked after a fresh user row
+     * is inserted. Receives (userId, email, displayName). Used by the
+     * HTTP entry point to issue a verification email; tests can leave
+     * it null so registration coverage stays independent of the
+     * email queue.
+     *
+     * @var callable|null
+     */
+    private $onRegistered = null;
+
     public function __construct(PDO $pdo)
     {
         $this->pdo      = $pdo;
         $this->users    = new UserRepository($pdo);
         $this->settings = new SettingsRepository($pdo);
         $this->limiter  = new RegistrationRateLimiter($pdo);
+    }
+
+    public function setOnRegistered(?callable $hook): void
+    {
+        $this->onRegistered = $hook;
     }
 
     /**
@@ -101,7 +117,7 @@ final class RegistrationService
         if (!$isDuplicate) {
             $hash = PasswordHasher::hash((string) $payload['password']);
             $status = $this->initialStatus($settings);
-            $this->users->insert([
+            $userId = $this->users->insert([
                 'email'             => $email,
                 'username'          => $username,
                 'display_name'      => (string) $payload['display_name'],
@@ -112,6 +128,15 @@ final class RegistrationService
             ]);
             // A race that still produced a unique-index violation is
             // absorbed by UserRepository::insert() returning null.
+            if ($userId !== null && $this->onRegistered !== null) {
+                try {
+                    ($this->onRegistered)($userId, $email, (string) $payload['display_name']);
+                } catch (\Throwable $e) {
+                    // Never let a downstream failure (e.g. email queue)
+                    // change the response the user sees.
+                    error_log('[bp] onRegistered hook failed: ' . $e->getMessage());
+                }
+            }
         }
 
         $this->limiter->record($ip, 'accepted');
