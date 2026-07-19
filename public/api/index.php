@@ -63,6 +63,12 @@ if (strncmp($route, '/auth', 5) === 0) {
     exit;
 }
 
+// ── Account dashboard (profile, security, notifications, …) ────────
+if (strncmp($route, '/account', 8) === 0) {
+    handle_account($method, substr($route, 8));
+    exit;
+}
+
 
 // ── Master (admin) routes ──────────────────────────────────────────
 if (strncmp($route, '/master', 7) === 0) {
