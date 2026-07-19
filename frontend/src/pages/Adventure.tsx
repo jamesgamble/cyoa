@@ -160,7 +160,7 @@ function AdventureView({ adventure }: ViewProps) {
         </h2>
         <div className="bp-adv-landing__action-row">
           <LinkButton
-            href={`/read/${slug}`}
+            href={`/adventure/${slug}/read`}
             variant="primary"
             data-testid="action-read"
           >
@@ -168,7 +168,7 @@ function AdventureView({ adventure }: ViewProps) {
           </LinkButton>
           {progress && (
             <LinkButton
-              href={`/read/${slug}/scene/${progress.sceneSlug}`}
+              href={`/adventure/${slug}/read/${progress.sceneSlug}`}
               variant="secondary"
               data-testid="action-resume"
             >

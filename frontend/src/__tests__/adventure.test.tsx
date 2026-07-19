@@ -158,7 +158,7 @@ describe("Adventure landing — actions", () => {
     renderAt(`/adventure/${FIRST.slug}`);
     expect(screen.getByTestId("action-read")).toHaveAttribute(
       "href",
-      `/read/${FIRST.slug}`,
+      `/adventure/${FIRST.slug}/read`,
     );
     expect(screen.getByTestId("action-map")).toHaveAttribute(
       "href",
@@ -183,7 +183,7 @@ describe("Adventure landing — actions", () => {
     const resume = screen.getByTestId("action-resume");
     expect(resume).toHaveAttribute(
       "href",
-      `/read/${FIRST.slug}/scene/the-tin-lantern`,
+      `/adventure/${FIRST.slug}/read/the-tin-lantern`,
     );
   });
 

@@ -38,6 +38,16 @@ const TOPICS: Record<string, { title: string; body: string[] }> = {
       "The page offers Read from beginning, View story map, and — when your browser remembers a scene — Resume reading. Reading works without an account; the resume marker is stored only in your browser. Signed-in visitors see a Follow placeholder that will connect to notifications when the account system ships.",
     ],
   },
+  reading: {
+    title: "Reading an adventure",
+    body: [
+      "The reader lives at /adventure/<slug>/read/<scene>. Each scene shows the adventure title, an optional chapter label, the scene title, the story body, a scene number, and either a numbered set of choices or an ending panel.",
+      "Choose a numbered option to move to the next scene. Use Back one scene to step back through your reading trail, or Restart to return to the first scene. The Story map action opens the branching diagram for the adventure.",
+      "Bookmark a scene to flag it for later; the bookmark is stored only in your browser. Add a branch appears when the adventure is accepting contributions; Report and Help are always available.",
+      "Reading progress, bookmarks, and discovered endings are per-adventure and per-browser. Clearing local progress from the reader erases every trace of your reading for that adventure and cannot be undone.",
+      "When you reach an ending, the reader tells you how many endings you have discovered so far, offers Explore another path back to your most recent branching scene, and lets you restart from the beginning.",
+    ],
+  },
   privacy: {
     title: "Privacy",
     body: [
