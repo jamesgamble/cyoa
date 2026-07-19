@@ -19,7 +19,18 @@ export { Choice, ChoiceList, ChoicesHeading } from "./story/Choice";
 export { EndingPanel } from "./story/EndingPanel";
 
 export { AdventureCard } from "./AdventureCard";
-export type { AdventureSummary } from "./AdventureCard";
+export type {
+  AdventureSummary,
+  AdventureStatus,
+  ContentRating,
+  Genre,
+} from "./AdventureCard";
+export {
+  GENRE_OPTIONS,
+  RATING_OPTIONS,
+  genreLabel,
+  ratingLabel,
+} from "./AdventureCard";
 export { FeaturedAdventureCard } from "./FeaturedAdventureCard";
 
 export { SearchField } from "./SearchField";
