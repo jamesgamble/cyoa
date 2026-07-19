@@ -5,6 +5,7 @@ import { ManageLayout } from "./layouts/ManageLayout";
 import { MasterLayout } from "./layouts/MasterLayout";
 import { NotFoundState } from "./states";
 import { Home, Discover, Start, Login, Register } from "./pages/public";
+import { Adventure } from "./pages/Adventure";
 import { Help, HelpTopic } from "./pages/help";
 import { ChangelogIndex, ChangelogVersion } from "./pages/changelog";
 import { Account, Manage, MasterLogin, Master } from "./pages/protected";
