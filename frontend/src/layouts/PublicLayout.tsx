@@ -1,8 +1,10 @@
 import { Outlet } from "react-router-dom";
 import { PrimaryNav } from "../components/PrimaryNav";
 import { Footer } from "../components/Footer";
+import { useLayoutMode } from "../lib/layoutMode";
 
 export function PublicLayout() {
+  useLayoutMode("reading");
   return (
     <div className="bp-app">
       <a href="#main" className="bp-skip-link">Skip to main content</a>

@@ -8,6 +8,7 @@ import { Home, Discover, Start, Login, Register } from "./pages/public";
 import { Help, HelpTopic } from "./pages/help";
 import { ChangelogIndex, ChangelogVersion } from "./pages/changelog";
 import { Account, Manage, MasterLogin, Master } from "./pages/protected";
+import { DesignSystem } from "./pages/DesignSystem";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/changelog/:version" element={<ChangelogVersion />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/design-system" element={<DesignSystem />} />
         <Route path="*" element={<NotFoundState />} />
       </Route>
       <Route element={<AccountLayout />}>
