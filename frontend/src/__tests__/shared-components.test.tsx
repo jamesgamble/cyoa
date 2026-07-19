@@ -128,8 +128,12 @@ describe("mobile navigation — keyboard and containment", () => {
         ]}
       />,
     );
-    for (const link of screen.getAllByRole("link")) {
-      expect(link).toHaveAttribute("tabindex", "-1");
+    const anchors = Array.from(
+      screen.getByTestId("mobile-nav").querySelectorAll("a"),
+    ) as HTMLAnchorElement[];
+    expect(anchors.length).toBe(2);
+    for (const link of anchors) {
+      expect(link.getAttribute("tabindex")).toBe("-1");
     }
     expect(screen.getByTestId("mobile-nav")).toHaveAttribute("aria-hidden", "true");
   });
@@ -159,7 +163,8 @@ describe("mobile navigation — keyboard and containment", () => {
         items={[{ to: "/discover", label: "Discover" }]}
       />,
     );
-    await user.click(screen.getByRole("link", { name: /discover/i }));
+    const link = screen.getByTestId("mobile-nav").querySelector("a") as HTMLAnchorElement;
+    await user.click(link);
     expect(closed).toBe(true);
   });
 });
