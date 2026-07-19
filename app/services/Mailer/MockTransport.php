@@ -25,6 +25,16 @@ final class MockTransport implements MailerTransport
         $this->failuresQueued = max(1, $count);
     }
 
+    /** Alias with a shorter name that reads well in tests. */
+    public function failNext(string $message, int $count = 1): void
+    {
+        $this->failNextWith($message, $count);
+    }
+
+    /** @return array<int, array<string,mixed>> */
+    public function messages(): array { return $this->sent; }
+
+
     public function send(array $message): void
     {
         if ($this->failuresQueued > 0 && $this->nextError !== null) {
