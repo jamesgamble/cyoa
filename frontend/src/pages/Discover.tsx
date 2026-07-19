@@ -17,6 +17,7 @@ import type {
   Genre,
 } from "../components/AdventureCard";
 import { DISCOVER_ADVENTURES } from "../data/discover";
+import { useHelpContext } from "../components/GlobalHelp";
 
 /* ---------------- filter state ---------------- */
 
@@ -242,6 +243,7 @@ function FilterControls({ filters, update, idPrefix }: FilterControlsProps) {
 }
 
 export function Discover() {
+  useHelpContext({ section: "discover" });
   const [searchParams, setSearchParams] = useSearchParams();
   const filters = useMemo(() => parseFilters(searchParams), [searchParams]);
   const [mobileOpen, setMobileOpen] = useState(false);

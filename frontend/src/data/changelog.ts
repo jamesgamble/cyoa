@@ -22,6 +22,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.8.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Help center at /help with a keyword search across every topic, an empty-result state, and a topic index listing the eleven canonical topics: Getting started, Discovering, Reading, Creating, Contributing, Accounts, Managing adventures, Moderation, Privacy and security, Changelog, and Common errors.",
+        "Individual help topic pages at /help/<slug> with breadcrumbs, a one-sentence summary, full body, and a Related topics section that links to sibling topics.",
+        "Persistent floating Help button rendered on every page by the global HelpProvider.",
+        "Contextual help drawer that suggests the four most relevant topics for the current route, sign-in state, role, adventure state, and section, with a link out to the full help center.",
+        "useHelpContext hook that lets pages push section, adventure-status, or setting overrides onto the contextual selection stack.",
+        "Keyboard support in the drawer: initial focus on Close, Tab/Shift+Tab focus trap, Escape to close, and focus return to the element that opened it.",
+        "Help URL sanitisation that strips query strings and hash fragments before any pathname appears in help copy or links so credentials and tokens can never leak through help.",
+        "Inline-help component now used alongside the new drawer to explain individual settings and fields where appropriate.",
+      ],
+      Changed: [
+        "Help topics rewritten to describe only implemented behaviour; planned features are labelled as such.",
+        "Home, Discover, Adventure, and Reader pages register their section (and adventure status where known) with the contextual help selector.",
+      ],
+    },
+  },
+  {
     version: "0.7.0",
     date: "2026-07-19",
     sections: {

@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { HelpProvider } from "./components/GlobalHelp";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { AccountLayout } from "./layouts/AccountLayout";
 import { ManageLayout } from "./layouts/ManageLayout";
@@ -14,6 +15,7 @@ import { DesignSystem } from "./pages/DesignSystem";
 
 export default function App() {
   return (
+    <HelpProvider>
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
@@ -42,5 +44,6 @@ export default function App() {
         <Route path="/master" element={<Master />} />
       </Route>
     </Routes>
+    </HelpProvider>
   );
 }

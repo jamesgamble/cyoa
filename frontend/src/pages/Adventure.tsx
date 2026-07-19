@@ -18,6 +18,7 @@ import type {
 import { findAdventureBySlug } from "../data/discover";
 import { useLocalProgress } from "../hooks/useLocalProgress";
 import { useSignedIn } from "../hooks/useSignedIn";
+import { useHelpContext } from "../components/GlobalHelp";
 
 /**
  * Derive contribution state from the older `contributionsOpen` boolean
@@ -38,6 +39,10 @@ function resolveStoryStatus(a: AdventureSummary): StoryStatus {
 export function Adventure() {
   const { slug = "" } = useParams();
   const adventure = findAdventureBySlug(slug);
+  useHelpContext({
+    section: "adventure",
+    adventureStatus: adventure ? resolveStoryStatus(adventure) : undefined,
+  });
 
   if (!adventure) {
     return (
