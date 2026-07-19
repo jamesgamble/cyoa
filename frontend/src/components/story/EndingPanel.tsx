@@ -27,7 +27,7 @@ export function EndingPanel({ title, kind = "An ending", body }: Props) {
       <span className="bp-ornament" aria-hidden="true" />
       <p className="bp-ending__kind">{kind}</p>
       <h2 id="bp-ending-title" className="bp-ending__title">{title}</h2>
-      <div className="bp-ending__body">
+      <div className="bp-ending__body" data-testid="ending-body">
         {paragraphs.map((p, i) => (
           <p key={i}>{p}</p>
         ))}
