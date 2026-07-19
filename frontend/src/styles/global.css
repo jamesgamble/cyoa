@@ -1668,3 +1668,78 @@ html[data-contrast="high"] body::before { display: none; }
   .bp-discover__filter-row { display: none; }
   .bp-discover__mobile-toggle { display: inline-flex; }
 }
+
+/* ==== v0.6.0 Adventure landing page ==== */
+.bp-adv-landing {
+  max-width: 44rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 1.75rem;
+}
+.bp-adv-landing__masthead {
+  border-bottom: 1px solid var(--bp-rule);
+  padding-bottom: 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+.bp-adv-landing__byline {
+  font-family: var(--bp-font-sans);
+  letter-spacing: var(--bp-tracking-caps);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--bp-ink-2);
+  margin: 0;
+}
+.bp-adv-landing__title {
+  font-family: var(--bp-font-display);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.1;
+  margin: 0;
+}
+.bp-adv-landing__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0;
+}
+.bp-adv-landing__actions {
+  display: grid;
+  gap: 0.75rem;
+}
+.bp-adv-landing__action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.bp-adv-landing__follow {
+  display: grid;
+  gap: 0.25rem;
+}
+.bp-adv-landing__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin: 0;
+}
+.bp-adv-landing__facts > div { display: grid; gap: 0.15rem; }
+.bp-adv-landing__facts dt {
+  font-family: var(--bp-font-sans);
+  font-size: 0.7rem;
+  letter-spacing: var(--bp-tracking-caps);
+  text-transform: uppercase;
+  color: var(--bp-ink-2);
+  margin: 0;
+}
+.bp-adv-landing__facts dd {
+  margin: 0;
+  font-size: 1rem;
+}
+.bp-adv-landing__warnings {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+.bp-adv-landing__back {
+  font-family: var(--bp-font-sans);
+  font-size: 0.85rem;
+  margin: 0;
+}
