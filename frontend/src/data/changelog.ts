@@ -22,6 +22,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.13.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Email verification: after registration, a single-use link is emailed and the account cannot sign in until the link is opened.",
+        "Sign-in at /login with email and password, an optional next-URL redirect, and clear messages for pending, suspended, and incorrect-credential outcomes.",
+        "Forgot password at /forgot-password: request a reset by email. The response is identical whether or not an account exists.",
+        "Reset password at /reset-password using the emailed single-use token. Every existing session for that account is revoked.",
+        "Change password at /change-password for signed-in users, revoking every other session and rotating the current cookie.",
+        "Database-backed sessions: session cookies (`bp_session`) are HttpOnly, SameSite=Lax, Secure on HTTPS, and bounded to 14 days. Only the SHA-256 of the token is stored.",
+        "Password change and password reset both queue a notification email so the account holder learns of a change out-of-band.",
+        "Canonical URL setting so verification and reset links use the configured HTTPS domain rather than a request-derived host.",
+      ],
+      Security: [
+        "Verification and reset tokens are 32 cryptographically random bytes, stored only as SHA-256 hashes, single-use, and expiring (24 hours and one hour respectively).",
+        "Sessions are rotated on login: any earlier session for the user is revoked before a fresh cookie is issued, so a stolen pre-login cookie cannot be upgraded.",
+        "Sessions are revoked on logout, password reset, password change, and any move away from `active` status.",
+        "Password reset and resend-verification responses are enumeration-safe: identical payload whether or not the address is on file.",
+        "Post-login redirects go through a same-origin allow-list on both server and client so `?next=` cannot forward to an external site.",
+        "Pending, suspended, and deleted accounts cannot sign in even with a correct password.",
+      ],
+    },
+  },
+  {
     version: "0.12.0",
     date: "2026-07-19",
     sections: {
