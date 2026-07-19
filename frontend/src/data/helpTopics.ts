@@ -247,7 +247,49 @@ export const HELP_TOPICS: HelpTopic[] = [
     related: ["reading", "discovering", "hosting-and-health"],
     match: { sections: ["discover", "adventure", "reader"] },
   },
+  {
+    slug: "master-sign-in",
+    title: "Administrator sign in",
+    summary:
+      "How administrators reach the master console and what a failed sign-in means.",
+    body: [
+      "The master console lives at /master. Only accounts that hold the admin role can sign in — everyone else sees an incorrect-credentials response, whether the email exists or not, so the sign-in page cannot be used to probe for admin accounts.",
+      "The initial administrator is created from the shell with scripts/bootstrap-admin.php. That script also promotes an existing account when you pass the email and username of a user who already registered.",
+      "Sessions are stored in an HMAC-signed HttpOnly cookie scoped to the site origin. Signing out clears the cookie on the current browser only; other browsers stay signed in until their session expires or the admin role is revoked.",
+    ],
+    related: ["email-settings", "email-queue", "accounts"],
+    match: { routes: [/^\/master\/login$/, /^\/master$/], sections: ["master"] },
+  },
+  {
+    slug: "email-settings",
+    title: "Email settings",
+    summary:
+      "How SMTP credentials are stored, how to update them, and how to send a test message.",
+    body: [
+      "The email settings page at /master/settings/email captures the host, port, encryption mode (STARTTLS, TLS, or none), username, password, from address, from name, reply-to address, retry limit, and batch size the email worker uses.",
+      "Passwords are encrypted at rest with an application key kept outside the database. The form never shows the stored password — it displays a placeholder when a value is on file. Type a new password to rotate it, or use Clear stored password to remove it.",
+      "The Send test action queues the operator_test template for the recipient you enter. The email is delivered by the same worker that processes the rest of the queue, so a test message is also a live check that the worker is running.",
+      "Turning off the Enabled toggle stops the worker from sending. Pending messages stay in the queue and resume when you re-enable it.",
+    ],
+    related: ["email-queue", "master-sign-in", "common-errors"],
+    match: { routes: [/^\/master\/settings\/email$/], sections: ["master"] },
+  },
+  {
+    slug: "email-queue",
+    title: "Email queue",
+    summary:
+      "What each queue status means, how retries work, and when to cancel a pending message.",
+    body: [
+      "Every outbound email is written to a durable queue with one of five statuses: pending (waiting for the next worker run), sending (a worker has just claimed it), sent (delivered to the SMTP server), failed (retry limit reached or a permanent error), or cancelled (removed before it left).",
+      "The worker retries transient failures with an exponential backoff plus jitter, capped at one hour, and gives up after the configured retry limit. Errors shown in the Last error column are short redacted tokens (for example smtp_552 or transport_error) — the raw provider reply is deliberately not stored so recipient addresses and credentials cannot leak into this page.",
+      "Only pending messages can be cancelled. Sending, sent, failed, and cancelled rows are historical and cannot be re-sent from this page — enqueue a new message from the feature that produced it instead.",
+      "If a worker crashes mid-send, its row is stuck in sending until the next worker run notices the stale claim (five minutes by default) and returns it to pending. You do not need to intervene manually.",
+    ],
+    related: ["email-settings", "master-sign-in", "common-errors"],
+    match: { routes: [/^\/master\/email-queue$/], sections: ["master"] },
+  },
 ];
+
 
 /** Topic slugs surfaced first when no more specific context matches. */
 const FALLBACK_ORDER = [
