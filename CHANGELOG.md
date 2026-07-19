@@ -2,6 +2,30 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.15.0 — 2026-07-19
+
+### Added
+- Bundled dependency-free React WYSIWYG editor `RichTextEditor` (`frontend/src/components/RichTextEditor.tsx`). The toolbar exposes exactly twelve actions and nothing else: Bold, Italic, Underline, Paragraph, Heading 2, Heading 3, Bulleted list, Numbered list, Blockquote, Horizontal rule, Undo, Redo.
+- Client sanitizer `sanitizeRichTextHtml` / `richTextToPlainText` / `richTextLength` in `frontend/src/lib/richTextSanitizer.ts`. Enforces the same allow-list as the server sanitizer so paste and on-change output are pre-filtered.
+- PHP sanitizer `App\HtmlSanitizer` (`app/security/HtmlSanitizer.php`) providing `sanitize()`, `toPlainText()`, and `plainTextLength()`. Allowed tags: `p`, `strong`, `em`, `u`, `h2`, `h3`, `ul`, `ol`, `li`, `blockquote`, `hr`, `br`. No attributes on any element.
+- Help topic "Restricted writing tools" covering what the editor can and cannot do, why links and images are removed, and how pasted content is normalised.
+
+### Security
+- Every attribute — including `class`, `style`, `id`, `data-*`, `aria-*`, `href`, `src`, `align`, and every `on*` event handler — is stripped from stored HTML by both the client and PHP sanitizers.
+- Disallowed subtrees (`script`, `style`, `iframe`, `object`, `embed`, `svg`, `math`, `form`, `img`, `video`, `audio`, `input`, `template`, `link`, `meta`, `base`, and every custom element) are dropped whole, including their text — hostile payloads cannot survive by being nested inside an allowed tag.
+- Links are unwrapped (text kept, `href` discarded). Plain-text pastes containing URLs are inserted as literal text; no auto-linking is performed anywhere in the pipeline.
+- The editor is a UX aid, not a security boundary. Every server write path re-sanitizes through `App\HtmlSanitizer` before storage, so a hostile client posting arbitrary HTML directly to the API cannot bypass the allow-list.
+- File and image drops onto the editing surface are cancelled at the `dragdrop` boundary.
+
+### Changed
+- `frontend/src/components/index.ts` now re-exports `RichTextEditor`, `RICH_TEXT_ACTIONS`, `sanitizeRichTextHtml`, `richTextToPlainText`, and `richTextLength`.
+- `frontend/src/styles/global.css` gains scoped `.bp-rte*` styles for the toolbar, editing surface, placeholder, character counter, and headings/lists/blockquotes rendered inside the surface.
+
+### Notes
+- The plain-text projection returned by `toPlainText()` is the canonical form used for character limits, search indexing, snippets, duplicate detection, and plain-text exports. `plainTextLength()` counts characters (multibyte-safe).
+
+
+
 ## 0.14.0 — 2026-07-19
 
 ### Added
