@@ -91,3 +91,92 @@ export async function fetchOutline(
     signal,
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Registration                                                        */
+/* ------------------------------------------------------------------ */
+
+export interface RegistrationSettings {
+  registration_enabled: boolean;
+  minimum_password_length: number;
+  requires_email_verification: boolean;
+  requires_admin_approval: boolean;
+}
+
+export async function fetchRegistrationSettings(
+  signal?: AbortSignal,
+): Promise<RegistrationSettings | null> {
+  return await getJson<RegistrationSettings>("/registration/settings", signal);
+}
+
+export async function fetchCsrfToken(
+  signal?: AbortSignal,
+): Promise<string | null> {
+  const data = await getJson<{ token: string }>("/csrf-token", signal);
+  return data?.token ?? null;
+}
+
+export interface RegistrationInput {
+  email: string;
+  username: string;
+  display_name: string;
+  password: string;
+  password_confirmation: string;
+  terms_accepted: boolean;
+  /** Honeypot — must be empty. */
+  nickname_url?: string;
+}
+
+export interface RegistrationResult {
+  status: number;
+  outcome:
+    | "accepted"
+    | "invalid"
+    | "rate_limited"
+    | "csrf_failed"
+    | "registration_disabled"
+    | "service_unavailable";
+  fields?: Record<string, string>;
+}
+
+export async function submitRegistration(
+  input: RegistrationInput,
+  csrfToken: string,
+): Promise<RegistrationResult> {
+  try {
+    const res = await fetch(apiUrl("/register"), {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+      body: JSON.stringify(input),
+    });
+    const status = res.status;
+    let body: { error?: string; status?: string; fields?: Record<string, string> } = {};
+    try {
+      body = await res.json();
+    } catch {
+      /* empty body */
+    }
+    if (status === 202 || body.status === "accepted") {
+      return { status, outcome: "accepted" };
+    }
+    if (status === 422) {
+      return { status, outcome: "invalid", fields: body.fields ?? {} };
+    }
+    if (status === 429) return { status, outcome: "rate_limited" };
+    if (status === 403 && body.error === "csrf_failed") {
+      return { status, outcome: "csrf_failed" };
+    }
+    if (status === 403 && body.error === "registration_disabled") {
+      return { status, outcome: "registration_disabled" };
+    }
+    return { status, outcome: "service_unavailable" };
+  } catch {
+    return { status: 0, outcome: "service_unavailable" };
+  }
+}
+
