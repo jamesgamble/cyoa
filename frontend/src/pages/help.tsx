@@ -65,7 +65,9 @@ export function HelpTopic() {
   return (
     <section>
       <h1>{entry.title}</h1>
-      <p>{entry.body}</p>
+      {entry.body.map((p, i) => (
+        <p key={i}>{p}</p>
+      ))}
       <p><Link to="/help">Back to help</Link></p>
     </section>
   );
