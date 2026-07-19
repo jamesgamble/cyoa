@@ -10,7 +10,7 @@ import { Adventure } from "./pages/Adventure";
 import { Reader } from "./pages/Reader";
 import { Help, HelpTopic } from "./pages/help";
 import { ChangelogIndex, ChangelogVersion } from "./pages/changelog";
-import { Account, Manage, MasterLogin, Master } from "./pages/protected";
+import { Account, Manage, MasterLogin, Master, MasterEmailSettings, MasterEmailQueue } from "./pages/protected";
 import { DesignSystem } from "./pages/DesignSystem";
 
 export default function App() {
