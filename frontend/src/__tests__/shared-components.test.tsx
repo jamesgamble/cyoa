@@ -211,7 +211,11 @@ describe("story containment — user content cannot control presentation", () =>
     render(<EndingPanel title="The tide" body={hostile} />);
     const panel = screen.getByTestId("ending-panel");
     expect(panel.querySelector("script")).toBeNull();
-    expect(panel.querySelector("span")).toBeNull();
+    // No user-injected <span> ended up inside the rendered body copy.
+    const body = panel.querySelector('[data-testid="ending-body"]') ?? panel;
+    expect(body.querySelector("span")).toBeNull();
+    expect(body.querySelector("[style]")).toBeNull();
+    expect(body.textContent).toContain("MALICIOUS");
   });
 
   it("Choice renders label as text, never as markup", () => {
