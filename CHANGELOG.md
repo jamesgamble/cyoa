@@ -2,6 +2,28 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.14.0 — 2026-07-19
+
+### Added
+- Migration `private/migrations/0005_account_dashboard.sql` adding `bio`, `public_profile`, `notify_replies`, `notify_moderation`, `notify_updates` columns to `users`, `user_agent` to `sessions`, a `pending_email_changes` table (hashed single-use token, 24h expiry), and a `user_bookmarks` table with a unique `(user_id, adventure_id, scene_id, kind)` constraint. Seeds an `email_change_verify` email template.
+- `App\AccountService` orchestrating profile/prefs updates, active-session listing, revoke-others, two-step email change (`requestEmailChange` → `confirmEmailChange`), bookmark/history import from a client-supplied payload, and per-caller adventure listing.
+- API routes `GET/PUT /api/account/profile`, `GET /api/account/security`, `PUT /api/account/notifications`, `POST /api/account/email-change`, `POST /api/account/email-change/confirm`, `POST /api/account/sessions/revoke-others`, `GET /api/account/adventures`, `GET /api/account/contributions`, `GET /api/account/bookmarks`, and `POST /api/account/bookmarks/import`. Every route requires a live session cookie; mutating routes additionally require CSRF and run under the write lock.
+- React account dashboard: `/account`, `/account/profile`, `/account/security`, `/account/notifications`, `/account/adventures`, `/account/contributions`, `/account/bookmarks` with a shared `AccountLayout` nav.
+- Local bookmark and reading-history import: the bookmarks page collects `bp-progress:*` entries from `window.localStorage`, asks for confirmation, and posts them to the account import endpoint.
+- Help topic "Account dashboard" covering profile edits, email change, notification prefs, session revocation, and local-progress import.
+
+### Security
+- Every `/api/account/*` route requires an active session cookie (401 otherwise). Mutating routes additionally require a fresh CSRF token and execute under the write lock so concurrent updates cannot leave a user row inconsistent.
+- Email-change tokens are 32 cryptographically random bytes generated via `random_bytes`, stored only as SHA-256 hashes, expire after 24 hours, and are single-use — a used or expired token fails identically to an unknown one.
+- The new email address only lands on `users.email` after the token is consumed by the account holder. A duplicate-address race is caught at confirm time and returns `email_in_use`.
+- Revoking other sessions keeps the current caller's session live and revokes every other session; the caller's cookie is unchanged.
+- Bookmark/history import validates every scene slug against the target adventure and uses `INSERT OR IGNORE` so repeated imports are idempotent; unknown slugs are dropped rather than raising a duplicate-key error.
+
+### Changed
+- `AccountLayout` now renders a sub-navigation covering every account sub-page and highlights the current section.
+- `frontend/src/App.tsx` wires the seven account sub-routes; the placeholder `Account` component in `pages/protected.tsx` has been removed.
+
+
 ## 0.13.0 — 2026-07-19
 
 ### Added

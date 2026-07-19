@@ -22,6 +22,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.14.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Account dashboard at /account with sub-pages for profile, security, notifications, adventures, contributions, and bookmarks.",
+        "Profile editing: change your display name, short bio, and toggle whether your profile is visible to other readers.",
+        "Change email flow: enter a new address, receive a single-use confirmation link, and the change only takes effect after opening it.",
+        "Notification preferences for replies, moderation decisions, and product updates.",
+        "Security summary listing active sessions with a one-click 'sign out other sessions' action.",
+        "Import your local bookmarks and reading history into your account after an explicit confirmation.",
+      ],
+      Security: [
+        "Every /api/account/* route requires an active session cookie; mutating routes additionally require a fresh CSRF token and run under the write lock.",
+        "Email-change tokens are 32 cryptographically random bytes stored only as SHA-256 hashes, single-use, and expire after 24 hours.",
+        "The new email address is only written to the users table after the token is consumed on the account holder's confirmation.",
+        "Revoking other sessions keeps the current caller's cookie active and revokes every other session for the user.",
+      ],
+    },
+  },
+  {
     version: "0.13.0",
     date: "2026-07-19",
     sections: {

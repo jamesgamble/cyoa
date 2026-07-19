@@ -395,3 +395,141 @@ export async function submitChangePassword(current_password: string, new_passwor
   return authMutate("/auth/change-password", { current_password, new_password, new_password_confirmation });
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Account dashboard (v0.14.0)                                         */
+/*                                                                     */
+/* All routes require a live session cookie. Mutating requests re-fetch */
+/* the CSRF token per request via the same pattern used elsewhere.     */
+/* ------------------------------------------------------------------ */
+
+export interface AccountProfile {
+  id: number;
+  email: string;
+  username: string;
+  display_name: string;
+  bio: string;
+  public_profile: boolean;
+  notify_replies: boolean;
+  notify_moderation: boolean;
+  notify_updates: boolean;
+  email_verified_at: string | null;
+  password_changed_at: string | null;
+  last_login_at: string | null;
+  created_at: string;
+}
+
+export interface AccountSession {
+  id: number;
+  created_at: string;
+  last_active_at: string;
+  expires_at: string;
+  user_agent: string;
+  is_current: boolean;
+}
+
+export interface AccountAdventure {
+  id: number;
+  slug: string;
+  title: string;
+  state: string;
+  visibility: string;
+  contribution_state: string;
+  updated_at: string;
+}
+
+export interface AccountBookmark {
+  id: number;
+  kind: string;
+  adventure_slug: string;
+  adventure_title: string;
+  scene_slug: string | null;
+  scene_title: string | null;
+  created_at: string;
+}
+
+interface AccountFetchResult<T> {
+  status: number;
+  profile?: AccountProfile | null;
+  sessions?: AccountSession[];
+  adventures?: AccountAdventure[];
+  contributions?: unknown[];
+  bookmarks?: AccountBookmark[];
+  raw?: T;
+}
+
+async function accountGet<T extends object>(path: string): Promise<AccountFetchResult<T>> {
+  try {
+    const res = await fetch(apiUrl(path), {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return { status: res.status };
+    const data = (await res.json()) as Record<string, unknown>;
+    return { status: res.status, ...data } as AccountFetchResult<T>;
+  } catch {
+    return { status: 0 };
+  }
+}
+
+async function accountMutate<T>(
+  path: string,
+  method: "POST" | "PUT",
+  body: unknown,
+): Promise<{ ok: boolean; status: number; data: T | null; fields?: Record<string, string>; error?: string }> {
+  const token = await fetchCsrfToken();
+  if (!token) return { ok: false, status: 0, data: null, error: "csrf_unavailable" };
+  try {
+    const res = await fetch(apiUrl(path), {
+      method,
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-CSRF-Token": token,
+      },
+      body: JSON.stringify(body ?? {}),
+    });
+    let parsed: Record<string, unknown> = {};
+    try { parsed = (await res.json()) as Record<string, unknown>; } catch { /* empty */ }
+    if (res.ok) return { ok: true, status: res.status, data: parsed as T };
+    return {
+      ok: false, status: res.status, data: null,
+      error: typeof parsed.error === "string" ? (parsed.error as string) : undefined,
+      fields: (parsed.fields as Record<string, string> | undefined),
+    };
+  } catch {
+    return { ok: false, status: 0, data: null, error: "network_error" };
+  }
+}
+
+export const fetchAccountProfile     = () => accountGet<{ profile: AccountProfile }>("/account/profile");
+export const fetchAccountSecurity    = () => accountGet<{ profile: AccountProfile; sessions: AccountSession[] }>("/account/security");
+export const fetchAccountAdventures  = () => accountGet<{ adventures: AccountAdventure[] }>("/account/adventures");
+export const fetchAccountContributions = () => accountGet<{ contributions: unknown[] }>("/account/contributions");
+export const fetchAccountBookmarks   = () => accountGet<{ bookmarks: AccountBookmark[] }>("/account/bookmarks");
+
+export function updateAccountProfile(input: { display_name: string; bio: string; public_profile: boolean }) {
+  return accountMutate<{ status: string }>("/account/profile", "PUT", input);
+}
+export function updateAccountNotifications(input: {
+  notify_replies: boolean; notify_moderation: boolean; notify_updates: boolean;
+}) {
+  return accountMutate<{ status: string }>("/account/notifications", "PUT", input);
+}
+export function requestAccountEmailChange(email: string) {
+  return accountMutate<{ status: string }>("/account/email-change", "POST", { email });
+}
+export function confirmAccountEmailChange(token: string) {
+  return accountMutate<{ status: string; email: string }>("/account/email-change/confirm", "POST", { token });
+}
+export function revokeOtherAccountSessions() {
+  return accountMutate<{ status: string; revoked: number }>("/account/sessions/revoke-others", "POST", {});
+}
+export function importAccountLocalProgress(entries: Array<{ slug: string; bookmarks?: string[]; history?: string[] }>) {
+  return accountMutate<{ status: string; imported_bookmarks: number; imported_history: number; skipped: number }>(
+    "/account/bookmarks/import", "POST", { entries },
+  );
+}
+
+
