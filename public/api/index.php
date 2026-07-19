@@ -23,6 +23,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 
 use App\AdminSession;
+use App\AuthService;
 use App\Csrf;
 use App\Database;
 use App\EmailQueueRepository;
@@ -33,6 +34,7 @@ use App\Migrator;
 use App\PublicRepository;
 use App\RegistrationService;
 use App\SettingsRepository;
+use App\SessionRepository;
 use App\SmtpSettingsRepository;
 use App\WriteLock;
 
@@ -53,6 +55,13 @@ if ($method === 'POST' && $route === '/register') {
     handle_register();
     exit;
 }
+
+// ── Authentication (login, logout, verify, reset, change) ──────────
+if (strncmp($route, '/auth', 5) === 0) {
+    handle_auth($method, substr($route, 5));
+    exit;
+}
+
 
 // ── Master (admin) routes ──────────────────────────────────────────
 if (strncmp($route, '/master', 7) === 0) {
@@ -227,6 +236,12 @@ function handle_register(): void
         $lock = new WriteLock();
         $result = $lock->withLock(static function () use ($pdo, $payload, $ip, $csrfOk): array {
             $svc = new RegistrationService($pdo);
+            // Wire the verification / welcome email into a successful
+            // insert. The RegistrationService always returns the
+            // same opaque outcome regardless of whether the hook ran.
+            $svc->setOnRegistered(static function (int $uid, string $email, string $name) use ($pdo): void {
+                (new AuthService($pdo))->onRegistered($uid, $email, $name);
+            });
             return $svc->handle($payload, $ip, $csrfOk);
         });
     } catch (\Throwable $e) {
@@ -392,4 +407,175 @@ function read_json_body(): array
     $decoded = json_decode($raw, true);
     return is_array($decoded) ? $decoded : [];
 }
+
+/**
+ * Handle every `/api/auth/*` request.
+ *
+ * All mutating routes require a matching CSRF token; all writes run
+ * under the write lock. Password recovery and resend-verification
+ * always respond identically ("opaque") regardless of whether the
+ * account exists.
+ *
+ * Session cookies (`bp_session`) are HttpOnly, SameSite=Lax, Secure
+ * on HTTPS, and carry a bounded lifetime that matches the row in
+ * `sessions.expires_at`.
+ */
+function handle_auth(string $method, string $tail): void
+{
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] auth db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+    $auth = new AuthService($pdo);
+
+    // ── GET /auth/session ──────────────────────────────────────────
+    if ($method === 'GET' && $tail === '/session') {
+        $uid = $auth->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+        echo json_encode([
+            'authenticated' => $uid !== null,
+            'user_id'       => $uid,
+        ]);
+        return;
+    }
+
+    // Everything below is a mutating request.
+    if ($method !== 'POST') { respond_error(405, 'method_not_allowed'); return; }
+    if (!Csrf::validate())  { respond_error(403, 'csrf_failed'); return; }
+    $body = read_json_body();
+
+    try {
+        $lock = new WriteLock();
+        switch ($tail) {
+            case '/login': {
+                $email = (string) ($body['email'] ?? '');
+                $pass  = (string) ($body['password'] ?? '');
+                $redirect = isset($body['redirect']) ? (string) $body['redirect'] : null;
+                $result = $lock->withLock(static fn() => $auth->login($email, $pass));
+                [$outcome, $cookie] = $result;
+                if ($outcome === AuthService::OK && is_string($cookie)) {
+                    auth_set_cookie($cookie);
+                    echo json_encode([
+                        'status'   => 'ok',
+                        'redirect' => AuthService::isSafeRedirect($redirect) ? $redirect : '/',
+                    ]);
+                    return;
+                }
+                http_response_code(401);
+                echo json_encode(['error' => $outcome]);
+                return;
+            }
+            case '/logout': {
+                $cookie = $_COOKIE[AuthService::SESSION_COOKIE] ?? null;
+                $lock->withLock(static function () use ($auth, $cookie): void {
+                    $auth->logout($cookie);
+                });
+                auth_clear_cookie();
+                echo json_encode(['status' => 'ok']);
+                return;
+            }
+            case '/verify-email': {
+                $token = (string) ($body['token'] ?? '');
+                $outcome = $lock->withLock(static fn() => $auth->verifyEmail($token));
+                if ($outcome === AuthService::OK) {
+                    echo json_encode(['status' => 'ok']);
+                    return;
+                }
+                http_response_code(400);
+                echo json_encode(['error' => 'token_invalid']);
+                return;
+            }
+            case '/resend-verification': {
+                $email = (string) ($body['email'] ?? '');
+                $lock->withLock(static function () use ($auth, $email): void {
+                    $auth->resendVerification($email);
+                });
+                echo json_encode(['status' => 'ok']);
+                return;
+            }
+            case '/forgot-password': {
+                $email = (string) ($body['email'] ?? '');
+                $lock->withLock(static function () use ($auth, $email): void {
+                    $auth->forgotPassword($email);
+                });
+                echo json_encode(['status' => 'ok']);
+                return;
+            }
+            case '/reset-password': {
+                $token = (string) ($body['token'] ?? '');
+                $pass  = (string) ($body['password'] ?? '');
+                $conf  = (string) ($body['password_confirmation'] ?? '');
+                $result = $lock->withLock(static fn() => $auth->resetPassword($token, $pass, $conf));
+                [$outcome, $errors] = $result;
+                if ($outcome === AuthService::OK) {
+                    // Revoke any pre-reset cookie the caller happened to
+                    // hold so the browser cannot present a stale one.
+                    auth_clear_cookie();
+                    echo json_encode(['status' => 'ok']);
+                    return;
+                }
+                if ($outcome === AuthService::INVALID) {
+                    http_response_code(422);
+                    echo json_encode(['error' => 'invalid', 'fields' => $errors]);
+                    return;
+                }
+                http_response_code(400);
+                echo json_encode(['error' => 'token_invalid']);
+                return;
+            }
+            case '/change-password': {
+                $uid = $auth->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+                if ($uid === null) { respond_error(401, 'unauthenticated'); return; }
+                $current = (string) ($body['current_password'] ?? '');
+                $next    = (string) ($body['new_password'] ?? '');
+                $conf    = (string) ($body['new_password_confirmation'] ?? '');
+                $result = $lock->withLock(static fn() => $auth->changePassword($uid, $current, $next, $conf));
+                [$outcome, $errors, $newCookie] = $result;
+                if ($outcome === AuthService::OK && is_string($newCookie)) {
+                    auth_set_cookie($newCookie);
+                    echo json_encode(['status' => 'ok']);
+                    return;
+                }
+                http_response_code(422);
+                echo json_encode(['error' => 'invalid', 'fields' => $errors]);
+                return;
+            }
+        }
+    } catch (\Throwable $e) {
+        error_log('[bp] auth error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    respond_error(404, 'not_found');
+}
+
+/** Emit the session cookie for the current response. */
+function auth_set_cookie(string $value): void
+{
+    $secure = (($_SERVER['HTTPS'] ?? 'off') !== 'off')
+          || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    setcookie(AuthService::SESSION_COOKIE, $value, [
+        'expires'  => time() + SessionRepository::TTL_SECONDS,
+        'path'     => '/',
+        'secure'   => $secure,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    $_COOKIE[AuthService::SESSION_COOKIE] = $value;
+}
+
+function auth_clear_cookie(): void
+{
+    setcookie(AuthService::SESSION_COOKIE, '', [
+        'expires'  => time() - 3600,
+        'path'     => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    unset($_COOKIE[AuthService::SESSION_COOKIE]);
+}
+
 

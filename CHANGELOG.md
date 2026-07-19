@@ -2,6 +2,36 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.13.0 — 2026-07-19
+
+### Added
+- Migration `private/migrations/0004_authentication_and_sessions.sql` creating `sessions` (hashed token, user, created/rotated/expiry timestamps, revocation reason, IP/user-agent columns) and `auth_tokens` (hashed token, purpose enum with CHECK `email_verification`/`password_reset`, target user, single-use `consumed_at`, expiry). Extends `users` with `password_changed_at` and `last_login_at`, and seeds a `canonical_url` setting.
+- `App\TokenRepository` issuing 32-byte random tokens, storing only their SHA-256 hash, and consuming them under a single-use guard: a used or expired token cannot be replayed.
+- `App\SessionRepository` for database-backed sessions with hashed lookup, rotation, per-user revocation (`logout`, `password_reset`, `password_change`, `suspended`), and cookie helpers that set HttpOnly, SameSite=Lax, and Secure (when HTTPS) with a bounded 14-day expiry.
+- `App\AuthService` orchestrating login, logout, email verification, resend verification, forgot / reset / change password. On successful login every prior session for the user is revoked before a new cookie is issued.
+- `RegistrationService` now emits an `onRegistered` hook, wired in `public/api/index.php` so successful registrations queue `verify_email` immediately.
+- `App\CanonicalUrl` helper reading the `canonical_url` setting and refusing anything not `https://` so verification and reset links never point elsewhere.
+- `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/verify-email`, `POST /api/auth/resend-verification`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `POST /api/auth/change-password`, and `GET /api/auth/session`. Every mutating route requires a fresh CSRF token.
+- React pages `/login`, `/forgot-password`, `/reset-password`, `/verify`, and `/change-password` in `frontend/src/pages/AuthPages.tsx` with an enumeration-safe reset flow, a single-use verification consumer, and same-origin redirect guarding for the `?next=` parameter.
+- API client helpers `fetchAuthSession`, `submitLogin`, `submitLogout`, `submitVerifyEmail`, `submitResendVerification`, `submitForgotPassword`, `submitResetPassword`, and `submitChangePassword` in `frontend/src/lib/apiClient.ts`, each fetching a fresh CSRF token and mapping server outcomes to a typed `AuthOutcome` union.
+- Help topics for verification, sign-in, password recovery, and account security in `frontend/src/data/helpTopics.ts`.
+
+### Security
+- Tokens are 32 cryptographically random bytes generated via `random_bytes`, stored only as SHA-256 hashes, expiring (verification 24 hours, reset 60 minutes), and single-use — replay after `consumed_at` fails identically to an unknown token.
+- Session cookies store an opaque random token; only its SHA-256 hash lives in `sessions`, so a database dump does not expose a login credential.
+- Sessions are rotated on login. Any earlier session for the user is revoked with reason `login_rotation` before a new cookie is issued.
+- Sessions are revoked on logout, password reset, password change, and every transition of a user out of `active` status.
+- Password reset, resend verification, and forgot password return identical responses regardless of whether the address is on file, protecting account enumeration.
+- Pending, suspended, and deleted users receive the same `invalid_credentials`-style outcome as a wrong password.
+- Post-login and reset redirects are allow-listed to same-origin paths beginning with a single `/`. Protocol-relative, backslash-escaped, and scheme-embedding paths are rejected on both server and client.
+- Verification / reset / password-changed emails are rendered through the existing template registry and enqueued via `EmailQueueRepository`; failure to enqueue never leaks user existence.
+
+### Changed
+- `RegistrationService::register` accepts an optional `onRegistered` callback so the HTTP layer can queue the verification mail without coupling the service to `EmailQueueRepository`.
+- `public/api/index.php` route map extended with the `/auth/*` group; existing endpoints unchanged.
+
+
+
 ## 0.12.0 — 2026-07-19
 
 ### Added
