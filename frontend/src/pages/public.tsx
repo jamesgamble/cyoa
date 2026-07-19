@@ -1,16 +1,8 @@
 import { Link } from "react-router-dom";
 
 export { Home } from "./Home";
+export { Discover } from "./Discover";
 
-
-export function Discover() {
-  return (
-    <section>
-      <h1>Discover</h1>
-      <p>Browse public adventures. Full listings arrive in a later release.</p>
-    </section>
-  );
-}
 
 export function Start() {
   return (
