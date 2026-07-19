@@ -275,3 +275,121 @@ function client_ip(): string
     return $ip;
 }
 
+/**
+ * Handle every `/api/master/*` request.
+ *
+ * All routes except POST /master/login and GET /master/session require
+ * an authenticated administrator session (see AdminSession). Mutating
+ * routes additionally require a valid CSRF token, and the SMTP save +
+ * test-email path runs inside the write lock so a concurrent worker
+ * never reads a half-written configuration.
+ */
+function handle_master(string $method, string $tail): void
+{
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] master db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+    $session = new AdminSession();
+
+    // ── Login ───────────────────────────────────────────────────
+    if ($method === 'POST' && $tail === '/login') {
+        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+        $body = read_json_body();
+        $email = (string) ($body['email'] ?? '');
+        $pass  = (string) ($body['password'] ?? '');
+        $uid = $session->login($pdo, $email, $pass);
+        if ($uid === null) { respond_error(401, 'invalid_credentials'); return; }
+        echo json_encode(['status' => 'ok', 'user_id' => $uid]);
+        return;
+    }
+    if ($method === 'POST' && $tail === '/logout') {
+        $session->clear();
+        echo json_encode(['status' => 'ok']);
+        return;
+    }
+    if ($method === 'GET' && $tail === '/session') {
+        $uid = $session->authenticate($pdo);
+        echo json_encode(['authenticated' => $uid !== null, 'user_id' => $uid]);
+        return;
+    }
+
+    // Every other master route needs a live admin session.
+    $uid = $session->authenticate($pdo);
+    if ($uid === null) { respond_error(401, 'unauthenticated'); return; }
+
+    // ── GET /master/settings/email ─────────────────────────────
+    if ($method === 'GET' && $tail === '/settings/email') {
+        $repo = new SmtpSettingsRepository($pdo);
+        echo json_encode(['settings' => $repo->loadForApi()]);
+        return;
+    }
+    // ── PUT /master/settings/email ─────────────────────────────
+    if ($method === 'PUT' && $tail === '/settings/email') {
+        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+        $body = read_json_body();
+        try {
+            $result = (new WriteLock())->withLock(static function () use ($pdo, $body): array {
+                return (new SmtpSettingsRepository($pdo))->save($body);
+            });
+        } catch (\Throwable $e) {
+            error_log('[bp] smtp save error: ' . $e->getMessage());
+            respond_error(503, 'service_unavailable');
+            return;
+        }
+        [$ok, $errors] = $result;
+        if (!$ok) { http_response_code(422); echo json_encode(['error'=>'invalid','fields'=>$errors]); return; }
+        echo json_encode(['status' => 'saved']);
+        return;
+    }
+    // ── POST /master/settings/email/test ───────────────────────
+    if ($method === 'POST' && $tail === '/settings/email/test') {
+        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+        $body = read_json_body();
+        $to = (string) ($body['to'] ?? '');
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) { respond_error(422, 'invalid_recipient'); return; }
+        try {
+            $smtp = (new SmtpSettingsRepository($pdo))->load();
+            (new EmailQueueRepository($pdo))->enqueue(
+                'operator_test', $to, '', ['recipient' => $to]
+            );
+        } catch (\Throwable $e) {
+            error_log('[bp] test email error: ' . $e->getMessage());
+            respond_error(503, 'service_unavailable');
+            return;
+        }
+        echo json_encode(['status' => 'queued']);
+        return;
+    }
+    // ── GET /master/email-queue ────────────────────────────────
+    if ($method === 'GET' && $tail === '/email-queue') {
+        $status = isset($_GET['status']) && is_string($_GET['status']) ? $_GET['status'] : null;
+        $repo = new EmailQueueRepository($pdo);
+        echo json_encode([
+            'counts'   => $repo->counts(),
+            'messages' => $repo->recent(100, $status),
+        ]);
+        return;
+    }
+    // ── POST /master/email-queue/{id}/cancel ───────────────────
+    if ($method === 'POST' && preg_match('#^/email-queue/(\d+)/cancel$#', $tail, $m)) {
+        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+        $ok = (new EmailQueueRepository($pdo))->cancel((int) $m[1]);
+        echo json_encode(['status' => $ok ? 'cancelled' : 'noop']);
+        return;
+    }
+
+    respond_error(404, 'not_found');
+}
+
+function read_json_body(): array
+{
+    $raw = file_get_contents('php://input') ?: '';
+    if ($raw === '') { return is_array($_POST) ? $_POST : []; }
+    $decoded = json_decode($raw, true);
+    return is_array($decoded) ? $decoded : [];
+}
+
