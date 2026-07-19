@@ -5,6 +5,7 @@ import { ManageLayout } from "./layouts/ManageLayout";
 import { MasterLayout } from "./layouts/MasterLayout";
 import { NotFoundState } from "./states";
 import { Home, Discover, Start, Login, Register } from "./pages/public";
+import { Adventure } from "./pages/Adventure";
 import { Help, HelpTopic } from "./pages/help";
 import { ChangelogIndex, ChangelogVersion } from "./pages/changelog";
 import { Account, Manage, MasterLogin, Master } from "./pages/protected";
@@ -16,6 +17,7 @@ export default function App() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/discover" element={<Discover />} />
+        <Route path="/adventure/:slug" element={<Adventure />} />
         <Route path="/start" element={<Start />} />
         <Route path="/help" element={<Help />} />
         <Route path="/help/:topic" element={<HelpTopic />} />

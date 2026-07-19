@@ -13,18 +13,42 @@ export type Genre =
   | "contemporary"
   | "folklore";
 
+/**
+ * Editorial completion state of the story itself, distinct from the
+ * publication `status`. "In progress" and "Complete" are the common
+ * states; "On hold" and "Archived" cover paused or retired stories.
+ */
+export type StoryStatus = "in-progress" | "complete" | "on-hold" | "archived";
+
+/**
+ * How new contributions are accepted:
+ *  - "immediate" — approved contributors publish branches directly
+ *  - "approval"  — every contribution is queued for the creator's review
+ *  - "closed"    — the story does not accept new contributions
+ */
+export type ContributionState = "immediate" | "approval" | "closed";
+
 export interface AdventureSummary {
   slug: string;
   title: string;
   author: string;
   synopsis?: string;
+  /** Longer editorial description shown on the adventure landing page. */
+  description?: string;
   status?: AdventureStatus;
+  storyStatus?: StoryStatus;
   sceneCount?: number;
   endingCount?: number;
   genre?: Genre;
   contentRating?: ContentRating;
+  /** Author-authored content warnings. Rendered as plain text. */
+  contentWarnings?: ReadonlyArray<string>;
+  /** Author-authored guidelines for contributors. Plain text. */
+  writingGuidelines?: string;
   /** True when the adventure accepts new branch contributions. */
   contributionsOpen?: boolean;
+  /** Precise contribution flow. Overrides `contributionsOpen` when both set. */
+  contributionState?: ContributionState;
   /** Editorial phrase, e.g. "yesterday". */
   updatedAt?: string;
   /** ISO-8601 timestamp used for sorting; presentation uses updatedAt. */
@@ -68,6 +92,43 @@ export function genreLabel(g: Genre): string {
 export function ratingLabel(r: ContentRating): string {
   return RATING_LABELS[r];
 }
+
+const STORY_STATUS_LABELS: Record<StoryStatus, string> = {
+  "in-progress": "In progress",
+  complete: "Complete",
+  "on-hold": "On hold",
+  archived: "Archived",
+};
+
+const CONTRIBUTION_STATE_LABELS: Record<ContributionState, string> = {
+  immediate: "Immediate publishing",
+  approval: "Approval required",
+  closed: "Closed to contributions",
+};
+
+export function storyStatusLabel(s: StoryStatus): string {
+  return STORY_STATUS_LABELS[s];
+}
+
+export function contributionStateLabel(c: ContributionState): string {
+  return CONTRIBUTION_STATE_LABELS[c];
+}
+
+export const STORY_STATUS_OPTIONS: ReadonlyArray<{
+  value: StoryStatus;
+  label: string;
+}> = Object.entries(STORY_STATUS_LABELS).map(([value, label]) => ({
+  value: value as StoryStatus,
+  label,
+}));
+
+export const CONTRIBUTION_STATE_OPTIONS: ReadonlyArray<{
+  value: ContributionState;
+  label: string;
+}> = Object.entries(CONTRIBUTION_STATE_LABELS).map(([value, label]) => ({
+  value: value as ContributionState,
+  label,
+}));
 
 interface Props {
   adventure: AdventureSummary;

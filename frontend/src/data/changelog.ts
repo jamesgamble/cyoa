@@ -22,6 +22,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Public adventure landing page at /adventure/:slug rendered from typed fixtures.",
+        "Title, creator, description, genre, content rating, content warnings, scene and ending counts, and last-updated line on the landing page.",
+        "Adventure status field with four states: In progress, Complete, On hold, and Archived.",
+        "Contribution status field with three states: Immediate publishing, Approval required, and Closed.",
+        "Author-authored writing guidelines panel.",
+        "Read from beginning, View story map, and Add a branch actions; Add a branch is hidden when contributions are closed.",
+        "Resume reading action shown only when the visitor's browser has a local progress marker for the adventure.",
+        "Follow placeholder visible to signed-in visitors, wired to a client-only toggle until the account system ships.",
+        "Help topic covering the adventure page and the meaning of each status.",
+        "Not-found state for /adventure/:slug when the slug does not resolve.",
+      ],
+      Changed: [
+        "AdventureSummary gained optional description, storyStatus, contributionState, contentWarnings, and writingGuidelines fields; existing consumers continue to work.",
+        "Discover fixtures enriched with the new fields so the same records back both Discover and the adventure landing page.",
+      ],
+    },
+  },
+  {
     version: "0.5.0",
     date: "2026-07-19",
     sections: {
