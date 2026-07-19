@@ -29,6 +29,7 @@ function readerHref(slug: string, sceneId: string): string {
 export function Reader() {
   const { slug = "", sceneId } = useParams();
   const navigate = useNavigate();
+  useHelpContext({ section: "reader" });
 
   const adventure = findAdventureBySlug(slug);
   const scenes = useMemo(() => scenesFor(slug), [slug]);
