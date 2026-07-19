@@ -155,7 +155,7 @@ final class BPAccountTest
         $stmt = $this->pdo->query(
             "SELECT data_json FROM email_queue WHERE template_key='email_change_verify' ORDER BY id DESC LIMIT 1"
         );
-        $payload = json_decode((string) $stmt->fetch()['payload'], true);
+        $payload = json_decode((string) $stmt->fetch()['data_json'], true);
         parse_str((string) parse_url((string) $payload['verify_url'], PHP_URL_QUERY), $q);
         $raw = (string) $q['email_change_token'];
         // Bob tries to consume Alice's token.
