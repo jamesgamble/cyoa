@@ -226,10 +226,12 @@ describe("RichTextEditor paste", () => {
   it("prevents drop of image files", () => {
     render(<RichTextEditor value="" onChange={() => {}} ariaLabel="Editor" />);
     const surface = screen.getByRole("textbox");
-    const dt = new DataTransfer();
-    // jsdom does not support DataTransfer.items well, but the
-    // handler consults `.types`. Simulate a file drop.
-    Object.defineProperty(dt, "types", { value: ["Files"] });
+    const notCancelled = fireEvent.drop(surface, {
+      dataTransfer: { types: ["Files"], files: [] },
+    });
+    expect(notCancelled).toBe(false);
+  });
+});
     const evt = new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt });
     surface.dispatchEvent(evt);
     expect(evt.defaultPrevented).toBe(true);
