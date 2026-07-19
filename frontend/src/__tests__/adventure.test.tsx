@@ -108,41 +108,44 @@ describe("Adventure landing — displayed fields", () => {
 });
 
 describe("Adventure landing — status rendering", () => {
-  it("labels the four adventure statuses correctly", () => {
+  it("labels 'in-progress' story status", () => {
     renderAt(`/adventure/${FIRST.slug}`);
     expect(screen.getByTestId("fact-story-status")).toHaveTextContent(
       "In progress",
     );
-
+  });
+  it("labels 'complete' story status", () => {
     renderAt(`/adventure/${COMPLETE.slug}`);
-    expect(screen.getAllByTestId("fact-story-status")[0]).toBeDefined();
     expect(screen.getByTestId("fact-story-status")).toHaveTextContent(
       "Complete",
     );
-
+  });
+  it("labels 'on-hold' story status", () => {
     renderAt(`/adventure/${ONHOLD.slug}`);
     expect(screen.getByTestId("fact-story-status")).toHaveTextContent(
       "On hold",
     );
-
+  });
+  it("labels 'archived' story status", () => {
     renderAt(`/adventure/${ARCHIVED.slug}`);
     expect(screen.getByTestId("fact-story-status")).toHaveTextContent(
       "Archived",
     );
   });
 
-  it("labels the three contribution states correctly", () => {
+  it("labels 'immediate' contribution state", () => {
     renderAt(`/adventure/${IMMEDIATE.slug}`);
     expect(screen.getByTestId("fact-contribution-state")).toHaveTextContent(
       "Immediate publishing",
     );
-
-    // approval
+  });
+  it("labels 'approval' contribution state", () => {
     renderAt(`/adventure/${FIRST.slug}`);
     expect(screen.getByTestId("fact-contribution-state")).toHaveTextContent(
       "Approval required",
     );
-
+  });
+  it("labels 'closed' contribution state", () => {
     renderAt(`/adventure/${CLOSED.slug}`);
     expect(screen.getByTestId("fact-contribution-state")).toHaveTextContent(
       /Closed/,
