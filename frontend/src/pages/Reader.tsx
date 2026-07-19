@@ -19,6 +19,7 @@ import {
   type Scene,
 } from "../data/scenes";
 import { useAdventureProgress } from "../hooks/useLocalProgress";
+import { useHelpContext } from "../components/GlobalHelp";
 
 /** Build the reader URL for a specific scene. */
 function readerHref(slug: string, sceneId: string): string {
