@@ -36,9 +36,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       Changed: [
         "Public, account, adventure management, and master layouts now apply their layout mode, adjusting container width and chrome.",
         "Footer, header, and navigation restyled to the editorial visual language.",
-      ],
-      Security: [
-        "Visible keyboard focus, reduced motion support, high contrast support, increased text size support, and 44px minimum tap targets on primary controls.",
+        "Interactive elements show a visible keyboard focus ring, honor reduced motion and high contrast preferences, support an increased text size setting, and meet a 44px minimum tap target on primary controls.",
       ],
     },
   },
