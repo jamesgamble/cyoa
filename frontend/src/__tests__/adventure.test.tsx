@@ -187,13 +187,15 @@ describe("Adventure landing — actions", () => {
     );
   });
 
-  it("shows Add a branch when contributions are open (immediate or approval)", () => {
+  it("shows Add a branch when contributions publish immediately", () => {
     renderAt(`/adventure/${IMMEDIATE.slug}`);
     expect(screen.getByTestId("action-add-branch")).toHaveAttribute(
       "href",
       `/adventure/${IMMEDIATE.slug}/branch`,
     );
+  });
 
+  it("shows Add a branch when contributions require approval", () => {
     renderAt(`/adventure/${FIRST.slug}`);
     expect(screen.getByTestId("action-add-branch")).toBeInTheDocument();
   });
