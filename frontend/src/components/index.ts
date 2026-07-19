@@ -24,12 +24,18 @@ export type {
   AdventureStatus,
   ContentRating,
   Genre,
+  StoryStatus,
+  ContributionState,
 } from "./AdventureCard";
 export {
   GENRE_OPTIONS,
   RATING_OPTIONS,
+  STORY_STATUS_OPTIONS,
+  CONTRIBUTION_STATE_OPTIONS,
   genreLabel,
   ratingLabel,
+  storyStatusLabel,
+  contributionStateLabel,
 } from "./AdventureCard";
 export { FeaturedAdventureCard } from "./FeaturedAdventureCard";
 
