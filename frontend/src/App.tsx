@@ -46,7 +46,13 @@ export default function App() {
         <Route path="*" element={<NotFoundState />} />
       </Route>
       <Route element={<AccountLayout />}>
-        <Route path="/account" element={<Account />} />
+        <Route path="/account" element={<AccountOverview />} />
+        <Route path="/account/profile" element={<AccountProfilePage />} />
+        <Route path="/account/security" element={<AccountSecurityPage />} />
+        <Route path="/account/notifications" element={<AccountNotificationsPage />} />
+        <Route path="/account/adventures" element={<AccountAdventuresPage />} />
+        <Route path="/account/contributions" element={<AccountContributionsPage />} />
+        <Route path="/account/bookmarks" element={<AccountBookmarksPage />} />
       </Route>
       <Route element={<ManageLayout />}>
         <Route path="/manage/:slug" element={<Manage />} />
