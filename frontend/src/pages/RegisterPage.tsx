@@ -14,17 +14,17 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { PasswordField } from "../../components/PasswordField";
-import { Checkbox } from "../../components/Checkbox";
-import { ValidationMessage } from "../../components/ValidationMessage";
-import { FormSection } from "../../components/FormSection";
-import { Button } from "../../components/Button";
+import { PasswordField } from "../components/PasswordField";
+import { Checkbox } from "../components/Checkbox";
+import { ValidationMessage } from "../components/ValidationMessage";
+import { FormSection } from "../components/FormSection";
+import { Button } from "../components/Button";
 import {
   fetchCsrfToken,
   fetchRegistrationSettings,
   submitRegistration,
   type RegistrationSettings,
-} from "../../lib/apiClient";
+} from "../lib/apiClient";
 
 interface FormState {
   email: string;
