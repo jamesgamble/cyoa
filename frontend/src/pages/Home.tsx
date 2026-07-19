@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import {
   AdventureCard,
   FeaturedAdventureCard,
-  Panel,
 } from "../components";
 import { FEATURED_ADVENTURE, RECENTLY_UPDATED } from "../data/adventures";
 
