@@ -15,6 +15,7 @@ import { DesignSystem } from "./pages/DesignSystem";
 
 export default function App() {
   return (
+    <HelpProvider>
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
