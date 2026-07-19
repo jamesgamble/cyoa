@@ -54,7 +54,7 @@ function StatusMessage({ msg }: { msg: string | null }) {
 /* ─────────────────────────── Overview ───────────────────────── */
 
 export function AccountOverview() {
-  useHelpContext({ section: "account", topic: "account-overview" });
+  useHelpContext({ section: "account" });
   const { profile, state } = useProfile();
   const navigate = useNavigate();
 
@@ -93,7 +93,7 @@ export function AccountOverview() {
 /* ─────────────────────────── Profile ─────────────────────────── */
 
 export function AccountProfilePage() {
-  useHelpContext({ section: "account", topic: "account-profile" });
+  useHelpContext({ section: "account" });
   const { profile, state, refresh } = useProfile();
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -202,7 +202,7 @@ export function AccountProfilePage() {
 /* ─────────────────────────── Security ─────────────────────────── */
 
 export function AccountSecurityPage() {
-  useHelpContext({ section: "account", topic: "account-security" });
+  useHelpContext({ section: "account" });
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [sessions, setSessions] = useState<AccountSession[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "unauth">("loading");
@@ -289,7 +289,7 @@ export function AccountSecurityPage() {
 /* ─────────────────────────── Notifications ───────────────────── */
 
 export function AccountNotificationsPage() {
-  useHelpContext({ section: "account", topic: "account-notifications" });
+  useHelpContext({ section: "account" });
   const { profile, state, refresh } = useProfile();
   const [replies, setReplies] = useState(true);
   const [moderation, setModeration] = useState(true);
@@ -342,7 +342,7 @@ export function AccountNotificationsPage() {
 /* ─────────────────────────── My adventures ───────────────────── */
 
 export function AccountAdventuresPage() {
-  useHelpContext({ section: "account", topic: "account-adventures" });
+  useHelpContext({ section: "account" });
   const [rows, setRows] = useState<AccountAdventure[] | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "unauth">("loading");
 
@@ -389,7 +389,7 @@ export function AccountAdventuresPage() {
 /* ─────────────────────────── Contributions ───────────────────── */
 
 export function AccountContributionsPage() {
-  useHelpContext({ section: "account", topic: "account-contributions" });
+  useHelpContext({ section: "account" });
   const [state, setState] = useState<"loading" | "ready" | "unauth">("loading");
   useEffect(() => {
     void (async () => {
@@ -411,7 +411,7 @@ export function AccountContributionsPage() {
 /* ─────────────────────────── Bookmarks ───────────────────────── */
 
 export function AccountBookmarksPage() {
-  useHelpContext({ section: "account", topic: "account-bookmarks" });
+  useHelpContext({ section: "account" });
   const [rows, setRows] = useState<AccountBookmark[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "unauth">("loading");
   const [msg, setMsg] = useState<string | null>(null);
