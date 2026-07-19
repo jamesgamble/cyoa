@@ -44,5 +44,6 @@ export default function App() {
         <Route path="/master" element={<Master />} />
       </Route>
     </Routes>
+    </HelpProvider>
   );
 }
