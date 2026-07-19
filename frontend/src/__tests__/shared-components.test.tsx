@@ -336,7 +336,7 @@ describe("form controls — labels, keyboard, and errors", () => {
   it("PasswordField reveal toggles input type and aria-pressed", async () => {
     const user = userEvent.setup();
     render(<PasswordField label="Password" defaultValue="secret" />);
-    const input = screen.getByLabelText(/password/i) as HTMLInputElement;
+    const input = screen.getByLabelText("Password") as HTMLInputElement;
     expect(input.type).toBe("password");
     const btn = screen.getByRole("button", { name: /show password/i });
     expect(btn).toHaveAttribute("aria-pressed", "false");
