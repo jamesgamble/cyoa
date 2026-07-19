@@ -64,3 +64,11 @@ export { SearchFilterBar } from "./SearchFilterBar";
 
 export { EmptyState } from "./EmptyState";
 export { ErrorState } from "./ErrorState";
+
+export { RichTextEditor, RICH_TEXT_ACTIONS } from "./RichTextEditor";
+export type { RichTextEditorProps, RichTextEditorHandle } from "./RichTextEditor";
+export {
+  sanitizeRichTextHtml,
+  richTextToPlainText,
+  richTextLength,
+} from "../lib/richTextSanitizer";

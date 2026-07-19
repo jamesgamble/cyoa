@@ -22,6 +22,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.15.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Restricted WYSIWYG editor for authoring story content. The toolbar exposes only paragraphs, bold, italic, underline, headings, bulleted and numbered lists, blockquotes, horizontal rules, and undo/redo.",
+        "Server-side HTML sanitizer that re-runs the same allow-list on every write path, so the editor is a helpful UX layer rather than a security boundary.",
+        "Help topic \"Restricted writing tools\" describing what the editor allows, what it removes, and how pasted content is normalised.",
+      ],
+      Security: [
+        "All attributes are stripped from stored content — including class, style, id, data-*, aria-*, href, src, align, and every on* event handler.",
+        "Disallowed elements (scripts, styles, iframes, images, embeds, SVG, MathML, forms, media, custom elements) are removed whole, including their text.",
+        "Links are unwrapped and their href is discarded; pasted URLs are inserted as literal text and are never auto-linked.",
+        "Dropping image or file attachments onto the editing surface is refused at the dragdrop boundary.",
+      ],
+    },
+  },
+  {
     version: "0.14.0",
     date: "2026-07-19",
     sections: {

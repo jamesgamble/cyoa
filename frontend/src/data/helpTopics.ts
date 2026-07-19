@@ -352,6 +352,25 @@ export const HELP_TOPICS: HelpTopic[] = [
     related: ["account-security", "signing-in", "privacy-and-security"],
     match: { routes: [/^\/account(\/.*)?$/], sections: ["account"], signedIn: true },
   },
+  {
+    slug: "restricted-writing-tools",
+    title: "Restricted writing tools",
+    summary:
+      "What the story editor allows, what it removes, and how pasted content is normalised.",
+    body: [
+      "The story editor is deliberately narrow. The toolbar exposes paragraphs, bold, italic, underline, Heading 2, Heading 3, bulleted lists, numbered lists, blockquotes, horizontal rules, and undo/redo — nothing else. There is no link tool, image tool, colour picker, font selector, alignment control, table, embed, or source-code view.",
+      "This is not an oversight. Story reading works best when every reader sees the same typography and layout. A story that could set its own fonts, colours, widths, or alignment would break the container the reader relies on and would let a bad actor build convincing look-alike UI.",
+      "When you paste from another source we keep the text and the allow-listed formatting and discard the rest. Links are unwrapped so their text stays but their destination is removed. Pasted images, embedded media, scripts, styles, tables, and custom HTML are dropped. URLs pasted as plain text are inserted as literal text — the editor never turns them into hyperlinks automatically.",
+      "The same rules run again on the server before your content is stored. That means the editor is a helpful writing aid, not a security fence — a hostile client cannot bypass the toolbar to smuggle in scripts, iframes, or arbitrary HTML.",
+      "The character counter and every search, snippet, and export uses the plain-text projection of your writing. Formatting characters don't count toward the limit; they just shape how the reader sees the words.",
+    ],
+    related: ["creating", "contributing", "privacy-and-security"],
+    match: {
+      routes: [/^\/(create|adventures|contribute)(\/.*)?$/],
+      sections: ["editor", "authoring"],
+      roles: ["author", "master"],
+    },
+  },
 ];
 
 
