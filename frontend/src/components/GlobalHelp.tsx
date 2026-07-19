@@ -114,16 +114,20 @@ export function useHelp(): HelpApi {
   return ctx;
 }
 
-/** Push contextual overrides while a component is mounted. */
+/**
+ * Push contextual overrides while a component is mounted. Safe to call
+ * outside a HelpProvider (e.g. in narrow test wrappers): the hook
+ * silently no-ops instead of throwing.
+ */
 export function useHelpContext(override: HelpOverride): void {
-  const { pushOverride } = useHelp();
-  // Stable-ish key — re-push whenever any field changes.
+  const ctx = useContext(HelpCtx);
   const key = JSON.stringify(override);
   useEffect(() => {
-    const cleanup = pushOverride(override);
+    if (!ctx) return;
+    const cleanup = ctx.pushOverride(override);
     return cleanup;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, pushOverride]);
+  }, [key, ctx]);
 }
 
 // ── UI ────────────────────────────────────────────────────────────────
