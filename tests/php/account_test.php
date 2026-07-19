@@ -126,13 +126,13 @@ final class BPAccountTest
 
         // Pull the raw token from the queued verification email.
         $stmt = $this->pdo->query(
-            "SELECT payload FROM email_queue
+            "SELECT data_json FROM email_queue
               WHERE template_key = 'email_change_verify'
               ORDER BY id DESC LIMIT 1"
         );
         $row = $stmt->fetch();
         assert_true($row !== false);
-        $payload = json_decode((string) $row['payload'], true);
+        $payload = json_decode((string) $row['data_json'], true);
         $url = (string) $payload['verify_url'];
         $qs = parse_url($url, PHP_URL_QUERY) ?? '';
         parse_str($qs, $q);
@@ -153,7 +153,7 @@ final class BPAccountTest
     {
         $this->svc->requestEmailChange($this->userId, 'alice3@example.com');
         $stmt = $this->pdo->query(
-            "SELECT payload FROM email_queue WHERE template_key='email_change_verify' ORDER BY id DESC LIMIT 1"
+            "SELECT data_json FROM email_queue WHERE template_key='email_change_verify' ORDER BY id DESC LIMIT 1"
         );
         $payload = json_decode((string) $stmt->fetch()['payload'], true);
         parse_str((string) parse_url((string) $payload['verify_url'], PHP_URL_QUERY), $q);
