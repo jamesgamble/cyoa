@@ -22,6 +22,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.2.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Complete design system with tokens for colors, typography, spacing, borders, shadows, reading widths, statuses, buttons, forms, story pages, management panels, and administrative tables.",
+        "Three layout modes: public reading, creation and management, master administration.",
+        "Internal design system preview at /design-system showing typography, colors, buttons, inputs, checkboxes, radios, toggles, status badges, story page, numbered choices, cards, alerts, dialogs, help drawer, management panels, and administrative tables.",
+        "Reusable primitives: Button, Badge, Alert, Dialog, HelpDrawer, Panel.",
+        "Subtle local CSS paper texture, editorial ornaments, and numbered choice styling.",
+        "Design system documentation.",
+      ],
+      Changed: [
+        "Public, account, adventure management, and master layouts now apply their layout mode, adjusting container width and chrome.",
+        "Footer, header, and navigation restyled to the editorial visual language.",
+        "Interactive elements show a visible keyboard focus ring, honor reduced motion and high contrast preferences, support an increased text size setting, and meet a 44px minimum tap target on primary controls.",
+      ],
+    },
+  },
+  {
     version: "0.1.0",
     date: "2026-07-19",
     sections: {

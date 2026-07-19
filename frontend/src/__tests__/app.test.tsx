@@ -71,7 +71,7 @@ describe("version display", () => {
     renderAt("/");
     const footer = screen.getByRole("contentinfo");
     expect(within(footer).getByTestId("app-version")).toHaveTextContent(`v${APP_VERSION}`);
-    expect(APP_VERSION).toBe("0.1.0");
+    expect(APP_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
 
