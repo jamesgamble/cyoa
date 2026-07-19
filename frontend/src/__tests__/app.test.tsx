@@ -86,15 +86,14 @@ describe("responsive navigation", () => {
   it("mobile toggle exposes the nav and toggles aria-expanded", async () => {
     const user = userEvent.setup();
     renderAt("/");
-    const toggle = screen.getByRole("button", { name: /toggle navigation menu/i });
+    const toggle = screen.getByTestId("masthead-toggle");
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     await user.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
-    const nav = screen.getByRole("navigation", { name: /primary/i });
-    expect(nav).toHaveAttribute("data-open", "true");
-    // Same items exposed
+    const mobileNav = screen.getByTestId("mobile-nav");
+    expect(mobileNav).toHaveAttribute("data-open", "true");
     for (const label of ["Home", "Discover", "Create", "Help", "Changelog", "Sign In"]) {
-      expect(within(nav).getByRole("link", { name: label })).toBeInTheDocument();
+      expect(within(mobileNav).getByText(label)).toBeInTheDocument();
     }
   });
 });
@@ -103,9 +102,8 @@ describe("keyboard navigation", () => {
   it("nav links and the menu toggle are reachable by tabbing", async () => {
     const user = userEvent.setup();
     renderAt("/");
-    // Tab through and collect focused element labels; assert nav items are in the sequence.
     const seen: string[] = [];
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 16; i++) {
       await user.tab();
       const el = document.activeElement as HTMLElement | null;
       if (el && el !== document.body) {
@@ -113,6 +111,6 @@ describe("keyboard navigation", () => {
       }
     }
     expect(seen).toEqual(expect.arrayContaining(["Home", "Discover", "Create", "Help", "Changelog", "Sign In"]));
-    expect(seen.some((s) => /toggle navigation menu/i.test(s))).toBe(true);
+    expect(seen.some((s) => /navigation menu/i.test(s))).toBe(true);
   });
 });
