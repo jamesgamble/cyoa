@@ -31,17 +31,15 @@ final class AccountService
 
     private PDO $pdo;
     private SessionRepository $sessions;
-    private TokenRepository $emailChangeTokens;
     private EmailQueueRepository $queue;
     private SettingsRepository $settings;
 
     public function __construct(PDO $pdo)
     {
-        $this->pdo               = $pdo;
-        $this->sessions          = new SessionRepository($pdo);
-        $this->emailChangeTokens = new TokenRepository($pdo, 'pending_email_changes');
-        $this->queue             = new EmailQueueRepository($pdo);
-        $this->settings          = new SettingsRepository($pdo);
+        $this->pdo      = $pdo;
+        $this->sessions = new SessionRepository($pdo);
+        $this->queue    = new EmailQueueRepository($pdo);
+        $this->settings = new SettingsRepository($pdo);
     }
 
     /* ─────────────────────── Profile / prefs ───────────────────── */
