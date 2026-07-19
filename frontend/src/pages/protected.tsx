@@ -26,14 +26,8 @@ import {
  * rotate it.
  */
 
-export function Account() {
-  return (
-    <section>
-      <h1>Account</h1>
-      <UnauthorizedState />
-    </section>
-  );
-}
+// v0.14.0 — the /account routes moved to `AccountPages.tsx`. Manage
+// remains here until authoring flows arrive in a later release.
 
 export function Manage() {
   const { slug } = useParams();
