@@ -30,6 +30,14 @@ const TOPICS: Record<string, { title: string; body: string[] }> = {
       "Branching Paths intentionally does not display popularity scores, public ratings, likes, comments, or follower counts. Discovery is by content, not by numbers.",
     ],
   },
+  "adventure-page": {
+    title: "The adventure page",
+    body: [
+      "Every adventure has a landing page at /adventure/<slug>. It gathers the title, creator, description, genre, content rating, content warnings, and any writing guidelines the creator has published.",
+      "Adventure status describes the story itself: In progress, Complete, On hold, or Archived. Contribution status describes how new branches are accepted: Immediate publishing means approved contributors publish directly; Approval required means every contribution is queued for the creator's review; Closed means the story is not accepting new branches.",
+      "The page offers Read from beginning, View story map, and — when your browser remembers a scene — Resume reading. Reading works without an account; the resume marker is stored only in your browser. Signed-in visitors see a Follow placeholder that will connect to notifications when the account system ships.",
+    ],
+  },
   privacy: {
     title: "Privacy",
     body: [
