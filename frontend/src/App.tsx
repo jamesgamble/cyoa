@@ -17,6 +17,7 @@ export default function App() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/discover" element={<Discover />} />
+        <Route path="/adventure/:slug" element={<Adventure />} />
         <Route path="/start" element={<Start />} />
         <Route path="/help" element={<Help />} />
         <Route path="/help/:topic" element={<HelpTopic />} />
