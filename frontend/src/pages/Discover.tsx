@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   AdventureCard,
@@ -17,6 +17,7 @@ import type {
   Genre,
 } from "../components/AdventureCard";
 import { DISCOVER_ADVENTURES } from "../data/discover";
+import { fetchDiscover } from "../lib/apiClient";
 import { useHelpContext } from "../components/GlobalHelp";
 
 /* ---------------- filter state ---------------- */
