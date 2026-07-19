@@ -42,7 +42,10 @@ export default function App() {
       <Route element={<MasterLayout />}>
         <Route path="/master/login" element={<MasterLogin />} />
         <Route path="/master" element={<Master />} />
+        <Route path="/master/settings/email" element={<MasterEmailSettings />} />
+        <Route path="/master/email-queue" element={<MasterEmailQueue />} />
       </Route>
+
     </Routes>
     </HelpProvider>
   );
