@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { HelpProvider } from "./components/GlobalHelp";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { AccountLayout } from "./layouts/AccountLayout";
 import { ManageLayout } from "./layouts/ManageLayout";
