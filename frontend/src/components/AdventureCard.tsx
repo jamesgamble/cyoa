@@ -93,6 +93,43 @@ export function ratingLabel(r: ContentRating): string {
   return RATING_LABELS[r];
 }
 
+const STORY_STATUS_LABELS: Record<StoryStatus, string> = {
+  "in-progress": "In progress",
+  complete: "Complete",
+  "on-hold": "On hold",
+  archived: "Archived",
+};
+
+const CONTRIBUTION_STATE_LABELS: Record<ContributionState, string> = {
+  immediate: "Immediate publishing",
+  approval: "Approval required",
+  closed: "Closed to contributions",
+};
+
+export function storyStatusLabel(s: StoryStatus): string {
+  return STORY_STATUS_LABELS[s];
+}
+
+export function contributionStateLabel(c: ContributionState): string {
+  return CONTRIBUTION_STATE_LABELS[c];
+}
+
+export const STORY_STATUS_OPTIONS: ReadonlyArray<{
+  value: StoryStatus;
+  label: string;
+}> = Object.entries(STORY_STATUS_LABELS).map(([value, label]) => ({
+  value: value as StoryStatus,
+  label,
+}));
+
+export const CONTRIBUTION_STATE_OPTIONS: ReadonlyArray<{
+  value: ContributionState;
+  label: string;
+}> = Object.entries(CONTRIBUTION_STATE_LABELS).map(([value, label]) => ({
+  value: value as ContributionState,
+  label,
+}));
+
 interface Props {
   adventure: AdventureSummary;
   /** Optional href override. Defaults to /adventure/:slug. */
