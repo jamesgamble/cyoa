@@ -14,6 +14,38 @@ Branching Paths is a self-contained application. It has three layers:
 - No cloud services, no serverless functions
 - Reads its version from the shared `VERSION` file (baked in at build time)
 
+### Shared components
+
+The `frontend/src/components/` directory holds the shared component library
+used across every surface of the app. Everything is exported from a single
+barrel (`frontend/src/components/index.ts`) and previewed at the internal
+`/design-system` route.
+
+- **Chrome:** `Wordmark`, `Masthead` (literary desktop nav), `MobileNav`
+  (mobile drawer), `Colophon` (editorial footer). `PrimaryNav` and `Footer`
+  are compatibility re-exports.
+- **Story surface (`components/story/`):** `StoryPage`, `SceneTitle`,
+  `StoryBody`, `Choice`, `ChoiceList`, `ChoicesHeading`, `EndingPanel`.
+  User-provided story text is rendered exclusively as plain text — never
+  `dangerouslySetInnerHTML` — and CSS applies `!important` overrides on
+  font, color, width, alignment, background, border, and position within
+  `.bp-story__body` so pasted content cannot control presentation.
+- **Discovery:** `AdventureCard`, `FeaturedAdventureCard`.
+- **Forms:** `SearchField`, `Select`, `Checkbox`, `RadioGroup`, `Toggle`,
+  `TextArea`, `PasswordField`, `FormSection`, `StepIndicator`,
+  `ValidationMessage`, `InlineHelp`.
+- **Overlays:** `Dialog`, `HelpDrawer`.
+- **Management:** `ManageNav`, `QueueItem`, `ActivityItem`, `WarningPanel`,
+  `DangerZone`, `AdminTable`, `SearchFilterBar`.
+- **Status:** `Badge`, `Alert`, `Panel`, `EmptyState`, `ErrorState`.
+
+Every interactive control ships with a visible label or explicit
+`aria-label`, uses semantic HTML (`<button>`, `<a>`, `<ol>`, `<fieldset>`,
+etc.), and honors the design system's focus-visible ring and reduced-motion
+overrides. Tests in `frontend/src/__tests__/shared-components.test.tsx`
+cover rendering, keyboard interaction, ARIA state, and story-content
+containment.
+
 ## Backend (planned in later versions)
 
 - Plain PHP 8.2 or newer
