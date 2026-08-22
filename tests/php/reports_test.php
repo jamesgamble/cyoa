@@ -56,7 +56,7 @@ final class BPReportsTest
         $this->svc        = new ReportService($this->pdo);
         $this->moderation = new ModerationService($this->pdo);
 
-        [$outcome, , $created] = (new AdventureService($this->pdo))->create($this->ownerId, '127.0.0.1', [
+        [$outcome, , $created] = (new AdventureService($this->pdo))->create($this->ownerId, [
             'title'          => 'The Salt Road',
             'description'    => 'A caravan crosses a drying sea bed and finds a door.',
             'genre'          => 'fantasy',
@@ -65,7 +65,7 @@ final class BPReportsTest
             'opening_title'  => 'The first mile',
             'opening_body'   => '<p>The wagons roll onto cracked white ground.</p>',
             'contribution_state' => 'open',
-        ]);
+        ], '127.0.0.1');
         assert_same(AdventureService::OK, $outcome);
         $this->slug        = (string) $created['slug'];
         $this->adventureId = (int) $created['id'];
@@ -144,14 +144,15 @@ final class BPReportsTest
         assert_same($this->startSceneId, (int) $row['scene_id']);
 
         [$so, , $sub] = (new BranchSubmissionService($this->pdo))->submit(
-            $this->slug, (string) $this->startSceneId, $this->strangerId, '10.2.0.3',
+            $this->slug, (string) $this->startSceneId,
             [
                 'choice_text' => 'Turn back to the wagons',
                 'scene_title' => 'Back among the wheels',
                 'scene_body'  => '<p>The caravan master frowns.</p>',
                 'scene_type'  => 'story',
                 'attribution' => 'username',
-            ]
+            ],
+            $this->strangerId, '10.2.0.3'
         );
         assert_same(BranchSubmissionService::OK, $so);
 
@@ -164,11 +165,11 @@ final class BPReportsTest
 
     public function testTargetFromAnotherAdventureIsNotFound(): void
     {
-        [, , $other] = (new AdventureService($this->pdo))->create($this->strangerId, '10.3.0.1', [
+        [, , $other] = (new AdventureService($this->pdo))->create($this->strangerId, [
             'title' => 'Another Country', 'description' => 'A second story entirely, elsewhere.',
             'genre' => 'fantasy', 'content_rating' => 'teen', 'visibility' => 'public',
             'opening_title' => 'Elsewhere', 'opening_body' => '<p>Elsewhere entirely.</p>',
-        ]);
+        ], '10.3.0.1');
         $s = $this->pdo->prepare('SELECT id FROM scenes WHERE adventure_id = :a AND is_start = 1');
         $s->execute([':a' => (int) $other['id']]);
         $foreignScene = (int) $s->fetch()['id'];
