@@ -647,3 +647,115 @@ export async function createAdventure(
     : "service_unavailable";
   return { status: r.status, outcome, fields: r.fields };
 }
+
+
+/* ------------------------------------------------------------------ */
+/* Publication workflow (v0.17.0)                                      */
+/*                                                                     */
+/* Manage, preview, draft saves, and status changes. Every route       */
+/* requires a live session; authorization (owner, editor, or           */
+/* administrator) is decided server-side and merely reflected here.    */
+/* ------------------------------------------------------------------ */
+
+export type AdventureState =
+  | "draft" | "published" | "on-hold" | "complete" | "archived" | "suspended";
+
+export type StatusAction =
+  | "publish" | "unpublish" | "set_in_progress"
+  | "set_complete" | "set_on_hold" | "archive";
+
+export interface ManageAdventure {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  state: AdventureState;
+  visibility: string;
+  updated_at: string;
+  writing_guidelines: string;
+}
+
+export interface ActivityRecord {
+  id: number;
+  action: string;
+  from_state: string | null;
+  to_state: string | null;
+  actor: string | null;
+  created_at: string;
+}
+
+export interface ManagePayload {
+  adventure: ManageAdventure;
+  role: "owner" | "editor" | "administrator";
+  read_only: boolean;
+  has_valid_opening: boolean;
+  available_actions: StatusAction[];
+  confirm_actions: StatusAction[];
+  activity: ActivityRecord[];
+}
+
+export interface PreviewScene {
+  id: number;
+  slug: string;
+  sceneNumber: number;
+  chapter: string | null;
+  title: string;
+  body: string;
+  isEnding: boolean;
+  state: string;
+  isStart: boolean;
+}
+
+export interface PreviewPayload {
+  adventure: { slug: string; title: string; state: AdventureState };
+  role: string;
+  noindex: boolean;
+  scenes: PreviewScene[];
+}
+
+export type ManageOutcome = "ok" | "unauthenticated" | "forbidden" | "not_found" | "error";
+
+export async function fetchManageAdventure(
+  slug: string,
+): Promise<{ outcome: ManageOutcome; data: ManagePayload | null }> {
+  return manageGet<ManagePayload>(`/adventures/${encodeURIComponent(slug)}/manage`);
+}
+
+export async function fetchAdventurePreview(
+  slug: string,
+): Promise<{ outcome: ManageOutcome; data: PreviewPayload | null }> {
+  return manageGet<PreviewPayload>(`/adventures/${encodeURIComponent(slug)}/preview`);
+}
+
+async function manageGet<T>(
+  path: string,
+): Promise<{ outcome: ManageOutcome; data: T | null }> {
+  try {
+    const res = await fetch(apiUrl(path), {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    if (res.ok) return { outcome: "ok", data: (await res.json()) as T };
+    if (res.status === 401) return { outcome: "unauthenticated", data: null };
+    if (res.status === 403) return { outcome: "forbidden", data: null };
+    if (res.status === 404) return { outcome: "not_found", data: null };
+    return { outcome: "error", data: null };
+  } catch {
+    return { outcome: "error", data: null };
+  }
+}
+
+export async function changeAdventureStatus(slug: string, action: StatusAction) {
+  return accountMutate<{ status: string; state: AdventureState; available_actions?: StatusAction[] }>(
+    `/adventures/${encodeURIComponent(slug)}/status`, "POST", { action },
+  );
+}
+
+export async function saveAdventureDraft(
+  slug: string,
+  input: { title?: string; description?: string; writing_guidelines?: string; opening_body?: string },
+) {
+  return accountMutate<{ status: string }>(
+    `/adventures/${encodeURIComponent(slug)}/draft`, "PUT", input,
+  );
+}
