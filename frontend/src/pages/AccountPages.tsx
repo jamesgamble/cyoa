@@ -399,7 +399,7 @@ export function AccountContributionsPage() {
     void (async () => {
       const r = await fetchContributionHistory();
       if (r.status === 401) { setState("unauth"); return; }
-      setRows(r.contributions ?? []);
+      setRows((r.contributions ?? []) as ContributionHistoryEntry[]);
       setState("ready");
     })();
   }, []);
