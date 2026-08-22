@@ -209,11 +209,10 @@ final class ReportService
     public function isRateLimited(string $key): bool
     {
         $s = $this->pdo->prepare(
-            "SELECT COUNT(*) AS c FROM content_reports
-              WHERE reporter_key = :k
-                AND created_at >= strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 hour')"
+            'SELECT COUNT(*) AS c FROM content_reports
+              WHERE reporter_key = :k AND created_at >= :since'
         );
-        $s->execute([':k' => $key]);
+        $s->execute([':k' => $key, ':since' => gmdate('Y-m-d\\TH:i:s\\Z', time() - 3600)]);
         return (int) ($s->fetch(PDO::FETCH_ASSOC)['c'] ?? 0) >= self::RATE_PER_HOUR;
     }
 
@@ -236,10 +235,11 @@ final class ReportService
                 AND IFNULL(scene_id, 0)      = :s
                 AND IFNULL(choice_id, 0)     = :c
                 AND IFNULL(submission_id, 0) = :b
-                AND created_at >= strftime('%Y-%m-%dT%H:%M:%fZ','now','-" . self::DUPLICATE_HOURS . " hours')
+                AND created_at >= :since
               ORDER BY id DESC LIMIT 1"
         );
         $s->execute([
+            ':since' => gmdate('Y-m-d\\TH:i:s\\Z', time() - self::DUPLICATE_HOURS * 3600),
             ':a' => $adventureId, ':k' => $key, ':t' => $targetType, ':r' => $reason,
             ':s' => $sceneId ?? 0, ':c' => $choiceId ?? 0, ':b' => $submissionId ?? 0,
         ]);
