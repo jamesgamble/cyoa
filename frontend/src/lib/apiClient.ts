@@ -849,3 +849,315 @@ export function submitBranch(slug: string, sceneRef: string, input: BranchDraftI
 
 export const fetchContributionHistory = () =>
   accountGet<{ contributions: ContributionHistoryEntry[] }>("/account/contributions");
+
+
+/* ------------------------------------------------------------------ */
+/* Moderation and owner controls (v0.19.0)                             */
+/*                                                                     */
+/* The management console reads one section at a time. Roles and       */
+/* capabilities always arrive from the server — the UI hides controls  */
+/* the caller may not use, and the server refuses them regardless.     */
+/* ------------------------------------------------------------------ */
+
+export type ManagementSection =
+  | "overview" | "story" | "submissions" | "reports" | "collaborators" | "settings";
+
+export type SubmissionState =
+  | "pending" | "changes_requested" | "approved" | "rejected" | "withdrawn";
+
+export type DecisionAction = "approve" | "reject" | "request_changes" | "edit_approve";
+
+export type TeamRole = "owner" | "editor" | "reviewer" | "administrator";
+
+export type PermissionLevel = "trusted" | "approval_required" | "blocked";
+
+export interface ModerationCapabilities {
+  view: boolean;
+  decide: boolean;
+  configure: boolean;
+  review: boolean;
+  read_only: boolean;
+}
+
+export interface SubmissionCounts {
+  pending: number;
+  changes_requested: number;
+  approved: number;
+  rejected: number;
+  withdrawn: number;
+  open_reports: number;
+}
+
+export interface ModerationOverview {
+  adventure: { slug: string; title: string; state: AdventureState };
+  role: TeamRole;
+  capabilities: ModerationCapabilities;
+  sections: ManagementSection[];
+  counts: SubmissionCounts;
+  settings: AdventureSettings;
+  activity: ActivityRecord[];
+}
+
+export interface SubmissionReview {
+  id: number;
+  reviewer: string | null;
+  note: string;
+  recommendation: "approve" | "reject" | null;
+  created_at: string;
+}
+
+export interface ModerationSubmission {
+  id: number;
+  state: SubmissionState;
+  choice_text: string;
+  scene_title: string;
+  scene_body: string;
+  scene_type: BranchSceneType;
+  attribution: BranchAttribution;
+  contributor: string | null;
+  private_note: string | null;
+  feedback: string | null;
+  revision: number;
+  created_at: string;
+  source_scene_id: number;
+  source_scene_title: string;
+  reviews: SubmissionReview[];
+}
+
+export interface ManagedChoice {
+  id: number;
+  label: string;
+  position: number;
+  target_scene_id: number;
+  target_title: string | null;
+}
+
+export interface ManagedScene {
+  id: number;
+  slug: string;
+  number: number;
+  title: string;
+  body: string;
+  scene_type: BranchSceneType;
+  state: string;
+  locked: boolean;
+  is_start: boolean;
+  choices: ManagedChoice[];
+  branch_slots: { limit: number; used: number };
+}
+
+export interface AdventureSettings {
+  contribution_mode: ContributionMode;
+  anonymous_contributions: boolean;
+  max_branches_per_scene: number;
+  requires_passcode: boolean;
+  contributions_paused: boolean;
+  allow_branching: boolean;
+  notify_on_submission: boolean;
+  notify_on_report: boolean;
+}
+
+export interface AdventurePermission {
+  id: number;
+  user_id: number;
+  username: string | null;
+  display_name: string | null;
+  level: PermissionLevel;
+  note: string | null;
+  created_at: string;
+}
+
+export interface AdventureCollaborator {
+  id: number;
+  user_id: number;
+  role: "owner" | "editor" | "reviewer";
+  username: string | null;
+  display_name: string | null;
+}
+
+export interface ContentReport {
+  id: number;
+  reason: string;
+  details: string | null;
+  state: "open" | "resolved" | "dismissed";
+  scene_id: number | null;
+  scene_title: string | null;
+  reporter: string | null;
+  created_at: string;
+}
+
+const moderationBase = (slug: string) =>
+  `/adventures/${encodeURIComponent(slug)}/moderation`;
+
+export const fetchModerationOverview = (slug: string) =>
+  manageGet<ModerationOverview>(moderationBase(slug));
+
+export const fetchModerationSubmissions = (slug: string, state: SubmissionState) =>
+  manageGet<{
+    role: TeamRole;
+    capabilities: ModerationCapabilities;
+    state: SubmissionState;
+    submissions: ModerationSubmission[];
+  }>(`${moderationBase(slug)}/submissions?state=${encodeURIComponent(state)}`);
+
+export const fetchModerationStory = (slug: string) =>
+  manageGet<{ role: TeamRole; capabilities: ModerationCapabilities; scenes: ManagedScene[] }>(
+    `${moderationBase(slug)}/story`,
+  );
+
+export const fetchModerationPermissions = (slug: string) =>
+  manageGet<{
+    role: TeamRole;
+    capabilities: ModerationCapabilities;
+    permissions: AdventurePermission[];
+    collaborators: AdventureCollaborator[];
+    levels: PermissionLevel[];
+  }>(`${moderationBase(slug)}/permissions`);
+
+export const fetchModerationReports = (
+  slug: string,
+  state: "open" | "resolved" | "dismissed" = "open",
+) =>
+  manageGet<{ role: TeamRole; capabilities: ModerationCapabilities; reports: ContentReport[] }>(
+    `${moderationBase(slug)}/reports?state=${encodeURIComponent(state)}`,
+  );
+
+export function decideSubmission(
+  slug: string,
+  submissionId: number,
+  action: DecisionAction,
+  input: {
+    feedback?: string;
+    choice_text?: string;
+    scene_title?: string;
+    scene_body?: string;
+    scene_type?: BranchSceneType;
+  } = {},
+) {
+  return accountMutate<{ status: string; state: SubmissionState; action: DecisionAction }>(
+    `${moderationBase(slug)}/submissions/${submissionId}/decision`,
+    "POST",
+    { action, ...input },
+  );
+}
+
+export const addSubmissionReview = (
+  slug: string,
+  submissionId: number,
+  note: string,
+  recommendation: "approve" | "reject" | null,
+) =>
+  accountMutate<{ status: string; reviews: SubmissionReview[] }>(
+    `${moderationBase(slug)}/submissions/${submissionId}/review`,
+    "POST",
+    { note, recommendation: recommendation ?? "" },
+  );
+
+export const updateManagedScene = (
+  slug: string,
+  sceneId: number,
+  input: {
+    title?: string;
+    body?: string;
+    scene_type?: BranchSceneType;
+    choices?: Array<{ id: number; label: string; position?: number }>;
+  },
+) =>
+  accountMutate<{ status: string }>(`${moderationBase(slug)}/scenes/${sceneId}`, "PUT", input);
+
+export const runSceneAction = (
+  slug: string,
+  sceneId: number,
+  action: "lock" | "unlock" | "hide" | "restore",
+) =>
+  accountMutate<{ status: string; state: string; locked: boolean }>(
+    `${moderationBase(slug)}/scenes/${sceneId}/action`, "POST", { action },
+  );
+
+export const createOwnerBranch = (
+  slug: string,
+  sceneId: number,
+  input: {
+    choice_text: string;
+    scene_title: string;
+    scene_body: string;
+    scene_type: BranchSceneType;
+  },
+) =>
+  accountMutate<{ status: string; scene_id: number; choice_id: number }>(
+    `${moderationBase(slug)}/scenes/${sceneId}/branch`, "POST", input,
+  );
+
+export const updateAdventureDetails = (
+  slug: string,
+  input: { title?: string; description?: string; writing_guidelines?: string },
+) => accountMutate<{ status: string }>(`${moderationBase(slug)}/details`, "PUT", input);
+
+export const updateAdventureSettings = (
+  slug: string,
+  input: Partial<Omit<AdventureSettings, "requires_passcode">> & {
+    contribution_passcode?: string;
+  },
+) =>
+  accountMutate<{ status: string; settings: AdventureSettings }>(
+    `${moderationBase(slug)}/settings`, "PUT", input,
+  );
+
+export const setAdventurePermission = (
+  slug: string,
+  userId: number,
+  level: PermissionLevel | null,
+  note = "",
+) =>
+  accountMutate<{ status: string; permissions: AdventurePermission[] }>(
+    `${moderationBase(slug)}/permissions`, "POST",
+    { user_id: userId, level: level ?? "", note },
+  );
+
+export const setAdventureCollaborator = (
+  slug: string,
+  userId: number,
+  role: "owner" | "editor" | "reviewer" | null,
+) =>
+  accountMutate<{ status: string; collaborators: AdventureCollaborator[] }>(
+    `${moderationBase(slug)}/collaborators`, "POST",
+    { user_id: userId, role: role ?? "" },
+  );
+
+export const resolveContentReport = (
+  slug: string,
+  reportId: number,
+  action: "resolve" | "dismiss",
+  note = "",
+) =>
+  accountMutate<{ status: string }>(
+    `${moderationBase(slug)}/reports/${reportId}/resolve`, "POST", { action, note },
+  );
+
+export const reportAdventureContent = (
+  slug: string,
+  input: { reason: string; details?: string; scene_id?: number | null },
+) => accountMutate<{ status: string; report_id: number }>(
+  `/adventures/${encodeURIComponent(slug)}/reports`, "POST", input,
+);
+
+/* Contributor-side actions on their own submissions. */
+
+export const updateOwnSubmission = (
+  submissionId: number,
+  input: {
+    choice_text: string;
+    scene_title: string;
+    scene_body: string;
+    scene_type: BranchSceneType;
+  },
+  resubmit = true,
+) =>
+  accountMutate<{ status: string; state: SubmissionState }>(
+    `/account/contributions/${submissionId}`, "PUT", { ...input, resubmit },
+  );
+
+export const withdrawOwnSubmission = (submissionId: number) =>
+  accountMutate<{ status: string; state: SubmissionState }>(
+    `/account/contributions/${submissionId}/withdraw`, "POST", {},
+  );
