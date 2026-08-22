@@ -33,6 +33,7 @@ use App\EmailQueueService;
 use App\EmailTemplateRepository;
 use App\Mailer\SmtpTransport;
 use App\Migrator;
+use App\PublicationService;
 use App\PublicRepository;
 use App\RegistrationService;
 use App\SettingsRepository;
@@ -68,6 +69,12 @@ if ($route === '/adventures' && $method === 'POST') {
     exit;
 }
 
+
+// ── Publication workflow (v0.17.0) ─────────────────────────────────
+if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/(manage|preview|status|draft)$#', $route, $pm)) {
+    handle_publication($method, $pm[1], $pm[2]);
+    exit;
+}
 
 // ── Authentication (login, logout, verify, reset, change) ──────────
 if (strncmp($route, '/auth', 5) === 0) {
@@ -799,6 +806,120 @@ function handle_adventure_create(): void
         default:
             http_response_code(422);
             echo json_encode(['error' => 'invalid', 'fields' => $errors]);
+            return;
+    }
+}
+
+
+/**
+ * Publication workflow endpoints (v0.17.0).
+ *
+ *   GET  /api/adventures/{slug}/manage   — state, role, actions, activity
+ *   GET  /api/adventures/{slug}/preview  — every scene, drafts included
+ *   PUT  /api/adventures/{slug}/draft    — save draft edits
+ *   POST /api/adventures/{slug}/status   — publish / unpublish / …
+ *
+ * Authorisation is always derived server-side from the authenticated
+ * session: author, collaborator roster, or administrator role. A role
+ * or owner id in the request body is ignored. Preview responses carry
+ * X-Robots-Tag: noindex so a leaked link is never indexed.
+ */
+function handle_publication(string $method, string $slug, string $tail): void
+{
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] publication db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    $userId  = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+    $isAdmin = $userId !== null && AdminSession::hasRole($pdo, $userId, 'admin');
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+
+    $svc = new PublicationService($pdo);
+
+    try {
+        if ($method === 'GET' && $tail === 'manage') {
+            [$outcome, $data] = $svc->managePayload($slug, $userId, $isAdmin);
+            publication_respond($outcome, $data);
+            return;
+        }
+        if ($method === 'GET' && $tail === 'preview') {
+            header('X-Robots-Tag: noindex, nofollow');
+            [$outcome, $data] = $svc->previewPayload($slug, $userId, $isAdmin);
+            publication_respond($outcome, $data);
+            return;
+        }
+        if ($method === 'PUT' && $tail === 'draft') {
+            if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+            $adv = $svc->adventureBySlug($slug);
+            if ($adv === null) { respond_error(404, 'not_found'); return; }
+            $role = $svc->roleFor((int) $adv['id'], $userId, $isAdmin);
+            $body = read_json_body();
+            $lock = new WriteLock();
+            [$outcome, $fields] = $lock->withLock(static function () use ($svc, $adv, $role, $body): array {
+                return $svc->saveDraft((int) $adv['id'], $role, $body);
+            });
+            if ($outcome === PublicationService::OK) { echo json_encode(['status' => 'ok']); return; }
+            if ($outcome === PublicationService::INVALID) {
+                http_response_code(422);
+                echo json_encode(['error' => 'invalid', 'fields' => $fields]);
+                return;
+            }
+            publication_respond($outcome, null);
+            return;
+        }
+        if ($method === 'POST' && $tail === 'status') {
+            if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+            $adv = $svc->adventureBySlug($slug);
+            if ($adv === null) { respond_error(404, 'not_found'); return; }
+            $role   = $svc->roleFor((int) $adv['id'], $userId, $isAdmin);
+            $body   = read_json_body();
+            $action = isset($body['action']) ? (string) $body['action'] : '';
+            $lock   = new WriteLock();
+            [$outcome, $data] = $lock->withLock(static function () use ($svc, $adv, $userId, $role, $action): array {
+                return $svc->changeStatus((int) $adv['id'], $userId, $role, $action);
+            });
+            if ($outcome === PublicationService::OK) {
+                echo json_encode(['status' => 'ok'] + ($data ?? []));
+                return;
+            }
+            publication_respond($outcome, null);
+            return;
+        }
+    } catch (\Throwable $e) {
+        error_log('[bp] publication error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    respond_error(405, 'method_not_allowed');
+}
+
+/** Map a PublicationService outcome to an HTTP response. */
+function publication_respond(string $outcome, ?array $data): void
+{
+    switch ($outcome) {
+        case PublicationService::OK:
+            echo json_encode($data ?? []);
+            return;
+        case PublicationService::NOT_FOUND:
+            respond_error(404, 'not_found');
+            return;
+        case PublicationService::FORBIDDEN:
+            respond_error(403, 'forbidden');
+            return;
+        case PublicationService::READ_ONLY:
+            respond_error(409, 'read_only');
+            return;
+        case PublicationService::NO_OPENING:
+            respond_error(422, 'no_opening_scene');
+            return;
+        default:
+            http_response_code(422);
+            echo json_encode(['error' => 'invalid']);
             return;
     }
 }
