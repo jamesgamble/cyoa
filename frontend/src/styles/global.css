@@ -2025,3 +2025,11 @@ html[data-contrast="high"] body::before { display: none; }
   .bp-review dd { margin-bottom: var(--bp-s-3); }
   .bp-wizard-actions > * { flex: 1 1 100%; }
 }
+
+.bp-lede {
+  font-size: var(--bp-fs-md);
+  color: var(--bp-ink-2);
+  max-width: 60ch;
+}
+.bp-link-quiet { color: var(--bp-muted); }
+.bp-link-quiet:hover { color: var(--bp-red); }
