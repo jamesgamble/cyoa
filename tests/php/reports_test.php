@@ -207,9 +207,8 @@ final class BPReportsTest
         $in = ['target_type' => 'scene', 'reason' => 'spam', 'scene_id' => $this->startSceneId];
         [$o, $first] = $this->svc->create($this->slug, $this->strangerId, '10.5.0.1', $in);
         assert_same(ReportService::OK, $o);
-        $dbg = $this->pdo->query('SELECT id, reporter_key, target_type, reason, scene_id, created_at FROM content_reports')->fetchAll(\PDO::FETCH_ASSOC);
         [$o2, $again] = $this->svc->create($this->slug, $this->strangerId, '10.5.0.1', $in);
-        assert_same(ReportService::DUPLICATE, $o2, json_encode($dbg));
+        assert_same(ReportService::DUPLICATE, $o2);
         assert_same(ReportService::DUPLICATE, $o2);
         assert_same($first['report_id'], $again['report_id']);
         assert_same(1, (int) $this->pdo->query('SELECT COUNT(*) c FROM content_reports')->fetch()['c']);

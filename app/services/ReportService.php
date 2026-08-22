@@ -212,7 +212,7 @@ final class ReportService
             'SELECT COUNT(*) AS c FROM content_reports
               WHERE reporter_key = :k AND created_at >= :since'
         );
-        $s->execute([':k' => $key, ':since' => gmdate('Y-m-d\\TH:i:s\\Z', time() - 3600)]);
+        $s->execute([':k' => $key, ':since' => gmdate('Y-m-d\TH:i:s\Z', time() - 3600)]);
         return (int) ($s->fetch(PDO::FETCH_ASSOC)['c'] ?? 0) >= self::RATE_PER_HOUR;
     }
 
@@ -239,7 +239,7 @@ final class ReportService
               ORDER BY id DESC LIMIT 1"
         );
         $s->execute([
-            ':since' => gmdate('Y-m-d\\TH:i:s\\Z', time() - self::DUPLICATE_HOURS * 3600),
+            ':since' => gmdate('Y-m-d\TH:i:s\Z', time() - self::DUPLICATE_HOURS * 3600),
             ':a' => $adventureId, ':k' => $key, ':t' => $targetType, ':r' => $reason,
             ':s' => $sceneId ?? 0, ':c' => $choiceId ?? 0, ':b' => $submissionId ?? 0,
         ]);
