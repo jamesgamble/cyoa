@@ -107,7 +107,7 @@ final class BPBranchSubmissionTest
             $a['slug'], $a['scene'], $this->payload(), $this->contributorId, '10.0.0.1'
         );
         assert_same(BranchSubmissionService::OK, $out);
-        assert_same('published', $data['state']);
+        assert_same('approved', $data['state']);
         assert_true($data['published']);
         assert_true($data['scene_id'] !== null, 'a scene was created');
         assert_true($data['choice_id'] !== null, 'a choice was created');
