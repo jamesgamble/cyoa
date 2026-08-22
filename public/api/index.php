@@ -26,6 +26,7 @@ use App\AccountService;
 use App\AdventureService;
 use App\AdminSession;
 use App\AuthService;
+use App\BranchSubmissionService;
 use App\Csrf;
 use App\Database;
 use App\EmailQueueRepository;
@@ -73,6 +74,12 @@ if ($route === '/adventures' && $method === 'POST') {
 // ── Publication workflow (v0.17.0) ─────────────────────────────────
 if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/(manage|preview|status|draft)$#', $route, $pm)) {
     handle_publication($method, $pm[1], $pm[2]);
+    exit;
+}
+
+// ── Branch submissions (v0.18.0) ───────────────────────────────────
+if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/scenes/([A-Za-z0-9\-]+)/branch$#', $route, $bm)) {
+    handle_branch_submission($method, $bm[1], $bm[2]);
     exit;
 }
 
@@ -646,7 +653,9 @@ function handle_account(string $method, string $tail): void
         return;
     }
     if ($method === 'GET' && $tail === '/contributions') {
-        echo json_encode(['contributions' => $svc->myContributions($userId)]);
+        echo json_encode([
+            'contributions' => (new BranchSubmissionService($pdo))->historyForUser($userId),
+        ]);
         return;
     }
     if ($method === 'GET' && $tail === '/bookmarks') {
@@ -922,4 +931,92 @@ function publication_respond(string $outcome, ?array $data): void
             echo json_encode(['error' => 'invalid']);
             return;
     }
+}
+
+
+/**
+ * Branch submissions (v0.18.0).
+ *
+ *   GET  /api/adventures/{slug}/scenes/{scene}/branch  — form context
+ *   POST /api/adventures/{slug}/scenes/{scene}/branch  — submit a branch
+ *
+ * A session is optional: adventures that allow anonymous contributions
+ * accept a signed-out visitor. Whoever the caller is, the contributor
+ * identity comes from the session cookie and the request IP — never
+ * from the request body. Writes require CSRF and run under the write
+ * lock so two concurrent submissions cannot exceed the branch limit.
+ */
+function handle_branch_submission(string $method, string $slug, string $sceneRef): void
+{
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] branch db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    $userId = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+    $ip     = client_ip();
+    $svc    = new BranchSubmissionService($pdo);
+
+    try {
+        if ($method === 'GET') {
+            [$outcome, $data] = $svc->context($slug, $sceneRef, $userId, $ip);
+            if ($outcome === BranchSubmissionService::OK) { echo json_encode($data); return; }
+            branch_respond($outcome, []);
+            return;
+        }
+        if ($method !== 'POST') { respond_error(405, 'method_not_allowed'); return; }
+        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+
+        $body = read_json_body();
+        $lock = new WriteLock();
+        [$outcome, $errors, $data] = $lock->withLock(
+            static function () use ($svc, $slug, $sceneRef, $body, $userId, $ip): array {
+                return $svc->submit($slug, $sceneRef, $body, $userId, $ip);
+            }
+        );
+        if ($outcome === BranchSubmissionService::OK) {
+            http_response_code(201);
+            echo json_encode(['status' => 'ok'] + ($data ?? []));
+            return;
+        }
+        branch_respond($outcome, $errors);
+    } catch (\Throwable $e) {
+        error_log('[bp] branch submission error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+    }
+}
+
+/** Map a BranchSubmissionService outcome to an HTTP response. */
+function branch_respond(string $outcome, array $errors): void
+{
+    $map = [
+        BranchSubmissionService::NOT_FOUND          => 404,
+        BranchSubmissionService::UNAVAILABLE        => 409,
+        BranchSubmissionService::CLOSED             => 409,
+        BranchSubmissionService::SOURCE_UNAVAILABLE => 409,
+        BranchSubmissionService::SCENE_LOCKED       => 409,
+        BranchSubmissionService::BRANCH_LIMIT       => 409,
+        BranchSubmissionService::DUPLICATE          => 409,
+        BranchSubmissionService::BLOCKED            => 403,
+        BranchSubmissionService::UNAUTHENTICATED    => 401,
+        BranchSubmissionService::PASSCODE_REQUIRED  => 422,
+        BranchSubmissionService::PASSCODE_INVALID   => 422,
+        BranchSubmissionService::RATE_LIMITED       => 429,
+        BranchSubmissionService::INVALID            => 422,
+    ];
+    // A tripped honeypot is answered exactly like a successful
+    // submission so a bot learns nothing, but nothing is stored.
+    if ($outcome === BranchSubmissionService::HONEYPOT) {
+        http_response_code(201);
+        echo json_encode(['status' => 'ok', 'state' => 'pending', 'published' => false]);
+        return;
+    }
+    $status = $map[$outcome] ?? 422;
+    http_response_code($status);
+    $payload = ['error' => $outcome];
+    if ($errors !== []) { $payload['fields'] = $errors; }
+    echo json_encode($payload);
 }
