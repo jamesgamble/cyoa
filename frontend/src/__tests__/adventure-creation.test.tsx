@@ -12,9 +12,10 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { CreateAdventure, validateStep } from "../pages/CreateAdventure";
+import type { CreationSettings } from "../lib/apiClient";
 import { HelpProvider } from "../components/GlobalHelp";
 
-const SETTINGS = {
+const SETTINGS: CreationSettings = {
   templates: {
     solo: {
       label: "Solo story", visibility: "public", contribution_mode: "closed",
@@ -47,7 +48,7 @@ const SETTINGS = {
     recent: 1,
   },
   can_create: true,
-} as const;
+};
 
 interface FakeResponse {
   status: number;
