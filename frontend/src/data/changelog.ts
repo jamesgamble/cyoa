@@ -22,6 +22,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.19.0",
+    date: "2026-09-13",
+    sections: {
+      Added: [
+        "Management sections for every adventure: overview, story, submissions, reports, collaborators, and settings.",
+        "Submission queue tabs for pending, changes requested, approved, rejected, and withdrawn branches.",
+        "Owner and editor decisions: approve, reject with feedback, request changes, and edit-and-approve.",
+        "A reviewer role that can leave private notes and recommend approval or rejection.",
+        "Contributors can read feedback, edit a returned submission, resubmit it, and withdraw it.",
+        "Story management: edit scenes and choices, lock, unlock, hide, restore, and add owner-created branches.",
+        "Owner settings for contribution mode, anonymous contributions, branch limit, passcode, pausing, branching, and notifications.",
+        "Per-contributor standing on an adventure: trusted, approval required, or blocked.",
+        "Reader reports on scenes, with an owner queue to resolve or dismiss them.",
+      ],
+      Changed: [
+        "Submission states are now pending, changes requested, approved, rejected, and withdrawn.",
+        "Trusted contributors skip the queue; approval-required contributors always queue; blocked contributors are refused.",
+        "Pausing submissions or turning branching off closes contributions without changing the contribution mode.",
+      ],
+      Security: [
+        "Roles are derived on the server from the adventure author, collaborator roster, and administrator flag.",
+        "Each decision runs in a single transaction, so a branch cannot be approved twice or after a rejection or withdrawal.",
+        "Contribution passcodes are stored hashed, and edited text passes the same sanitiser as contributed text.",
+      ],
+    },
+  },
+  {
     version: "0.18.0",
     date: "2026-09-13",
     sections: {

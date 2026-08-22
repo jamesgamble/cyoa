@@ -2,6 +2,31 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.19.0 — 2026-09-13
+
+### Added
+- Moderation and owner controls, backed by `App\ModerationService` (`app/services/ModerationService.php`) and migration `private/migrations/0009_moderation_and_owner_controls.sql`.
+- Management sections: overview, story, submissions, reports, collaborators, and settings, served from `/api/adventures/{slug}/moderation/*`.
+- Submission queue tabs: pending, changes requested, approved, rejected, and withdrawn.
+- Owner and editor decisions: approve, reject with feedback, request changes, and edit-and-approve.
+- Reviewer role: private notes and non-binding recommendations to approve or reject.
+- Contributor workflow: read feedback, edit a changes-requested submission, resubmit, and withdraw (`PUT /api/account/contributions/{id}`, `POST /api/account/contributions/{id}/withdraw`).
+- Story management: edit scenes and choice labels, lock and unlock scenes, hide and restore scenes, and add owner-created branches.
+- Owner settings: contribution mode, anonymous contributions, branch limit, contribution passcode, pause submissions, allow branching, and notification preferences.
+- Per-user, per-adventure standing: trusted, approval required, or blocked.
+- Content reports from readers (`POST /api/adventures/{slug}/reports`) with an owner-side resolve or dismiss queue.
+
+### Changed
+- Submission states are now `pending`, `changes_requested`, `approved`, `rejected`, and `withdrawn`; the former `published` and `declined` values map to `approved` and `rejected`.
+- New submissions honour contributor standing: trusted bypasses the queue, approval-required always queues, blocked is refused.
+- Pausing submissions or disabling branching closes the contribution path without changing the contribution mode.
+
+### Security
+- Roles are always derived server-side from the adventure author, the collaborator roster, and the administrator flag; a role in the request body is ignored.
+- Every decision runs in one transaction that re-reads and claims the submission by state, so double approval, approval after rejection or withdrawal, and branch-limit bypass are all refused.
+- Contributor edits and withdrawals are matched on submission id and user id together.
+- Contribution passcodes are only ever stored hashed; edited scene bodies and guidelines pass the same sanitiser as contributed content.
+
 ## 0.18.0 — 2026-09-13
 
 ### Added
