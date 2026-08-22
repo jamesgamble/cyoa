@@ -297,12 +297,14 @@ final class BranchSubmissionService
     {
         $e = [];
 
-        $choice = trim((string) ($input['choice_text'] ?? ''));
+        // Choice text and scene titles are rendered as plain text, so
+        // any markup a contributor pastes is flattened before storage.
+        $choice = trim(HtmlSanitizer::toPlainText((string) ($input['choice_text'] ?? '')));
         if (mb_strlen($choice) < self::CHOICE_MIN || mb_strlen($choice) > self::CHOICE_MAX) {
             $e['choice_text'] = 'invalid';
         }
 
-        $title = trim((string) ($input['scene_title'] ?? ''));
+        $title = trim(HtmlSanitizer::toPlainText((string) ($input['scene_title'] ?? '')));
         if (mb_strlen($title) < self::TITLE_MIN || mb_strlen($title) > self::TITLE_MAX) {
             $e['scene_title'] = 'invalid';
         }
