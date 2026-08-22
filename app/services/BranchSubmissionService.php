@@ -523,7 +523,8 @@ final class BranchSubmissionService
     {
         $s = $this->pdo->prepare(
             'SELECT b.id, b.state, b.attribution, b.choice_text, b.scene_title,
-                    b.scene_type, b.private_note, b.created_at, b.moderator_note,
+                    b.scene_body, b.scene_type, b.private_note, b.created_at,
+                    b.moderator_note, b.feedback, b.revision,
                     a.slug AS adventure_slug, a.title AS adventure_title,
                     s.slug AS source_scene_slug, s.title AS source_scene_title
                FROM branch_submissions b
@@ -543,7 +544,14 @@ final class BranchSubmissionService
                 'attribution'       => (string) $r['attribution'],
                 'choice_text'       => (string) $r['choice_text'],
                 'scene_title'       => (string) $r['scene_title'],
+                'scene_body'        => (string) $r['scene_body'],
                 'scene_type'        => (string) $r['scene_type'],
+                'feedback'          => $r['feedback'],
+                'revision'          => (int) $r['revision'],
+                // Contributors may edit a returned submission and
+                // withdraw anything not yet decided.
+                'can_edit'          => (string) $r['state'] === 'changes_requested',
+                'can_withdraw'      => in_array((string) $r['state'], ['pending','changes_requested'], true),
                 'private_note'      => $r['private_note'],
                 'moderator_note'    => $r['moderator_note'],
                 'created_at'        => (string) $r['created_at'],
