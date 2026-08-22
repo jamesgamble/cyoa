@@ -232,9 +232,9 @@ final class ReportService
                 AND reporter_key = :k
                 AND target_type  = :t
                 AND reason       = :r
-                AND IFNULL(scene_id, 0)      = :s
-                AND IFNULL(choice_id, 0)     = :c
-                AND IFNULL(submission_id, 0) = :b
+                AND IFNULL(scene_id, 0)      = CAST(:s AS INTEGER)
+                AND IFNULL(choice_id, 0)     = CAST(:c AS INTEGER)
+                AND IFNULL(submission_id, 0) = CAST(:b AS INTEGER)
                 AND created_at >= :since
               ORDER BY id DESC LIMIT 1"
         );
