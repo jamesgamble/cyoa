@@ -298,7 +298,14 @@ export function CreateAdventure() {
     setSubmitState("failed");
   };
 
-  if (load === "loading") return <p role="status">Loading…</p>;
+  if (load === "loading") {
+    return (
+      <section>
+        <h1>Create an adventure</h1>
+        <p role="status">Loading…</p>
+      </section>
+    );
+  }
   if (load === "unauth") {
     return (
       <section>
