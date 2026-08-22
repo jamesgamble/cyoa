@@ -299,7 +299,7 @@ export function SubmitBranch() {
         {context.scene.title}”.
       </p>
       <p data-testid="branch-mode">
-        <Badge tone={context.contribution_mode === "immediate" ? "success" : "neutral"}>
+        <Badge tone={context.contribution_mode === "immediate" ? "published" : "review"}>
           {context.contribution_mode === "immediate"
             ? "Publishes immediately"
             : context.contribution_mode === "approval"
@@ -312,44 +312,44 @@ export function SubmitBranch() {
       </p>
 
       {closed && (
-        <Alert tone="warning" data-testid="branch-closed">
+        <div data-testid="branch-closed"><Alert tone="warning">
           This adventure is not accepting new branches.
-        </Alert>
+        </Alert></div>
       )}
       {!closed && needsSignIn && (
-        <Alert tone="warning" data-testid="branch-signin">
+        <div data-testid="branch-signin"><Alert tone="warning">
           This adventure accepts contributions from signed-in accounts only.{" "}
           <Link to={`/login?redirect=/adventure/${slug}/branch`}>Sign in</Link> to continue.
-        </Alert>
+        </Alert></div>
       )}
       {!closed && blocked && (
-        <Alert tone="danger" data-testid="branch-blocked">
+        <div data-testid="branch-blocked"><Alert tone="danger">
           You cannot contribute to this adventure.
-        </Alert>
+        </Alert></div>
       )}
       {!closed && !blocked && full && (
-        <Alert tone="warning" data-testid="branch-full">
+        <div data-testid="branch-full"><Alert tone="warning">
           This scene already has all the branches it allows.
-        </Alert>
+        </Alert></div>
       )}
       {!closed && context.scene.locked && (
-        <Alert tone="warning" data-testid="branch-locked">
+        <div data-testid="branch-locked"><Alert tone="warning">
           This scene has been locked, so it accepts no further branches.
-        </Alert>
+        </Alert></div>
       )}
       {!closed && context.rate_limited && (
-        <Alert tone="warning" data-testid="branch-rate-limited">
+        <div data-testid="branch-rate-limited"><Alert tone="warning">
           You have submitted several branches recently. Try again in an hour.
-        </Alert>
+        </Alert></div>
       )}
       {outcome && (
-        <Alert tone="danger" data-testid="branch-outcome">
+        <div data-testid="branch-outcome"><Alert tone="danger">
           {OUTCOME_MESSAGES[outcome] ?? "Your branch could not be submitted."}
-        </Alert>
+        </Alert></div>
       )}
 
       {context.adventure.writing_guidelines.trim() !== "" && (
-        <WarningPanel title="Writing guidelines" data-testid="branch-guidelines">
+        <WarningPanel title="Writing guidelines">
           <p>{context.adventure.writing_guidelines}</p>
         </WarningPanel>
       )}
@@ -393,11 +393,13 @@ export function SubmitBranch() {
               </ValidationMessage>
             )}
 
+            <p className="bp-label" id="scene-body-label">Scene text</p>
             <RichTextEditor
-              label="Scene text"
               value={draft.sceneBody}
               onChange={(html) => set("sceneBody", html)}
-              maxLength={BODY_MAX}
+              ariaLabelledBy="scene-body-label"
+              maxPlainTextLength={BODY_MAX}
+              data-testid="branch-body-editor"
             />
             {errors["scene_body"] && (
               <ValidationMessage id="scene-body-error" tone="error">
@@ -445,7 +447,7 @@ export function SubmitBranch() {
               value={draft.privateNote}
               maxLength={NOTE_MAX}
               onChange={(e) => set("privateNote", e.target.value)}
-              hint="Only the adventure's team reads this. It is never published."
+              help="Only the adventure's team reads this. It is never published."
               error={errors["private_note"]}
             />
           </FormSection>
