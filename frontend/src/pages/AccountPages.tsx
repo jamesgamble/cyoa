@@ -361,6 +361,7 @@ export function AccountAdventuresPage() {
   return (
     <section aria-labelledby="adv-h">
       <h1 id="adv-h">My adventures</h1>
+      <p><Link to="/start">Create a new adventure</Link></p>
       {rows && rows.length === 0 ? (
         <p>You haven't started an adventure yet. <Link to="/start">Begin one</Link>.</p>
       ) : (

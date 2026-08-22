@@ -23,6 +23,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 
 use App\AccountService;
+use App\AdventureService;
 use App\AdminSession;
 use App\AuthService;
 use App\Csrf;
@@ -56,6 +57,17 @@ if ($method === 'POST' && $route === '/register') {
     handle_register();
     exit;
 }
+
+// ── Adventure creation (v0.16.0) ───────────────────────────────────
+if ($route === '/adventures/creation-settings' && $method === 'GET') {
+    handle_creation_settings();
+    exit;
+}
+if ($route === '/adventures' && $method === 'POST') {
+    handle_adventure_create();
+    exit;
+}
+
 
 // ── Authentication (login, logout, verify, reset, change) ──────────
 if (strncmp($route, '/auth', 5) === 0) {
@@ -697,3 +709,96 @@ function handle_account(string $method, string $tail): void
 
 
 
+
+/**
+ * GET /api/adventures/creation-settings (v0.16.0).
+ *
+ * Requires a live session. Returns the templates, the enumerated
+ * option lists the wizard renders, and the caller's remaining budget
+ * so the UI can disable creation before a doomed submit.
+ */
+function handle_creation_settings(): void
+{
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] creation settings db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+    $userId = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+
+    $svc = new AdventureService($pdo);
+    $limits = $svc->creationLimits($userId);
+    echo json_encode([
+        'templates'          => AdventureService::templates(),
+        'genres'             => AdventureService::GENRES,
+        'content_ratings'    => AdventureService::RATINGS,
+        'visibilities'       => AdventureService::VISIBILITIES,
+        'contribution_modes' => AdventureService::CONTRIBUTION_MODES,
+        'statuses'           => AdventureService::STATUSES,
+        'max_branches_min'   => AdventureService::MAX_BRANCHES_MIN,
+        'max_branches_max'   => AdventureService::MAX_BRANCHES_MAX,
+        'limits'             => $limits,
+        'can_create'         => $limits['owned'] < $limits['max_adventures_per_user']
+                                && $limits['recent'] < $limits['adventures_per_user_per_hour'],
+    ]);
+}
+
+/**
+ * POST /api/adventures (v0.16.0).
+ *
+ * Session-authenticated and CSRF-protected. The owner is always the
+ * authenticated caller — any author id in the body is ignored. The
+ * whole write runs under the file write lock so the adventure + its
+ * opening scene commit as one serialized transaction.
+ */
+function handle_adventure_create(): void
+{
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] adventure create db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+    $userId = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+    if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+
+    $body = read_json_body();
+    $ip   = client_ip();
+
+    try {
+        $lock = new WriteLock();
+        $result = $lock->withLock(static function () use ($pdo, $userId, $body, $ip): array {
+            return (new AdventureService($pdo))->create($userId, $body, $ip);
+        });
+    } catch (\Throwable $e) {
+        error_log('[bp] adventure create error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    [$outcome, $errors, $adventure] = $result;
+    switch ($outcome) {
+        case AdventureService::OK:
+            http_response_code(201);
+            echo json_encode(['status' => 'ok', 'adventure' => $adventure]);
+            return;
+        case AdventureService::FORBIDDEN:
+            respond_error(403, 'not_active');
+            return;
+        case AdventureService::RATE_LIMITED:
+            respond_error(429, 'rate_limited');
+            return;
+        case AdventureService::LIMIT_REACHED:
+            respond_error(409, 'limit_reached');
+            return;
+        default:
+            http_response_code(422);
+            echo json_encode(['error' => 'invalid', 'fields' => $errors]);
+            return;
+    }
+}

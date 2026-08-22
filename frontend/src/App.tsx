@@ -6,10 +6,11 @@ import { ManageLayout } from "./layouts/ManageLayout";
 import { MasterLayout } from "./layouts/MasterLayout";
 import { NotFoundState } from "./states";
 import {
-  Home, Discover, Start, Login, Register,
+  Home, Discover, Login, Register,
   ForgotPassword, ResetPassword, VerifyEmail, ChangePassword,
 } from "./pages/public";
 import { Adventure } from "./pages/Adventure";
+import { CreateAdventure } from "./pages/CreateAdventure";
 import { Reader } from "./pages/Reader";
 import { Help, HelpTopic } from "./pages/help";
 import { ChangelogIndex, ChangelogVersion } from "./pages/changelog";
@@ -31,7 +32,7 @@ export default function App() {
         <Route path="/adventure/:slug" element={<Adventure />} />
         <Route path="/adventure/:slug/read" element={<Reader />} />
         <Route path="/adventure/:slug/read/:sceneId" element={<Reader />} />
-        <Route path="/start" element={<Start />} />
+        <Route path="/start" element={<CreateAdventure />} />
         <Route path="/help" element={<Help />} />
         <Route path="/help/:topic" element={<HelpTopic />} />
         <Route path="/changelog" element={<ChangelogIndex />} />

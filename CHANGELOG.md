@@ -2,6 +2,33 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.16.0 — 2026-07-19
+
+### Added
+- Adventure creation for signed-in, active accounts. `POST /api/adventures` and `GET /api/adventures/creation-settings`, backed by `App\AdventureService` (`app/services/AdventureService.php`).
+- Five-step creation wizard at `/start` (`frontend/src/pages/CreateAdventure.tsx`): Basics, Opening scene, Contributions, Writing guidelines, Review.
+- Four templates — `solo`, `open-community`, `moderated-community`, `private-group`. Templates set visibility, contribution mode, anonymous contributions, and the per-scene branch limit; they never write story content and never bypass validation.
+- Migration `private/migrations/0006_adventure_creation.sql`: `adventures.anonymous_contributions`, `adventures.max_branches_per_scene`, `adventures.contribution_passcode_hash`, `adventures.writing_guidelines_plain`, `adventures.template_key`, `scenes.body_plain`, and the `adventure_creation_attempts` table. Default settings `max_adventures_per_user` (20) and `adventures_per_user_per_hour` (5).
+- Draft/publish choice on the Review step. A draft keeps its opening scene in the `draft` state.
+
+### Changed
+- `/start` is now the working wizard; the placeholder `Start` page has been removed.
+- Help topic "Creating an adventure" rewritten to describe shipped behaviour.
+
+### Security
+- The adventure row, its opening scene, and its content warnings are written inside one transaction held under the `flock()` write lock. Any failure rolls back the whole unit, and the rate-limit attempt row is only recorded on commit.
+- The owner is always the authenticated session user; `author_id`/`owner_id` in the request body are ignored.
+- Creation requires an `active` user and a valid double-submit CSRF token.
+- Per-user adventure caps and the hourly creation limit are enforced server-side before any write.
+- Scene text and writing guidelines are re-sanitized through `App\HtmlSanitizer` on the server; plain-text projections (`body_plain`, `writing_guidelines_plain`) are derived for limits and search.
+- Contribution passcodes are stored as password hashes only.
+
+### Tests
+- `tests/php/adventure_creation_test.php` — creation, ownership, authorization, validation, sanitization, templates, limits, rollback, and rate-limit recording.
+- `frontend/src/__tests__/adventure-creation.test.tsx` — wizard steps, template behaviour, validation, limits, unauthenticated state, and submit payload.
+
+
+
 ## 0.15.0 — 2026-07-19
 
 ### Added

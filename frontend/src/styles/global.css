@@ -1958,3 +1958,78 @@ html[data-contrast="high"] body::before { display: none; }
 .bp-rte__help { font-family: var(--bp-font-sans); font-size: 0.78rem; color: var(--bp-ink-2); margin: 0; }
 .bp-rte__count { font-family: var(--bp-font-sans); font-size: 0.78rem; color: var(--bp-ink-2); margin: 0; text-align: right; }
 .bp-rte__count--over { color: var(--bp-accent); font-weight: 600; }
+
+
+/* ── Creation wizard (v0.16.0) ─────────────────────────────────── */
+
+.bp-create__step-heading {
+  font-size: 1.15rem;
+  margin: var(--bp-s-6) 0 var(--bp-s-4);
+}
+.bp-create__step-heading:focus-visible {
+  outline: 2px solid var(--bp-gold);
+  outline-offset: 3px;
+}
+
+.bp-inline-add {
+  display: flex;
+  gap: var(--bp-s-3);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.bp-inline-add .bp-input { flex: 1 1 16rem; }
+
+.bp-tag-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--bp-s-3) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bp-s-3);
+}
+.bp-tag-list li { display: inline-flex; align-items: center; gap: 0.25rem; }
+.bp-tag-remove {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--bp-muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.15rem 0.3rem;
+}
+.bp-tag-remove:hover { color: var(--bp-red); }
+
+.bp-review {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) 1fr;
+  gap: var(--bp-s-3) var(--bp-s-5);
+  margin: 0;
+}
+.bp-review dt {
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+  color: var(--bp-muted);
+}
+.bp-review dd { margin: 0; }
+
+.bp-wizard-actions {
+  display: flex;
+  gap: var(--bp-s-4);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: var(--bp-s-6);
+}
+
+@media (max-width: 40rem) {
+  .bp-review { grid-template-columns: 1fr; gap: 0.15rem; }
+  .bp-review dd { margin-bottom: var(--bp-s-3); }
+  .bp-wizard-actions > * { flex: 1 1 100%; }
+}
+
+.bp-lede {
+  font-size: var(--bp-fs-md);
+  color: var(--bp-ink-2);
+  max-width: 60ch;
+}
+.bp-link-quiet { color: var(--bp-muted); }
+.bp-link-quiet:hover { color: var(--bp-red); }
