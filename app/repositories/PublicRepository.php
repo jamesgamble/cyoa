@@ -152,6 +152,10 @@ final class PublicRepository
         }
         $summary = $this->summarizeAdventure($row);
         $summary['contentWarnings'] = $this->warningsFor((int) $row['id']);
+        // v0.21.0 — the structured warning list (canonical code, label,
+        // optional detail) drives the reader-facing consent gate.
+        $summary['contentWarningDetails'] = (new \App\ReportService($this->pdo))
+            ->warnings((int) $row['id']);
         $summary['writingGuidelines'] = $row['writing_guidelines'] !== null
             ? (string) $row['writing_guidelines'] : null;
         $summary['description'] = $row['description'] !== null
