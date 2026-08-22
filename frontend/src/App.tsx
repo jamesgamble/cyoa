@@ -12,9 +12,11 @@ import {
 import { Adventure } from "./pages/Adventure";
 import { CreateAdventure } from "./pages/CreateAdventure";
 import { Reader } from "./pages/Reader";
+import { Preview } from "./pages/Preview";
+import { ManageAdventure } from "./pages/ManageAdventure";
 import { Help, HelpTopic } from "./pages/help";
 import { ChangelogIndex, ChangelogVersion } from "./pages/changelog";
-import { Manage, MasterLogin, Master, MasterEmailSettings, MasterEmailQueue } from "./pages/protected";
+import { MasterLogin, Master, MasterEmailSettings, MasterEmailQueue } from "./pages/protected";
 import {
   AccountOverview, AccountProfilePage, AccountSecurityPage,
   AccountNotificationsPage, AccountAdventuresPage,
@@ -30,6 +32,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/discover" element={<Discover />} />
         <Route path="/adventure/:slug" element={<Adventure />} />
+        <Route path="/adventure/:slug/preview" element={<Preview />} />
         <Route path="/adventure/:slug/read" element={<Reader />} />
         <Route path="/adventure/:slug/read/:sceneId" element={<Reader />} />
         <Route path="/start" element={<CreateAdventure />} />
@@ -56,7 +59,7 @@ export default function App() {
         <Route path="/account/bookmarks" element={<AccountBookmarksPage />} />
       </Route>
       <Route element={<ManageLayout />}>
-        <Route path="/manage/:slug" element={<Manage />} />
+        <Route path="/manage/:slug" element={<ManageAdventure />} />
       </Route>
       <Route element={<MasterLayout />}>
         <Route path="/master/login" element={<MasterLogin />} />

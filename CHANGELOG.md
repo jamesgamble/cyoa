@@ -2,6 +2,28 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.17.0 — 2026-08-22
+
+### Added
+- Publication workflow endpoints backed by `App\PublicationService` (`app/services/PublicationService.php`): `GET /api/adventures/{slug}/manage`, `GET /api/adventures/{slug}/preview`, `PUT /api/adventures/{slug}/draft`, `POST /api/adventures/{slug}/status`.
+- Status actions: publish, unpublish, set in progress, set complete, set on hold, and archive.
+- Working manage console at `/manage/:slug` (`frontend/src/pages/ManageAdventure.tsx`) with draft saving, status controls, and the activity log.
+- Private preview at `/adventure/:slug/preview` (`frontend/src/pages/Preview.tsx`) showing every scene, unpublished ones included.
+- Confirmation dialogs before publish, unpublish, and archive.
+- Migration `private/migrations/0007_publication_workflow.sql`: `adventure_collaborators` (owner/editor roster, backfilled for existing adventures) and the append-only `adventure_activity` log.
+
+### Changed
+- Publishing requires a valid opening scene (start scene with a title and body text); publishing also publishes that opening scene.
+- Archived adventures are read-only — no draft saves and no further status changes.
+- Unpublishing returns the adventure to draft and deletes nothing: scenes, choices, warnings, and settings are preserved.
+
+### Security
+- Drafts and previews are visible only to the adventure author, its collaborators, and administrators. Roles are derived server-side from the session; a role or owner id in the request body is ignored.
+- Preview responses send `X-Robots-Tag: noindex, nofollow`, and the preview page adds a matching robots meta tag, so preview links are never indexed.
+- Draft saves and status changes require a valid double-submit CSRF token and run under the `flock()` write lock.
+- Every accepted status change writes its activity record inside the same transaction as the state update; rejected changes write nothing.
+- Preview scene bodies are re-sanitized through `App\HtmlSanitizer` before they leave the server.
+
 ## 0.16.0 — 2026-07-19
 
 ### Added

@@ -25,7 +25,7 @@ describe("routing", () => {
     ["/login", /Sign in/i],
     ["/register", /Create an account/i],
     ["/account", /Account/i],
-    ["/manage/example-adventure", /Manage example-adventure/i],
+    ["/manage/example-adventure", /Manage adventure/i],
     ["/master/login", /Master sign in/i],
     ["/master", /Master administration/i],
   ];

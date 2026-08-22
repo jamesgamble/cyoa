@@ -22,6 +22,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.17.0",
+    date: "2026-08-22",
+    sections: {
+      Added: [
+        "Draft, preview, and publishing controls on the manage page: save a draft, open a private preview, publish, unpublish, set in progress, set complete, set on hold, and archive.",
+        "A private preview of the reader experience, including unpublished scenes. Preview requires authorization and is never indexed by search engines.",
+        "Confirmation dialogs before publishing, unpublishing, and archiving.",
+        "An activity record for every accepted status change, written in the same transaction as the change and shown on the manage page.",
+        "A collaborator roster so an owner can grant editors the same draft, preview, and publishing access.",
+      ],
+      Changed: [
+        "Publishing now requires a valid opening scene with a title and text.",
+        "Archived adventures are read-only: no edits and no further status changes. Unpublishing only changes status and never deletes scenes, choices, or settings.",
+        "The manage page is a working console rather than a placeholder.",
+      ],
+    },
+  },
+  {
     version: "0.16.0",
     date: "2026-07-19",
     sections: {
