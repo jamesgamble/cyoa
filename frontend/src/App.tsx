@@ -24,6 +24,8 @@ import {
   AccountContributionsPage, AccountBookmarksPage,
 } from "./pages/AccountPages";
 import { DesignSystem } from "./pages/DesignSystem";
+import { Invitation } from "./pages/Invitation";
+import { AccountInboxPage } from "./pages/Inbox";
 
 export default function App() {
   return (
@@ -48,11 +50,13 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify" element={<VerifyEmail />} />
         <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/invitations/:token" element={<Invitation />} />
         <Route path="/design-system" element={<DesignSystem />} />
         <Route path="*" element={<NotFoundState />} />
       </Route>
       <Route element={<AccountLayout />}>
         <Route path="/account" element={<AccountOverview />} />
+        <Route path="/account/inbox" element={<AccountInboxPage />} />
         <Route path="/account/profile" element={<AccountProfilePage />} />
         <Route path="/account/security" element={<AccountSecurityPage />} />
         <Route path="/account/notifications" element={<AccountNotificationsPage />} />

@@ -2033,3 +2033,42 @@ html[data-contrast="high"] body::before { display: none; }
 }
 .bp-link-quiet { color: var(--bp-muted); }
 .bp-link-quiet:hover { color: var(--bp-red); }
+
+/* ── Collaborator roster (v0.20.0) ───────────────────────────────── */
+.bp-roster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bp-s-3);
+}
+
+.bp-roster__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bp-s-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--bp-s-3) 0;
+  border-bottom: var(--bp-border-hair);
+}
+
+.bp-roster__item:last-child { border-bottom: 0; }
+
+.bp-roster__meta {
+  color: var(--bp-muted);
+  font-size: var(--bp-fs-sm);
+}
+
+.bp-roster__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bp-s-2);
+  align-items: flex-end;
+}
+
+@media (max-width: 40rem) {
+  .bp-roster__item { flex-direction: column; align-items: stretch; }
+  .bp-roster__actions { width: 100%; }
+}
