@@ -56,7 +56,7 @@ final class BPReportsTest
         $this->svc        = new ReportService($this->pdo);
         $this->moderation = new ModerationService($this->pdo);
 
-        [$outcome, , $created] = (new AdventureService($this->pdo))->create($this->ownerId, [
+        [$outcome, $e2, $created] = (new AdventureService($this->pdo))->create($this->ownerId, [
             'title'          => 'The Salt Road',
             'description'    => 'A caravan crosses a drying sea bed and finds a door.',
             'genre'          => 'fantasy',
@@ -67,7 +67,7 @@ final class BPReportsTest
             'status'             => 'published',
             'contribution_mode'  => 'open',
         ], '127.0.0.1');
-        assert_same(AdventureService::OK, $outcome);
+        assert_same(AdventureService::OK, $outcome, json_encode($e2 ?? []));
         $this->slug        = (string) $created['slug'];
         $this->adventureId = (int) $created['id'];
 
