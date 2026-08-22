@@ -759,3 +759,93 @@ export async function saveAdventureDraft(
     `/adventures/${encodeURIComponent(slug)}/draft`, "PUT", input,
   );
 }
+
+
+/* ------------------------------------------------------------------ */
+/* Branch submissions (v0.18.0)                                        */
+/*                                                                     */
+/* The server owns every rule below — mode, passcode, branch limit,    */
+/* rate limit, blocks, sanitisation. `fetchBranchContext` reports what */
+/* the form should show; `submitBranch` re-checks all of it anyway.    */
+/* ------------------------------------------------------------------ */
+
+export type ContributionMode = "immediate" | "approval" | "closed";
+export type BranchAttribution = "username" | "display_name" | "anonymous";
+export type BranchSceneType = "story" | "ending";
+
+export interface BranchContext {
+  adventure: { slug: string; title: string; state: string; writing_guidelines: string };
+  scene: { id: number; slug: string; title: string; published: boolean; locked: boolean };
+  contribution_mode: ContributionMode;
+  contributions_enabled: boolean;
+  requires_passcode: boolean;
+  allows_anonymous: boolean;
+  signed_in: boolean;
+  can_submit: boolean;
+  blocked: boolean;
+  rate_limited: boolean;
+  branch_limit: { limit: number; used: number; remaining: number };
+  attribution_options: BranchAttribution[];
+  limits: { choice_max: number; title_max: number; body_max: number; note_max: number };
+}
+
+export interface BranchDraftInput {
+  choice_text: string;
+  scene_title: string;
+  scene_body: string;
+  scene_type: BranchSceneType;
+  attribution: BranchAttribution;
+  private_note?: string;
+  passcode?: string;
+  /** Honeypot — always submitted empty by the real form. */
+  website?: string;
+}
+
+export interface BranchSubmissionResult {
+  status: string;
+  submission_id: number;
+  state: "published" | "pending";
+  mode: ContributionMode;
+  published: boolean;
+  scene_id: number | null;
+  choice_id: number | null;
+  attribution: BranchAttribution;
+}
+
+export interface ContributionHistoryEntry {
+  id: number;
+  state: string;
+  attribution: BranchAttribution;
+  choice_text: string;
+  scene_title: string;
+  scene_type: BranchSceneType;
+  private_note: string | null;
+  moderator_note: string | null;
+  created_at: string;
+  adventure_slug: string;
+  adventure_title: string;
+  source_scene_slug: string;
+  source_scene_title: string;
+}
+
+export async function fetchBranchContext(
+  slug: string,
+  sceneRef: string,
+  signal?: AbortSignal,
+): Promise<BranchContext | null> {
+  return getJson<BranchContext>(
+    `/adventures/${encodeURIComponent(slug)}/scenes/${encodeURIComponent(sceneRef)}/branch`,
+    signal,
+  );
+}
+
+export function submitBranch(slug: string, sceneRef: string, input: BranchDraftInput) {
+  return accountMutate<BranchSubmissionResult>(
+    `/adventures/${encodeURIComponent(slug)}/scenes/${encodeURIComponent(sceneRef)}/branch`,
+    "POST",
+    input,
+  );
+}
+
+export const fetchContributionHistory = () =>
+  accountGet<{ contributions: ContributionHistoryEntry[] }>("/account/contributions");

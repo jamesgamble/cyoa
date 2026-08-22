@@ -8,12 +8,13 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { UnauthorizedState } from "../states";
+import { Badge } from "../components/Badge";
 import { useHelpContext } from "../components/GlobalHelp";
 import {
   fetchAccountProfile,
   fetchAccountSecurity,
   fetchAccountAdventures,
-  fetchAccountContributions,
+  fetchContributionHistory,
   fetchAccountBookmarks,
   updateAccountProfile,
   updateAccountNotifications,
@@ -26,6 +27,7 @@ import {
   type AccountSession,
   type AccountAdventure,
   type AccountBookmark,
+  type ContributionHistoryEntry,
 } from "../lib/apiClient";
 import { readLocalProgress } from "../hooks/useLocalProgress";
 
@@ -392,10 +394,12 @@ export function AccountAdventuresPage() {
 export function AccountContributionsPage() {
   useHelpContext({ section: "account" });
   const [state, setState] = useState<"loading" | "ready" | "unauth">("loading");
+  const [rows, setRows] = useState<ContributionHistoryEntry[]>([]);
   useEffect(() => {
     void (async () => {
-      const r = await fetchAccountContributions();
+      const r = await fetchContributionHistory();
       if (r.status === 401) { setState("unauth"); return; }
+      setRows((r.contributions ?? []) as ContributionHistoryEntry[]);
       setState("ready");
     })();
   }, []);
@@ -404,7 +408,44 @@ export function AccountContributionsPage() {
   return (
     <section aria-labelledby="contrib-h">
       <h1 id="contrib-h">Contributions</h1>
-      <p>You haven't submitted a contribution yet. Authoring flows arrive in a later release.</p>
+      {rows.length === 0 ? (
+        <p data-testid="contributions-empty">
+          You haven't submitted a contribution yet. Open any adventure that accepts
+          branches and choose “Add a branch”.
+        </p>
+      ) : (
+        <ul className="bp-list" data-testid="contributions-list">
+          {rows.map((row) => (
+            <li key={row.id} data-testid="contribution-item">
+              <p>
+                <Link to={`/adventure/${row.adventure_slug}`}>{row.adventure_title}</Link>{" "}
+                <Badge tone={row.state === "published" ? "published" : row.state === "declined" ? "archived" : "review"}>
+                  {row.state === "published"
+                    ? "Published"
+                    : row.state === "declined"
+                      ? "Declined"
+                      : row.state === "changes_requested"
+                        ? "Changes requested"
+                        : "Awaiting review"}
+                </Badge>
+              </p>
+              <p>
+                “{row.choice_text}” → {row.scene_title}
+                {row.scene_type === "ending" ? " (ending)" : ""}
+              </p>
+              <p className="bp-muted">
+                From “{row.source_scene_title}” · credited as{" "}
+                {row.attribution === "anonymous"
+                  ? "Anonymous"
+                  : row.attribution === "display_name"
+                    ? "your display name"
+                    : "your username"}
+              </p>
+              {row.moderator_note && <p data-testid="contribution-note">{row.moderator_note}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

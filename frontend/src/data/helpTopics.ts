@@ -114,12 +114,16 @@ export const HELP_TOPICS: HelpTopic[] = [
     slug: "contributing",
     title: "Contributing a branch",
     summary:
-      "How new branches will attach to existing stories, and what the three contribution states mean.",
+      "How to add a branch to another writer's adventure, how attribution works, and what can stop a submission.",
     body: [
-      "Contributing a branch means writing a new scene (and, if you like, further scenes and an ending) that attaches to an existing scene in someone else's adventure. The contribution flow is planned for a later release.",
-      "Every adventure declares a contribution status: Immediate publishing means approved contributors publish directly; Approval required means every contribution is queued for the creator's review; Closed means the adventure is not accepting new branches at all.",
-      "The Add a branch action appears in the reader when the adventure's contribution status is not Closed. Following the link today opens a placeholder page that describes the shape of the coming flow.",
-      "Contributions are not overwrites. A branch extends a story from an existing scene; the scene you branched from is not modified, and the original path stays intact.",
+      "Contributing a branch means writing a new scene that attaches to a published scene in someone else's adventure, reached through a new numbered choice. Open a scene in the reader and choose Add a branch.",
+      "Every adventure declares a contribution status. Immediate publishing writes your branch straight into the story. Approval required queues it for the adventure's team to review before readers see it. Closed means the adventure accepts no new branches, and the form is not offered.",
+      "A branch form asks for the choice text readers will click, a title and body for the next scene, whether that scene continues the story or ends it, how you would like to be credited, and an optional private note to the team. If the creator configured a contribution passcode, you must supply it.",
+      "Public attribution is a display preference: your username, your display name, or Anonymous. Choosing Anonymous hides your name from readers only \u2014 the adventure's moderators always see who submitted the branch, so anonymity is never a way to contribute without accountability.",
+      "Several rules can stop a submission: the adventure must be accepting contributions, the scene you are branching from must be published and unlocked, the scene must have a free branch slot, you must not be blocked from that adventure, the passcode must match, and there are hourly limits on how many branches one account or one connection may submit. A choice that repeats one already leaving that scene is refused as a duplicate.",
+      "Your draft autosaves in this browser as you type, so closing the tab or a refused submission does not lose your writing. The draft is cleared once the branch is accepted.",
+      "Scene text uses the restricted editor. Links, images, styles, and custom HTML are removed as you type and again on the server, so a contribution can never change how a story looks.",
+      "Contributions are not overwrites. A branch extends a story from an existing scene; the scene you branched from is not modified, and the original path stays intact. Every submission you make appears under Contributions in your account.",
     ],
     related: ["reading", "creating", "moderation"],
     match: {

@@ -22,6 +22,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.18.0",
+    date: "2026-09-13",
+    sections: {
+      Added: [
+        "Add a branch to someone else's adventure: write the choice readers click and the scene it leads to, mark it as a continuation or an ending, choose how you are credited, and leave a private note for the adventure's team.",
+        "A contribution passcode field on adventures whose creator configured one.",
+        "Drafts autosave in your browser as you type, per adventure and per scene, and are cleared once the branch is accepted.",
+        "Contribution history in your account, showing each submission and whether it is published or awaiting review.",
+      ],
+      Changed: [
+        "Adventures that publish immediately add your branch to the story straight away; adventures that require approval queue it for review; closed adventures do not offer the form.",
+        "A branch waiting for review holds one of the scene's branch slots, so a scene cannot be over-filled while its queue is pending.",
+      ],
+      Security: [
+        "Choosing Anonymous hides your name from readers only. The adventure's moderators always see who submitted a branch.",
+        "Contribution rules — availability, passcode, branch limits, block lists, hourly limits, duplicate choices, and length limits — are enforced on the server, not in the browser.",
+        "Scene text is sanitized before storage, so a contribution can never change how a story looks.",
+      ],
+    },
+  },
+  {
     version: "0.17.0",
     date: "2026-08-22",
     sections: {
