@@ -37,6 +37,7 @@ use App\Migrator;
 use App\ModerationService;
 use App\PublicationService;
 use App\PublicRepository;
+use App\ReportService;
 use App\RegistrationService;
 use App\SettingsRepository;
 use App\SessionRepository;
@@ -85,6 +86,12 @@ if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/moderation(/.*)?$#', $route, $mm)
 }
 if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/reports$#', $route, $rm) && $method === 'POST') {
     handle_report_create($rm[1]);
+    exit;
+}
+
+// ── Reports and content warnings (v0.21.0) ─────────────────────────
+if (preg_match('#^/reports/(\d+)/privacy$#', $route, $pv) && $method === 'POST') {
+    handle_report_privacy((int) $pv[1]);
     exit;
 }
 
@@ -1137,8 +1144,22 @@ function handle_moderation(string $method, string $slug, string $tail): void
             }
             if ($tail === '/reports') {
                 $state = isset($_GET['state']) ? (string) $_GET['state'] : 'open';
-                [$o, $d] = $svc->reports($slug, $userId, $isAdmin, $state);
-                moderation_respond($o, $d);
+                [$o, $d] = (new ReportService($pdo))->queue($slug, $userId, $isAdmin, $state);
+                report_respond($o, $d);
+                return;
+            }
+            if ($tail === '/warnings') {
+                $adv = $svc->adventureBySlug($slug);
+                if ($adv === null) { respond_error(404, 'not_found'); return; }
+                $role = $svc->roleFor((int) $adv['id'], $userId, $isAdmin);
+                if (!$svc->canView($role)) { respond_error(403, 'forbidden'); return; }
+                echo json_encode([
+                    'status'   => 'ok',
+                    'codes'    => ReportService::WARNING_CODES,
+                    'labels'   => ReportService::WARNING_LABELS,
+                    'warnings' => (new ReportService($pdo))->warnings((int) $adv['id']),
+                    'can_edit' => $svc->canDecide($role),
+                ]);
                 return;
             }
             respond_error(404, 'not_found');
@@ -1227,6 +1248,26 @@ function handle_moderation(string $method, string $slug, string $tail): void
                 static fn () => $svc->setCollaborator($slug, $userId, $isAdmin, $target, $role)
             );
             moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'POST' && preg_match('#^/reports/(\d+)/act$#', $tail, $m)) {
+            $id     = (int) $m[1];
+            $action = (string) ($body['action'] ?? '');
+            $note   = (string) ($body['note'] ?? '');
+            $reports = new ReportService($pdo);
+            [$o, $d] = $lock->withLock(
+                static fn () => $reports->act($slug, $id, $userId, $isAdmin, $action, $note)
+            );
+            report_respond($o, $d);
+            return;
+        }
+        if ($method === 'PUT' && $tail === '/warnings') {
+            $items = isset($body['warnings']) && is_array($body['warnings']) ? $body['warnings'] : [];
+            $reports = new ReportService($pdo);
+            [$o, $d] = $lock->withLock(
+                static fn () => $reports->setWarnings($slug, $userId, $isAdmin, $items)
+            );
+            report_respond($o, $d);
             return;
         }
         if ($method === 'POST' && preg_match('#^/reports/(\d+)/resolve$#', $tail, $m)) {
