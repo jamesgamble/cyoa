@@ -31,7 +31,7 @@ import { Alert } from "../components/Alert";
 import { InlineHelp } from "../components/InlineHelp";
 import { UnauthorizedState, ServiceUnavailableState } from "../states";
 import { useHelpContext } from "../components/GlobalHelp";
-import { sanitizeRichText, richTextToPlainText } from "../lib/richTextSanitizer";
+import { sanitizeRichTextHtml, richTextToPlainText } from "../lib/richTextSanitizer";
 import {
   fetchCreationSettings,
   createAdventure,
@@ -268,13 +268,13 @@ export function CreateAdventure() {
       content_warnings: draft.content_warnings,
       visibility: draft.visibility,
       opening_title: draft.opening_title.trim(),
-      opening_body: sanitizeRichText(draft.opening_body),
+      opening_body: sanitizeRichTextHtml(draft.opening_body),
       status: draft.status,
       contribution_mode: draft.contribution_mode,
       anonymous_contributions: draft.anonymous_contributions,
       max_branches_per_scene: draft.max_branches_per_scene,
       contribution_passcode: draft.contribution_passcode,
-      writing_guidelines: sanitizeRichText(draft.writing_guidelines),
+      writing_guidelines: sanitizeRichTextHtml(draft.writing_guidelines),
     });
     if (result.outcome === "ok" && result.adventure) {
       navigate(`/manage/${result.adventure.slug}`);
@@ -388,7 +388,9 @@ export function CreateAdventure() {
               aria-invalid={errors.title ? "true" : undefined}
               onChange={(e) => set("title", e.target.value)}
             />
-            <ValidationMessage tone="error" message={label("title", errors.title)} />
+            {label("title", errors.title) ? (
+              <ValidationMessage tone="error">{label("title", errors.title)}</ValidationMessage>
+            ) : null}
           </div>
 
           <TextArea
@@ -485,7 +487,9 @@ export function CreateAdventure() {
               aria-invalid={errors.opening_title ? "true" : undefined}
               onChange={(e) => set("opening_title", e.target.value)}
             />
-            <ValidationMessage tone="error" message={label("opening_title", errors.opening_title)} />
+            {label("opening_title", errors.opening_title) ? (
+              <ValidationMessage tone="error">{label("opening_title", errors.opening_title)}</ValidationMessage>
+            ) : null}
           </div>
 
           <div className="bp-field">
@@ -498,7 +502,9 @@ export function CreateAdventure() {
               placeholder="The lantern swings once, and the gate opens…"
               data-testid="opening-body-editor"
             />
-            <ValidationMessage tone="error" message={label("opening_body", errors.opening_body)} />
+            {label("opening_body", errors.opening_body) ? (
+              <ValidationMessage tone="error">{label("opening_body", errors.opening_body)}</ValidationMessage>
+            ) : null}
             <InlineHelp>
               The editor allows paragraphs, emphasis, headings, lists, quotes, and
               rules only. Pasted links, images, styles, and custom HTML are removed
@@ -567,10 +573,9 @@ export function CreateAdventure() {
               aria-invalid={errors.max_branches_per_scene ? "true" : undefined}
               onChange={(e) => set("max_branches_per_scene", Number(e.target.value))}
             />
-            <ValidationMessage
-              tone="error"
-              message={label("max_branches_per_scene", errors.max_branches_per_scene)}
-            />
+            {label("max_branches_per_scene", errors.max_branches_per_scene) ? (
+              <ValidationMessage tone="error">{label("max_branches_per_scene", errors.max_branches_per_scene)}</ValidationMessage>
+            ) : null}
           </div>
 
           <Checkbox
@@ -606,10 +611,9 @@ export function CreateAdventure() {
               placeholder="Tone, tense, what's off-limits…"
               data-testid="guidelines-editor"
             />
-            <ValidationMessage
-              tone="error"
-              message={label("writing_guidelines", errors.writing_guidelines)}
-            />
+            {label("writing_guidelines", errors.writing_guidelines) ? (
+              <ValidationMessage tone="error">{label("writing_guidelines", errors.writing_guidelines)}</ValidationMessage>
+            ) : null}
           </div>
         </FormSection>
       )}
@@ -656,7 +660,7 @@ export function CreateAdventure() {
           />
 
           {Object.keys(errors).length > 0 && (
-            <ValidationMessage tone="error" message="Some details need fixing — check the earlier steps." />
+            <ValidationMessage tone="error">Some details need fixing — check the earlier steps.</ValidationMessage>
           )}
         </FormSection>
       )}
