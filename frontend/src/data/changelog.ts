@@ -22,6 +22,31 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.16.0",
+    date: "2026-07-19",
+    sections: {
+      Added: [
+        "Adventure creation for signed-in, active accounts: a five-step wizard covering Basics, Opening scene, Contributions, Writing guidelines, and Review.",
+        "Four creation templates — Solo story, Open community story, Moderated community story, and Private group story. Templates configure settings only; they never write story content and never skip validation.",
+        "Per-adventure contribution settings: who may add branches, whether contributions may omit a display name, how many branches each scene allows, and an optional contribution passcode.",
+        "Optional writing guidelines authored in the restricted editor and shown to contributors.",
+        "Draft or publish choice at the end of the wizard. A draft keeps its opening scene unpublished until you are ready.",
+        "The account dashboard's adventure list now links straight into the creation wizard.",
+      ],
+      Changed: [
+        "The Create page is now the working wizard rather than a placeholder, and the Creating an adventure help topic describes the shipped behaviour.",
+      ],
+      Security: [
+        "The adventure and its opening scene are written in one serialized transaction under the write lock; a failure at any point rolls the whole thing back, so a half-created adventure cannot be left behind.",
+        "The owner of a new adventure is always the authenticated caller. An author or owner id supplied in the request body is ignored.",
+        "Creation is refused for accounts that are not active, and is protected by the double-submit CSRF check like every other mutating request.",
+        "Per-user adventure caps and an hourly creation rate limit are enforced on the server, not merely in the wizard.",
+        "Scene text and writing guidelines are re-sanitized server-side through the shared allow-list before storage, and a plain-text projection is derived for limits and search.",
+        "Contribution passcodes are stored only as password hashes, never in plain text.",
+      ],
+    },
+  },
+  {
     version: "0.15.0",
     date: "2026-07-19",
     sections: {
