@@ -454,7 +454,7 @@ export function SubmitBranch() {
 
           {context.requires_passcode && (
             <FormSection
-              title="Contribution passcode"
+              title="Passcode"
               description="This adventure asks contributors for a passcode."
             >
               <PasswordField
