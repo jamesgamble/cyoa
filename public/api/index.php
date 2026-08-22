@@ -34,6 +34,7 @@ use App\EmailQueueService;
 use App\EmailTemplateRepository;
 use App\Mailer\SmtpTransport;
 use App\Migrator;
+use App\ModerationService;
 use App\PublicationService;
 use App\PublicRepository;
 use App\RegistrationService;
@@ -74,6 +75,16 @@ if ($route === '/adventures' && $method === 'POST') {
 // ── Publication workflow (v0.17.0) ─────────────────────────────────
 if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/(manage|preview|status|draft)$#', $route, $pm)) {
     handle_publication($method, $pm[1], $pm[2]);
+    exit;
+}
+
+// ── Moderation and owner controls (v0.19.0) ────────────────────────
+if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/moderation(/.*)?$#', $route, $mm)) {
+    handle_moderation($method, $mm[1], rtrim($mm[2] ?? '', '/'));
+    exit;
+}
+if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/reports$#', $route, $rm) && $method === 'POST') {
+    handle_report_create($rm[1]);
     exit;
 }
 
@@ -668,6 +679,29 @@ function handle_account(string $method, string $tail): void
     if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
     $body = read_json_body();
 
+    // ── Contributor actions on their own submissions (v0.19.0) ──
+    // The submission is matched on id AND user id, so one contributor
+    // can never edit or withdraw another's branch.
+    if (preg_match('#^/contributions/(\d+)$#', $tail, $cm) && $method === 'PUT') {
+        $mod = new ModerationService($pdo);
+        $subId = (int) $cm[1];
+        $resubmit = !array_key_exists('resubmit', $body) || !empty($body['resubmit']);
+        [$outcome, $data] = (new WriteLock())->withLock(
+            static fn () => $mod->contributorUpdate($subId, $userId, $body, $resubmit)
+        );
+        moderation_respond($outcome, $data);
+        return;
+    }
+    if (preg_match('#^/contributions/(\d+)/withdraw$#', $tail, $wm) && $method === 'POST') {
+        $mod = new ModerationService($pdo);
+        $subId = (int) $wm[1];
+        [$outcome, $data] = (new WriteLock())->withLock(
+            static fn () => $mod->withdraw($subId, $userId)
+        );
+        moderation_respond($outcome, $data);
+        return;
+    }
+
     try {
         $lock = new WriteLock();
         if ($method === 'PUT' && $tail === '/profile') {
@@ -1019,4 +1053,257 @@ function branch_respond(string $outcome, array $errors): void
     $payload = ['error' => $outcome];
     if ($errors !== []) { $payload['fields'] = $errors; }
     echo json_encode($payload);
+}
+
+
+/**
+ * Moderation and owner controls (v0.19.0).
+ *
+ *   GET  /moderation                              overview + counts
+ *   GET  /moderation/submissions?state=pending    one queue tab
+ *   POST /moderation/submissions/{id}/decision    approve / reject / …
+ *   POST /moderation/submissions/{id}/review      reviewer note
+ *   GET  /moderation/story                        scenes and choices
+ *   PUT  /moderation/scenes/{id}                  edit scene + choices
+ *   POST /moderation/scenes/{id}/action           lock/unlock/hide/restore
+ *   POST /moderation/scenes/{id}/branch           owner-created branch
+ *   PUT  /moderation/details                      details + guidelines
+ *   PUT  /moderation/settings                     contribution settings
+ *   GET  /moderation/permissions                  standings + roster
+ *   POST /moderation/permissions                  trusted/approval/blocked
+ *   POST /moderation/collaborators                grant or remove a role
+ *   GET  /moderation/reports?state=open           report queue
+ *   POST /moderation/reports/{id}/resolve         resolve or dismiss
+ *
+ * Every route requires a live session; the role is derived
+ * server-side. Writes are CSRF-protected and serialized by the write
+ * lock, so concurrent decisions cannot both publish a branch.
+ */
+function handle_moderation(string $method, string $slug, string $tail): void
+{
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] moderation db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    $userId = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+    $isAdmin = AdminSession::hasRole($pdo, $userId, 'admin');
+    $svc = new ModerationService($pdo);
+
+    try {
+        if ($method === 'GET') {
+            if ($tail === '' ) {
+                [$o, $d] = $svc->overview($slug, $userId, $isAdmin);
+                moderation_respond($o, $d);
+                return;
+            }
+            if ($tail === '/submissions') {
+                $state = isset($_GET['state']) ? (string) $_GET['state'] : 'pending';
+                [$o, $d] = $svc->submissions($slug, $userId, $isAdmin, $state);
+                moderation_respond($o, $d);
+                return;
+            }
+            if ($tail === '/story') {
+                [$o, $d] = $svc->story($slug, $userId, $isAdmin);
+                moderation_respond($o, $d);
+                return;
+            }
+            if ($tail === '/permissions') {
+                [$o, $d] = $svc->permissions($slug, $userId, $isAdmin);
+                moderation_respond($o, $d);
+                return;
+            }
+            if ($tail === '/reports') {
+                $state = isset($_GET['state']) ? (string) $_GET['state'] : 'open';
+                [$o, $d] = $svc->reports($slug, $userId, $isAdmin, $state);
+                moderation_respond($o, $d);
+                return;
+            }
+            respond_error(404, 'not_found');
+            return;
+        }
+
+        if ($method !== 'POST' && $method !== 'PUT') { respond_error(405, 'method_not_allowed'); return; }
+        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+
+        $body = read_json_body();
+        $lock = new WriteLock();
+
+        if ($method === 'POST' && preg_match('#^/submissions/(\d+)/decision$#', $tail, $m)) {
+            $id     = (int) $m[1];
+            $action = (string) ($body['action'] ?? '');
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->decide($slug, $id, $userId, $isAdmin, $action, $body)
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'POST' && preg_match('#^/submissions/(\d+)/review$#', $tail, $m)) {
+            $id  = (int) $m[1];
+            $rec = isset($body['recommendation']) && $body['recommendation'] !== ''
+                 ? (string) $body['recommendation'] : null;
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->addReview($slug, $id, $userId, $isAdmin, (string) ($body['note'] ?? ''), $rec)
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'PUT' && preg_match('#^/scenes/(\d+)$#', $tail, $m)) {
+            $id = (int) $m[1];
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->updateScene($slug, $id, $userId, $isAdmin, $body)
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'POST' && preg_match('#^/scenes/(\d+)/action$#', $tail, $m)) {
+            $id = (int) $m[1];
+            $action = (string) ($body['action'] ?? '');
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->sceneAction($slug, $id, $userId, $isAdmin, $action)
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'POST' && preg_match('#^/scenes/(\d+)/branch$#', $tail, $m)) {
+            $id = (int) $m[1];
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->createOwnerBranch($slug, $id, $userId, $isAdmin, $body)
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'PUT' && $tail === '/details') {
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->updateDetails($slug, $userId, $isAdmin, $body)
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'PUT' && $tail === '/settings') {
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->updateSettings($slug, $userId, $isAdmin, $body)
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'POST' && $tail === '/permissions') {
+            $target = (int) ($body['user_id'] ?? 0);
+            $level  = isset($body['level']) && $body['level'] !== '' ? (string) $body['level'] : null;
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->setPermission(
+                    $slug, $userId, $isAdmin, $target, $level, (string) ($body['note'] ?? '')
+                )
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'POST' && $tail === '/collaborators') {
+            $target = (int) ($body['user_id'] ?? 0);
+            $role   = isset($body['role']) && $body['role'] !== '' ? (string) $body['role'] : null;
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->setCollaborator($slug, $userId, $isAdmin, $target, $role)
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+        if ($method === 'POST' && preg_match('#^/reports/(\d+)/resolve$#', $tail, $m)) {
+            $id = (int) $m[1];
+            [$o, $d] = $lock->withLock(
+                static fn () => $svc->resolveReport(
+                    $slug, $id, $userId, $isAdmin,
+                    (string) ($body['action'] ?? 'resolve'), (string) ($body['note'] ?? '')
+                )
+            );
+            moderation_respond($o, $d);
+            return;
+        }
+    } catch (\Throwable $e) {
+        error_log('[bp] moderation error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    respond_error(404, 'not_found');
+}
+
+/**
+ * POST /api/adventures/{slug}/reports (v0.19.0).
+ *
+ * Readers — signed in or not — can report a scene. The reporter is
+ * taken from the session cookie and the request IP; the body only
+ * carries the reason and the note.
+ */
+function handle_report_create(string $slug): void
+{
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] report db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+    if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+
+    $userId = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+    $body   = read_json_body();
+    $svc    = new ModerationService($pdo);
+
+    try {
+        [$o, $d] = (new WriteLock())->withLock(static function () use ($svc, $slug, $userId, $body): array {
+            return $svc->createReport(
+                $slug,
+                $userId,
+                client_ip(),
+                (string) ($body['reason'] ?? ''),
+                (string) ($body['details'] ?? ''),
+                isset($body['scene_id']) && $body['scene_id'] !== null ? (int) $body['scene_id'] : null
+            );
+        });
+    } catch (\Throwable $e) {
+        error_log('[bp] report error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    if ($o === ModerationService::OK) {
+        http_response_code(201);
+        echo json_encode(['status' => 'ok'] + ($d ?? []));
+        return;
+    }
+    moderation_respond($o, $d);
+}
+
+/** Map a ModerationService outcome to an HTTP response. */
+function moderation_respond(string $outcome, ?array $data): void
+{
+    switch ($outcome) {
+        case ModerationService::OK:
+            echo json_encode(['status' => 'ok'] + ($data ?? []));
+            return;
+        case ModerationService::NOT_FOUND:
+            respond_error(404, 'not_found');
+            return;
+        case ModerationService::FORBIDDEN:
+            respond_error(403, 'forbidden');
+            return;
+        case ModerationService::READ_ONLY:
+            respond_error(409, 'read_only');
+            return;
+        case ModerationService::CONFLICT:
+            http_response_code(409);
+            echo json_encode(['error' => 'conflict'] + ($data ?? []));
+            return;
+        case ModerationService::LIMIT:
+            respond_error(409, 'branch_limit_reached');
+            return;
+        default:
+            http_response_code(422);
+            echo json_encode(['error' => 'invalid'] + ($data ?? []));
+            return;
+    }
 }
