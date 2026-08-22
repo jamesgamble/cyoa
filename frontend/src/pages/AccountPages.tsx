@@ -8,12 +8,13 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { UnauthorizedState } from "../states";
+import { Badge } from "../components/Badge";
 import { useHelpContext } from "../components/GlobalHelp";
 import {
   fetchAccountProfile,
   fetchAccountSecurity,
   fetchAccountAdventures,
-  fetchAccountContributions,
+  fetchContributionHistory,
   fetchAccountBookmarks,
   updateAccountProfile,
   updateAccountNotifications,
@@ -26,6 +27,7 @@ import {
   type AccountSession,
   type AccountAdventure,
   type AccountBookmark,
+  type ContributionHistoryEntry,
 } from "../lib/apiClient";
 import { readLocalProgress } from "../hooks/useLocalProgress";
 
