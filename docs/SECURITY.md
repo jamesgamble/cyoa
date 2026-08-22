@@ -16,3 +16,10 @@ Never allowed: images, links, automatic links, inline code, code blocks, tables,
 ## Public changelog
 
 Public changelog entries must exclude secrets, exploit details, private administrator notes, raw errors, and internal-only infrastructure details.
+
+## Drafts, preview, and publishing
+
+- Draft adventures and unpublished scenes are served only through the manage and preview endpoints, which require a session and an owner/editor/administrator role.
+- Roles are always derived server-side; never trust a role, owner id, or adventure id supplied by the client.
+- Preview responses are marked `noindex, nofollow` at the HTTP and document level.
+- Archived adventures are read-only. Unpublishing changes status only and never deletes content.
