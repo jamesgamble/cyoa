@@ -392,8 +392,9 @@ final class BPModerationTest
 
     public function testWithdrawalIsTerminalAndReleasesTheSlot(): void
     {
-        $a  = $this->makeAdventure(['max_branches_per_scene' => 1]);
+        $a  = $this->makeAdventure(['max_branches_per_scene' => 2]);
         $id = $this->pending($a);
+        $this->pending($a, ['choice_text' => 'Take the side door']);
         [$o] = $this->svc->withdraw($id, $this->contributorId);
         assert_same(ModerationService::OK, $o);
         [$twice] = $this->svc->withdraw($id, $this->contributorId);
@@ -474,11 +475,15 @@ final class BPModerationTest
 
     public function testOwnerBranchRespectsTheBranchLimit(): void
     {
-        $a  = $this->makeAdventure(['max_branches_per_scene' => 1]);
+        $a  = $this->makeAdventure(['max_branches_per_scene' => 2]);
         [, $d] = $this->svc->story($a['slug'], $this->ownerId, false);
         $sceneId = (int) $d['scenes'][0]['id'];
         [$first] = $this->svc->createOwnerBranch($a['slug'], $sceneId, $this->ownerId, false, $this->payload());
         assert_same(ModerationService::OK, $first);
+        [$fill] = $this->svc->createOwnerBranch($a['slug'], $sceneId, $this->ownerId, false, $this->payload([
+            'choice_text' => 'Follow the drip of water',
+        ]));
+        assert_same(ModerationService::OK, $fill);
         [$second] = $this->svc->createOwnerBranch($a['slug'], $sceneId, $this->ownerId, false, $this->payload([
             'choice_text' => 'Turn back to the stairs',
         ]));
