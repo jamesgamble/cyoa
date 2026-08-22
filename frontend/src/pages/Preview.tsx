@@ -83,11 +83,7 @@ export function Preview() {
 
       {data.scenes.map((scene) => (
         <Panel key={scene.id} title={`Scene ${scene.sceneNumber}`}>
-          <SceneTitle
-            title={scene.title}
-            chapter={scene.chapter ?? undefined}
-            sceneNumber={scene.sceneNumber}
-          />
+          <SceneTitle>{scene.title}</SceneTitle>
           <p className="bp-meta" data-testid={`preview-scene-state-${scene.slug}`}>
             {scene.state === "published" ? "Published scene" : "Unpublished scene"}
           </p>
