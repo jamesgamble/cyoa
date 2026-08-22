@@ -5,6 +5,7 @@ import { useLayoutMode } from "../lib/layoutMode";
 
 const links: Array<{ to: string; label: string; end?: boolean }> = [
   { to: "/account", label: "Overview", end: true },
+  { to: "/account/inbox", label: "Inbox" },
   { to: "/account/profile", label: "Profile" },
   { to: "/account/security", label: "Security" },
   { to: "/account/notifications", label: "Notifications" },

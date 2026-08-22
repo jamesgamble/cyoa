@@ -88,6 +88,24 @@ if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/reports$#', $route, $rm) && $meth
     exit;
 }
 
+// ── Collaborators and ownership transfer (v0.20.0) ─────────────────
+if ($route === '/auth/reauthenticate' && $method === 'POST') {
+    handle_reauthenticate();
+    exit;
+}
+if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/collaborators(/.*)?$#', $route, $cm)) {
+    handle_collaborators($method, $cm[1], rtrim($cm[2] ?? '', '/'));
+    exit;
+}
+if (preg_match('#^/invitations(/.*)?$#', $route, $im)) {
+    handle_invitations($method, rtrim($im[1] ?? '', '/'));
+    exit;
+}
+if (preg_match('#^/notifications(/.*)?$#', $route, $nm)) {
+    handle_notifications($method, rtrim($nm[1] ?? '', '/'));
+    exit;
+}
+
 // ── Branch submissions (v0.18.0) ───────────────────────────────────
 if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/scenes/([A-Za-z0-9\-]+)/branch$#', $route, $bm)) {
     handle_branch_submission($method, $bm[1], $bm[2]);
@@ -1306,4 +1324,218 @@ function moderation_respond(string $outcome, ?array $data): void
             echo json_encode(['error' => 'invalid'] + ($data ?? []));
             return;
     }
+}
+
+/* ═══════════════ Collaborators and ownership (v0.20.0) ═══════════════ */
+
+/**
+ * Map a CollaborationService outcome onto an HTTP response. The
+ * service never returns a raw invitation token, so nothing secret can
+ * leak through this path.
+ */
+function collaboration_respond(string $outcome, ?array $data): void
+{
+    switch ($outcome) {
+        case CollaborationService::OK:
+            echo json_encode(['status' => 'ok'] + ($data ?? []));
+            return;
+        case CollaborationService::NOT_FOUND:
+            http_response_code(404);
+            echo json_encode(['error' => 'not_found'] + ($data ?? []));
+            return;
+        case CollaborationService::FORBIDDEN:
+            respond_error(403, 'forbidden');
+            return;
+        case CollaborationService::REAUTH:
+            respond_error(403, 'reauthentication_required');
+            return;
+        case CollaborationService::UNCONFIRMED:
+            respond_error(422, 'confirmation_required');
+            return;
+        case CollaborationService::EXPIRED:
+            respond_error(410, 'expired');
+            return;
+        case CollaborationService::CONFLICT:
+            http_response_code(409);
+            echo json_encode(['error' => 'conflict'] + ($data ?? []));
+            return;
+        default:
+            http_response_code(422);
+            echo json_encode(['error' => 'invalid'] + ($data ?? []));
+            return;
+    }
+}
+
+/**
+ * POST /api/auth/reauthenticate — re-enter the password to unlock a
+ * sensitive action (currently ownership transfer) for a short window.
+ */
+function handle_reauthenticate(): void
+{
+    try { $pdo = Database::open(); }
+    catch (\Throwable $e) { error_log('[bp] reauth db error: ' . $e->getMessage()); respond_error(503, 'service_unavailable'); return; }
+
+    $cookie = $_COOKIE[AuthService::SESSION_COOKIE] ?? null;
+    $userId = (new AuthService($pdo))->authenticate($cookie);
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+    if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+
+    $body = read_json_body();
+    $svc  = new CollaborationService($pdo);
+    [$o, $d] = (new WriteLock())->withLock(static fn () => $svc->reauthenticate(
+        $userId,
+        AccountService::sessionIdFromCookie($cookie),
+        (string) ($body['password'] ?? '')
+    ));
+    collaboration_respond($o, $d);
+}
+
+/**
+ * /api/adventures/{slug}/collaborators … — roster, invitations, role
+ * changes, removals, and ownership transfer. Every entry point derives
+ * the caller's role server-side.
+ */
+function handle_collaborators(string $method, string $slug, string $tail): void
+{
+    try { $pdo = Database::open(); }
+    catch (\Throwable $e) { error_log('[bp] collaborators db error: ' . $e->getMessage()); respond_error(503, 'service_unavailable'); return; }
+
+    $cookie = $_COOKIE[AuthService::SESSION_COOKIE] ?? null;
+    $userId = (new AuthService($pdo))->authenticate($cookie);
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+    $isAdmin = AdminSession::hasRole($pdo, $userId, 'admin');
+    $svc = new CollaborationService($pdo);
+
+    try {
+        if ($method === 'GET' && $tail === '') {
+            [$o, $d] = $svc->roster($slug, $userId, $isAdmin);
+            collaboration_respond($o, $d);
+            return;
+        }
+
+        if ($method !== 'POST' && $method !== 'PUT' && $method !== 'DELETE') {
+            respond_error(405, 'method_not_allowed');
+            return;
+        }
+        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+
+        $body = read_json_body();
+        $lock = new WriteLock();
+
+        if ($method === 'POST' && $tail === '/invitations') {
+            [$o, $d] = $lock->withLock(static fn () => $svc->invite(
+                $slug, $userId, $isAdmin,
+                (string) ($body['email'] ?? ''),
+                (string) ($body['role'] ?? 'editor'),
+                (string) ($body['message'] ?? '')
+            ));
+            collaboration_respond($o, $d);
+            return;
+        }
+        if (($method === 'POST' || $method === 'DELETE')
+            && preg_match('#^/invitations/(\d+)/revoke$#', $tail, $m)) {
+            $id = (int) $m[1];
+            [$o, $d] = $lock->withLock(static fn () => $svc->revokeInvitation($slug, $userId, $isAdmin, $id));
+            collaboration_respond($o, $d);
+            return;
+        }
+        if ($method === 'PUT' && preg_match('#^/(\d+)$#', $tail, $m)) {
+            $target = (int) $m[1];
+            $role = isset($body['role']) && $body['role'] !== '' ? (string) $body['role'] : null;
+            [$o, $d] = $lock->withLock(static fn () => $svc->setRole($slug, $userId, $isAdmin, $target, $role));
+            collaboration_respond($o, $d);
+            return;
+        }
+        if ($method === 'DELETE' && preg_match('#^/(\d+)$#', $tail, $m)) {
+            $target = (int) $m[1];
+            [$o, $d] = $lock->withLock(static fn () => $svc->setRole($slug, $userId, $isAdmin, $target, null));
+            collaboration_respond($o, $d);
+            return;
+        }
+        if ($method === 'POST' && $tail === '/transfer') {
+            $sessionId = AccountService::sessionIdFromCookie($cookie);
+            [$o, $d] = $lock->withLock(static fn () => $svc->transferOwnership(
+                $slug, $userId, $isAdmin, $sessionId,
+                (int) ($body['user_id'] ?? 0),
+                (bool) ($body['confirm'] ?? false),
+                array_key_exists('stay_as_editor', $body) ? (bool) $body['stay_as_editor'] : true
+            ));
+            collaboration_respond($o, $d);
+            return;
+        }
+    } catch (\Throwable $e) {
+        error_log('[bp] collaborators error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    respond_error(404, 'not_found');
+}
+
+/**
+ * /api/invitations/{token} — the recipient's accept / decline screen.
+ * The token is looked up by hash; only its addressee can act on it.
+ */
+function handle_invitations(string $method, string $tail): void
+{
+    try { $pdo = Database::open(); }
+    catch (\Throwable $e) { error_log('[bp] invitations db error: ' . $e->getMessage()); respond_error(503, 'service_unavailable'); return; }
+
+    $userId = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+    $svc = new CollaborationService($pdo);
+
+    try {
+        if ($method === 'GET' && preg_match('#^/([A-Za-z0-9_\-]+)$#', $tail, $m)) {
+            [$o, $d] = $svc->invitationByToken($m[1], $userId);
+            collaboration_respond($o, $d);
+            return;
+        }
+        if ($method === 'POST' && preg_match('#^/([A-Za-z0-9_\-]+)/(accept|decline)$#', $tail, $m)) {
+            if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+            $token = $m[1];
+            $action = $m[2];
+            [$o, $d] = (new WriteLock())->withLock(static fn () => $action === 'accept'
+                ? $svc->acceptInvitation($token, $userId)
+                : $svc->declineInvitation($token, $userId));
+            collaboration_respond($o, $d);
+            return;
+        }
+    } catch (\Throwable $e) {
+        error_log('[bp] invitations error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+
+    respond_error(404, 'not_found');
+}
+
+/** /api/notifications — the signed-in user's inbox. */
+function handle_notifications(string $method, string $tail): void
+{
+    try { $pdo = Database::open(); }
+    catch (\Throwable $e) { error_log('[bp] notifications db error: ' . $e->getMessage()); respond_error(503, 'service_unavailable'); return; }
+
+    $userId = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+    $svc = new CollaborationService($pdo);
+
+    if ($method === 'GET' && $tail === '') {
+        echo json_encode([
+            'notifications' => $svc->notifications($userId),
+            'unread'        => $svc->unreadCount($userId),
+        ]);
+        return;
+    }
+    if ($method === 'POST' && ($tail === '/read' || preg_match('#^/(\d+)/read$#', $tail, $m))) {
+        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+        $id = isset($m[1]) ? (int) $m[1] : null;
+        (new WriteLock())->withLock(static function () use ($svc, $userId, $id) {
+            $svc->markRead($userId, $id);
+            return null;
+        });
+        echo json_encode(['status' => 'ok', 'unread' => $svc->unreadCount($userId)]);
+        return;
+    }
+    respond_error(404, 'not_found');
 }

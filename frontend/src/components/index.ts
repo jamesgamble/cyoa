@@ -52,6 +52,7 @@ export { StepIndicator } from "./StepIndicator";
 export { ValidationMessage } from "./ValidationMessage";
 export { InlineHelp } from "./InlineHelp";
 
+export { CollaboratorsPanel } from "./CollaboratorsPanel";
 export { ManageNav } from "./ManageNav";
 export type { ManageNavItem } from "./ManageNav";
 export { QueueItem } from "./QueueItem";

@@ -2,6 +2,21 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.20.0 — 2026-09-13
+
+### Added
+- Adventure roles owner, editor, and reviewer with a full collaborator roster (`App\CollaborationService`, migration `private/migrations/0010_collaborators_and_ownership.sql`).
+- Invitations by email to registered members: tokens are random, hashed at rest, expiring, single-use, and revocable (`/api/adventures/{slug}/collaborators/invitations`).
+- Invitations arrive both in the recipient's on-site inbox and as a queued email; accept and decline at `/invitations/{token}`.
+- Notification inbox at `/account/inbox` with unread counts and mark-as-read.
+- Ownership transfer that requires recent password reauthentication (`POST /api/auth/reauthenticate`) plus explicit confirmation, runs in one transaction, always leaves exactly one owner, and keeps the previous owner as an editor unless they choose to leave.
+- Role changes, collaborator removal, and invitation revocation from the Collaborators panel on the manage page.
+- Help topics: collaborators and roles, transferring ownership, and your inbox.
+
+### Security
+- Invitation tokens are never echoed back to the inviter and only the addressed account can accept or decline.
+- Transfers and every roster change are CSRF-protected, permission-checked server-side, and recorded in the adventure activity log with notifications to both parties.
+
 ## 0.19.0 — 2026-09-13
 
 ### Added

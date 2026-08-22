@@ -15,6 +15,7 @@ import {
   Alert,
   Badge,
   Button,
+  CollaboratorsPanel,
   DangerZone,
   Dialog,
   Panel,
@@ -227,6 +228,8 @@ export function ManageAdventure() {
           </Button>
         </DangerZone>
       )}
+
+      <CollaboratorsPanel slug={adventure.slug} />
 
       <Panel title="Activity">
         {data.activity.length === 0 ? (

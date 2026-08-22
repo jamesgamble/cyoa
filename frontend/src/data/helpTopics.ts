@@ -57,6 +57,49 @@ export const HELP_TOPICS: HelpTopic[] = [
     match: { routes: [/^\/$/, /^\/start$/], sections: ["home"] },
   },
   {
+    slug: "collaborators",
+    title: "Collaborators and roles",
+    summary:
+      "How owners invite editors and reviewers, change roles, and remove people from an adventure.",
+    body: [
+      "Every adventure has exactly one owner. The owner can invite other registered members as editors or reviewers, using the email address on their account.",
+      "Editors can edit the adventure's details, scenes, and choices, and decide on branch submissions. Reviewers can leave private notes and recommend approval or rejection, but cannot publish or change the story themselves.",
+      "Invitations arrive in the recipient's inbox on the site and by email. Each invitation link works once, is tied to the invited account, and expires on its own. Owners can revoke a pending invitation at any time before it is used.",
+      "Owners can change an editor into a reviewer (or the other way round) and remove anyone except themselves. Removing someone takes away their access immediately; the work they contributed stays in the story.",
+    ],
+    related: ["ownership-transfer", "inbox", "moderation"],
+    match: {
+      routes: [/^\/manage\//, /^\/invitations\//],
+      sections: ["collaboration", "manage"],
+    },
+  },
+  {
+    slug: "ownership-transfer",
+    title: "Transferring ownership",
+    summary:
+      "What happens when an adventure changes hands, and the safeguards around it.",
+    body: [
+      "Ownership can only pass to someone who is already an editor or reviewer on the adventure, so nobody can be handed a story unexpectedly.",
+      "Because the change cannot be undone by you afterwards, the transfer asks for your password again and for an explicit confirmation. Re-entering your password unlocks the action for a few minutes only.",
+      "The transfer happens in a single step: the new owner takes over, and you stay on as an editor unless you choose to leave the team. There is always exactly one owner.",
+      "Both people are notified in their inbox and by email, and the change is recorded in the adventure's activity log.",
+    ],
+    related: ["collaborators", "inbox", "moderation"],
+    match: { routes: [/^\/manage\//], sections: ["collaboration", "manage"] },
+  },
+  {
+    slug: "inbox",
+    title: "Your inbox",
+    summary: "Where invitations and adventure notifications arrive on the site.",
+    body: [
+      "The inbox in your account collects invitations to collaborate, the outcome of invitations you sent, and ownership changes, so a missed email never loses an invitation.",
+      "Unread items are marked as new. You can mark a single notification as read, or clear them all at once.",
+      "Notifications never contain the invitation link itself in a form anyone else can reuse: each link works once and only for the invited account.",
+    ],
+    related: ["collaborators", "accounts"],
+    match: { routes: [/^\/account\/inbox/], sections: ["collaboration", "account"] },
+  },
+  {
     slug: "discovering",
     title: "Discovering adventures",
     summary:

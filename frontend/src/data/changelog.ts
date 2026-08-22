@@ -22,6 +22,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.20.0",
+    date: "2026-09-13",
+    sections: {
+      Added: [
+        "Adventure teams: owners can invite registered members as editors or reviewers by email address.",
+        "Invitations arrive in your on-site inbox and by email; each link works once, only for the invited account, and expires on its own.",
+        "Owners can revoke pending invitations, change editor and reviewer roles, and remove team members.",
+        "Ownership transfer to an existing editor or reviewer, with the previous owner staying on as an editor unless they choose to leave.",
+        "A notification inbox in your account for invitations, invitation outcomes, and ownership changes.",
+        "Help topics covering collaborators and roles, transferring ownership, and your inbox.",
+      ],
+      Security: [
+        "Transferring ownership asks for your password again and for an explicit confirmation, and the change is applied in one step that always leaves exactly one owner.",
+        "Invitation links are never shown to the inviter, and every team change is permission-checked on the server and recorded in the adventure's activity log.",
+      ],
+    },
+  },
+  {
     version: "0.19.0",
     date: "2026-09-13",
     sections: {

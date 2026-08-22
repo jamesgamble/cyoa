@@ -1166,3 +1166,124 @@ export const withdrawOwnSubmission = (submissionId: number) =>
   accountMutate<{ status: string; state: SubmissionState }>(
     `/account/contributions/${submissionId}/withdraw`, "POST", {},
   );
+
+/* ─────────── Collaborators and ownership transfer (v0.20.0) ─────────── */
+
+export type AdventureRole = "owner" | "editor" | "reviewer";
+export type InvitationState = "pending" | "accepted" | "declined" | "revoked" | "expired";
+
+export interface RosterMember {
+  user_id: number;
+  role: AdventureRole;
+  username: string;
+  display_name: string;
+  created_at: string;
+}
+
+export interface RosterInvitation {
+  id: number;
+  email: string;
+  role: "editor" | "reviewer";
+  state: InvitationState;
+  expires_at: string;
+  created_at: string;
+  invitee_username: string | null;
+}
+
+export interface RosterPayload {
+  adventure: { slug: string; title: string };
+  viewer_role: AdventureRole | "administrator";
+  can_manage: boolean;
+  owner_id: number;
+  collaborators: RosterMember[];
+  invitations: RosterInvitation[];
+  invitable_roles: Array<"editor" | "reviewer">;
+}
+
+export interface InvitationDetails {
+  id: number;
+  role: "editor" | "reviewer";
+  message: string | null;
+  expires_at: string;
+  adventure_slug: string;
+  adventure_title: string;
+  invited_by: string;
+}
+
+export interface InboxNotification {
+  id: number;
+  kind: string;
+  title: string;
+  body: string;
+  url: string | null;
+  adventure_id: number | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+const rosterBase = (slug: string) => `/adventures/${encodeURIComponent(slug)}/collaborators`;
+
+/** GET helper for collaboration payloads, which are returned flat. */
+async function collabGet<T>(path: string): Promise<{ status: number; data: T | null }> {
+  try {
+    const res = await fetch(apiUrl(path), {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return { status: res.status, data: null };
+    return { status: res.status, data: (await res.json()) as T };
+  } catch {
+    return { status: 0, data: null };
+  }
+}
+
+export const fetchRoster = (slug: string) => collabGet<RosterPayload>(rosterBase(slug));
+
+export const inviteCollaborator = (
+  slug: string,
+  input: { email: string; role: "editor" | "reviewer"; message?: string },
+) => accountMutate<RosterPayload>(`${rosterBase(slug)}/invitations`, "POST", input);
+
+export const revokeInvitation = (slug: string, invitationId: number) =>
+  accountMutate<RosterPayload>(`${rosterBase(slug)}/invitations/${invitationId}/revoke`, "POST", {});
+
+export const changeCollaboratorRole = (
+  slug: string,
+  userId: number,
+  role: "editor" | "reviewer",
+) => accountMutate<RosterPayload>(`${rosterBase(slug)}/${userId}`, "PUT", { role });
+
+export const removeCollaborator = (slug: string, userId: number) =>
+  accountMutate<RosterPayload>(`${rosterBase(slug)}/${userId}`, "PUT", { role: "" });
+
+/** Re-enter the password to unlock a sensitive action for a short window. */
+export const reauthenticate = (password: string) =>
+  accountMutate<{ status: string; window_seconds: number }>(
+    "/auth/reauthenticate", "POST", { password },
+  );
+
+export const transferOwnership = (
+  slug: string,
+  userId: number,
+  options: { confirm: boolean; stayAsEditor: boolean },
+) =>
+  accountMutate<{ status: string; owner_id: number; roster: RosterPayload | null }>(
+    `${rosterBase(slug)}/transfer`, "POST",
+    { user_id: userId, confirm: options.confirm, stay_as_editor: options.stayAsEditor },
+  );
+
+export const fetchInvitation = (token: string) =>
+  collabGet<InvitationDetails & { status: string }>(`/invitations/${encodeURIComponent(token)}`);
+
+export const respondToInvitation = (token: string, action: "accept" | "decline") =>
+  accountMutate<{ status: string; adventure_slug: string; role?: AdventureRole }>(
+    `/invitations/${encodeURIComponent(token)}/${action}`, "POST", {},
+  );
+
+export const fetchInbox = () =>
+  collabGet<{ notifications: InboxNotification[]; unread: number }>("/notifications");
+
+export const markNotificationRead = (id: number | null) =>
+  accountMutate<{ status: string; unread: number }>(
+    id === null ? "/notifications/read" : `/notifications/${id}/read`, "POST", {},
+  );
