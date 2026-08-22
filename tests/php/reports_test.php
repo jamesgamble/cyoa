@@ -65,7 +65,8 @@ final class BPReportsTest
             'opening_title'  => 'The first mile',
             'opening_body'   => '<p>The wagons roll onto cracked white ground.</p>',
             'status'             => 'published',
-            'contribution_mode'  => 'open',
+            'contribution_mode'  => 'immediate',
+            'max_branches_per_scene' => 4,
         ], '127.0.0.1');
         assert_same(AdventureService::OK, $outcome, json_encode($e2 ?? []));
         $this->slug        = (string) $created['slug'];
@@ -170,7 +171,8 @@ final class BPReportsTest
             'title' => 'Another Country', 'description' => 'A second story entirely, elsewhere.',
             'genre' => 'fantasy', 'content_rating' => 'teen', 'visibility' => 'public',
             'opening_title' => 'Elsewhere', 'opening_body' => '<p>Elsewhere entirely.</p>',
-            'status' => 'published', 'contribution_mode' => 'open',
+            'status' => 'published', 'contribution_mode' => 'immediate',
+            'max_branches_per_scene' => 4,
         ], '10.3.0.1');
         $s = $this->pdo->prepare('SELECT id FROM scenes WHERE adventure_id = :a AND is_start = 1');
         $s->execute([':a' => (int) $other['id']]);
