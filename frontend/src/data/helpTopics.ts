@@ -84,7 +84,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       "The transfer happens in a single step: the new owner takes over, and you stay on as an editor unless you choose to leave the team. There is always exactly one owner.",
       "Both people are notified in their inbox and by email, and the change is recorded in the adventure's activity log.",
     ],
-    related: ["collaborators", "inbox", "publishing"],
+    related: ["collaborators", "inbox", "moderation"],
     match: { routes: [/^\/manage\//], sections: ["collaboration", "manage"] },
   },
   {
