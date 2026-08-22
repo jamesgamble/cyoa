@@ -95,7 +95,8 @@ const FIELD_MESSAGES: Record<string, string> = {
   empty: "Write something before continuing.",
 };
 
-function label(field: string, code?: string): string | undefined {
+/** Map a server or client error code to a reader-facing sentence. */
+function label(code?: string): string | undefined {
   if (!code) return undefined;
   return FIELD_MESSAGES[code] ?? code.replace(/_/g, " ");
 }
@@ -388,8 +389,8 @@ export function CreateAdventure() {
               aria-invalid={errors.title ? "true" : undefined}
               onChange={(e) => set("title", e.target.value)}
             />
-            {label("title", errors.title) ? (
-              <ValidationMessage tone="error">{label("title", errors.title)}</ValidationMessage>
+            {label(errors.title) ? (
+              <ValidationMessage tone="error">{label(errors.title)}</ValidationMessage>
             ) : null}
           </div>
 
@@ -400,14 +401,14 @@ export function CreateAdventure() {
             maxLength={DESCRIPTION_MAX}
             showCount
             value={draft.description}
-            error={label("description", errors.description)}
+            error={label(errors.description)}
             onChange={(e) => set("description", e.target.value)}
           />
 
           <Select
             label="Genre"
             value={draft.genre}
-            error={label("genre", errors.genre)}
+            error={label(errors.genre)}
             onChange={(e) => set("genre", e.target.value)}
           >
             {settings.genres.map((g) => (
@@ -419,7 +420,7 @@ export function CreateAdventure() {
             label="Content rating"
             help="Readers filter by rating on Discover."
             value={draft.content_rating}
-            error={label("content_rating", errors.content_rating)}
+            error={label(errors.content_rating)}
             onChange={(e) => set("content_rating", e.target.value)}
           >
             {settings.content_ratings.map((r) => (
@@ -487,8 +488,8 @@ export function CreateAdventure() {
               aria-invalid={errors.opening_title ? "true" : undefined}
               onChange={(e) => set("opening_title", e.target.value)}
             />
-            {label("opening_title", errors.opening_title) ? (
-              <ValidationMessage tone="error">{label("opening_title", errors.opening_title)}</ValidationMessage>
+            {label(errors.opening_title) ? (
+              <ValidationMessage tone="error">{label(errors.opening_title)}</ValidationMessage>
             ) : null}
           </div>
 
@@ -502,8 +503,8 @@ export function CreateAdventure() {
               placeholder="The lantern swings once, and the gate opens…"
               data-testid="opening-body-editor"
             />
-            {label("opening_body", errors.opening_body) ? (
-              <ValidationMessage tone="error">{label("opening_body", errors.opening_body)}</ValidationMessage>
+            {label(errors.opening_body) ? (
+              <ValidationMessage tone="error">{label(errors.opening_body)}</ValidationMessage>
             ) : null}
             <InlineHelp>
               The editor allows paragraphs, emphasis, headings, lists, quotes, and
@@ -536,13 +537,13 @@ export function CreateAdventure() {
                 VISIBILITY_LABELS[t.visibility] ?? t.visibility
               }.`,
             }))}
-            error={label("template", errors.template)}
+            error={label(errors.template)}
           />
 
           <Select
             label="Who can add branches"
             value={draft.contribution_mode}
-            error={label("contribution_mode", errors.contribution_mode)}
+            error={label(errors.contribution_mode)}
             onChange={(e) => set("contribution_mode", e.target.value)}
           >
             {settings.contribution_modes.map((m) => (
@@ -553,7 +554,7 @@ export function CreateAdventure() {
           <Select
             label="Visibility"
             value={draft.visibility}
-            error={label("visibility", errors.visibility)}
+            error={label(errors.visibility)}
             onChange={(e) => set("visibility", e.target.value)}
           >
             {settings.visibilities.map((v) => (
@@ -573,8 +574,8 @@ export function CreateAdventure() {
               aria-invalid={errors.max_branches_per_scene ? "true" : undefined}
               onChange={(e) => set("max_branches_per_scene", Number(e.target.value))}
             />
-            {label("max_branches_per_scene", errors.max_branches_per_scene) ? (
-              <ValidationMessage tone="error">{label("max_branches_per_scene", errors.max_branches_per_scene)}</ValidationMessage>
+            {label(errors.max_branches_per_scene) ? (
+              <ValidationMessage tone="error">{label(errors.max_branches_per_scene)}</ValidationMessage>
             ) : null}
           </div>
 
@@ -589,7 +590,7 @@ export function CreateAdventure() {
             label="Contribution passcode (optional)"
             help={`Leave blank for no passcode. Minimum ${PASSCODE_MIN} characters.`}
             value={draft.contribution_passcode}
-            error={label("contribution_passcode", errors.contribution_passcode)}
+            error={label(errors.contribution_passcode)}
             onChange={(e) => set("contribution_passcode", e.target.value)}
           />
         </FormSection>
@@ -611,8 +612,8 @@ export function CreateAdventure() {
               placeholder="Tone, tense, what's off-limits…"
               data-testid="guidelines-editor"
             />
-            {label("writing_guidelines", errors.writing_guidelines) ? (
-              <ValidationMessage tone="error">{label("writing_guidelines", errors.writing_guidelines)}</ValidationMessage>
+            {label(errors.writing_guidelines) ? (
+              <ValidationMessage tone="error">{label(errors.writing_guidelines)}</ValidationMessage>
             ) : null}
           </div>
         </FormSection>
