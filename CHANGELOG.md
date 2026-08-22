@@ -2,6 +2,28 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.18.0 — 2026-09-13
+
+### Added
+- Branch submissions: `GET /api/adventures/{slug}/scenes/{scene}/branch` (form context) and `POST` (submit), backed by `App\BranchSubmissionService` (`app/services/BranchSubmissionService.php`).
+- Submission page at `/adventure/:slug/branch?from=<scene>` (`frontend/src/pages/SubmitBranch.tsx`): choice text, next-scene title and body, story-or-ending, optional private note to the team, public attribution preference, and the contribution passcode when one is configured.
+- Browser autosave for branch drafts, kept per adventure and per scene, restored on return and cleared once the branch is accepted.
+- Contribution history on `/account/contributions`, showing each submission with its review state.
+- Migration `private/migrations/0008_branch_submissions.sql`: `branch_submissions`, `contribution_blocks`, `contribution_attempts`, and `scenes.is_locked`. Default settings `contributions_per_user_per_hour` (10) and `contributions_per_ip_per_hour` (5).
+
+### Changed
+- Immediate mode publishes the new scene and choice in one transaction; approval mode records a pending submission and publishes nothing; closed mode refuses.
+- Pending submissions occupy a branch slot, so a scene cannot be over-filled while its queue is waiting.
+- Help topic "Contributing a branch" rewritten to describe shipped behaviour.
+
+### Security
+- Every rule is enforced server-side: adventure availability, contribution mode, published and unlocked source scene, branch limit, contributor block list, passcode, hourly per-user and per-IP rate limits, honeypot, length limits, sanitisation, and duplicate detection on the normalised choice text.
+- The contributor identity comes from the session cookie and the request IP; a user id in the request body is ignored. Signed-out visitors may contribute only where the creator allows it, and can only be credited as Anonymous.
+- Anonymous public attribution hides the name from readers only. The user id, username, and submitting IP are always recorded for moderators.
+- Choice text and scene titles are flattened to plain text; scene bodies pass through `App\HtmlSanitizer` before storage, so a contribution can never control presentation.
+- Submissions require a valid double-submit CSRF token and run under the `flock()` write lock, so concurrent submissions cannot exceed a scene's branch limit.
+- A tripped honeypot is answered exactly like a success and stores nothing. Refused submissions consume no rate-limit budget.
+
 ## 0.17.0 — 2026-08-22
 
 ### Added
