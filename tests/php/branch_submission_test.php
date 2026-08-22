@@ -66,7 +66,7 @@ final class BPBranchSubmissionTest
     {
         static $n = 0;
         $n++;
-        [$outcome, $errors, $adv] = (new AdventureService($this->pdo))->create($this->ownerId, [
+        [$outcome, $errors, $adv] = (new AdventureService($this->pdo))->create($this->ownerId, $over + [
             'title' => 'The Lantern Road ' . $n,
             'description' => 'A winter journey through a hollow kingdom.',
             'genre' => 'fantasy', 'content_rating' => 'teen',
@@ -77,7 +77,7 @@ final class BPBranchSubmissionTest
             'contribution_mode' => 'immediate',
             'anonymous_contributions' => false,
             'max_branches_per_scene' => 4,
-        ] + $over);
+        ]);
         assert_same(AdventureService::OK, $outcome, 'fixture: ' . json_encode($errors));
         return [
             'slug'  => (string) $adv['slug'],
