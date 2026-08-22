@@ -94,9 +94,16 @@ final class BPReportsTest
     private function extraScene(string $title = 'The salt door'): int
     {
         $this->pdo->prepare(
-            "INSERT INTO scenes (adventure_id, title, body, scene_type, state, scene_number)
-             VALUES (:a, :t, '<p>A door in the salt.</p>', 'story', 'published', 2)"
-        )->execute([':a' => $this->adventureId, ':t' => $title]);
+            "INSERT INTO scenes (adventure_id, slug, title, body, body_plain, scene_type, state, scene_number)
+             VALUES (:a, :g, :t, '<p>A door in the salt.</p>', 'A door in the salt.', 'story', 'published', :n)"
+        )->execute([
+            ':a' => $this->adventureId,
+            ':g' => 'scene-' . bin2hex(random_bytes(4)),
+            ':t' => $title,
+            ':n' => 2 + (int) $this->pdo->query(
+                'SELECT COUNT(*) c FROM scenes WHERE adventure_id = ' . $this->adventureId
+            )->fetch()['c'],
+        ]);
         return (int) $this->pdo->lastInsertId();
     }
 
@@ -390,7 +397,7 @@ final class BPReportsTest
         assert_same('Violence', $d['warnings'][0]['label']);
         assert_same('One scene depicts self-harm.', $d['warnings'][1]['details']);
 
-        $public = (new \App\PublicRepository($this->pdo))->adventure($this->slug);
+        $public = (new \App\PublicRepository($this->pdo))->adventureBySlug($this->slug);
         assert_same(3, count($public['contentWarningDetails']));
         assert_same('violence', $public['contentWarningDetails'][0]['code']);
     }
