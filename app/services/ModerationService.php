@@ -502,7 +502,7 @@ final class ModerationService
      *
      * @param array<string,mixed> $adv
      */
-    public function hasFreeSlot(array $adv, int $sceneId, ?int $exceptSubmissionId = null): int|bool
+    public function hasFreeSlot(array $adv, int $sceneId, ?int $exceptSubmissionId = null): bool
     {
         $limit = max(1, (int) $adv['max_branches_per_scene']);
 

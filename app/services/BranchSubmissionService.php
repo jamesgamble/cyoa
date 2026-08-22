@@ -58,8 +58,11 @@ final class BranchSubmissionService
     public const UNAUTHENTICATED       = 'unauthenticated';
 
     /** States a submission can be in. */
-    public const STATE_PUBLISHED = 'published';
+    public const STATE_APPROVED  = 'approved';
     public const STATE_PENDING   = 'pending';
+    /** Retained name for the immediately-published outcome. */
+    public const STATE_PUBLISHED = self::STATE_APPROVED;
+    public const PAUSED          = 'contributions_paused';
 
     public const ATTRIBUTIONS = ['username', 'display_name', 'anonymous'];
     public const SCENE_TYPES  = ['story', 'ending'];
@@ -117,8 +120,37 @@ final class BranchSubmissionService
     public function contributionsEnabled(array $adv): bool
     {
         $mode = (string) $adv['contribution_state'];
+        if ((int) ($adv['allow_branching'] ?? 1) !== 1) return false;
+        if ((int) ($adv['contributions_paused'] ?? 0) === 1) return false;
         return ($mode === 'immediate' || $mode === 'approval')
             && in_array((string) $adv['state'], self::CONTRIBUTABLE_STATES, true);
+    }
+
+    /**
+     * A contributor's standing on one adventure:
+     * `trusted`, `approval_required`, `blocked`, or null.
+     */
+    public function permissionLevel(int $adventureId, ?int $userId): ?string
+    {
+        if ($userId === null) return null;
+        $s = $this->pdo->prepare(
+            'SELECT level FROM adventure_permissions
+              WHERE adventure_id = :a AND user_id = :u LIMIT 1'
+        );
+        $s->execute([':a' => $adventureId, ':u' => $userId]);
+        $r = $s->fetch(PDO::FETCH_ASSOC);
+        return $r === false ? null : (string) $r['level'];
+    }
+
+    /**
+     * The state a new submission lands in: the adventure's mode, then
+     * adjusted by the contributor's per-adventure standing.
+     */
+    public function resolvedState(string $mode, ?string $permission): string
+    {
+        if ($permission === 'approval_required') return self::STATE_PENDING;
+        if ($permission === 'trusted') return self::STATE_APPROVED;
+        return $mode === 'immediate' ? self::STATE_APPROVED : self::STATE_PENDING;
     }
 
     public function isBlocked(int $adventureId, ?int $userId, string $ip): bool
@@ -143,7 +175,7 @@ final class BranchSubmissionService
 
         $p = $this->pdo->prepare(
             "SELECT COUNT(*) AS c FROM branch_submissions
-              WHERE source_scene_id = :s AND state = 'pending'"
+              WHERE source_scene_id = :s AND state IN ('pending','changes_requested')"
         );
         $p->execute([':s' => $sceneId]);
         return $used + (int) ($p->fetch()['c'] ?? 0);
@@ -220,7 +252,7 @@ final class BranchSubmissionService
         $p = $this->pdo->prepare(
             "SELECT 1 FROM branch_submissions
               WHERE source_scene_id = :s AND choice_text_key = :k
-                AND state IN ('pending','published') LIMIT 1"
+                AND state IN ('pending','changes_requested','approved') LIMIT 1"
         );
         $p->execute([':s' => $sceneId, ':k' => $key]);
         return $p->fetch() !== false;
@@ -263,6 +295,9 @@ final class BranchSubmissionService
                 'locked'    => (int) ($scene['is_locked'] ?? 0) === 1,
             ],
             'contribution_mode'     => $mode,
+            'contributions_paused'  => (int) ($adv['contributions_paused'] ?? 0) === 1,
+            'allow_branching'       => (int) ($adv['allow_branching'] ?? 1) === 1,
+            'permission'            => $this->permissionLevel((int) $adv['id'], $userId),
             'contributions_enabled' => $this->contributionsEnabled($adv),
             'requires_passcode'     => $adv['contribution_passcode_hash'] !== null
                                        && (string) $adv['contribution_passcode_hash'] !== '',
@@ -406,14 +441,16 @@ final class BranchSubmissionService
             return [self::DUPLICATE, ['choice_text' => 'duplicate'], null];
         }
 
-        $state = $mode === 'immediate' ? self::STATE_PUBLISHED : self::STATE_PENDING;
+        $permission = $this->permissionLevel($adventureId, $userId);
+        if ($permission === 'blocked') return [self::BLOCKED, [], null];
+        $state = $this->resolvedState($mode, $permission);
 
         $this->pdo->beginTransaction();
         try {
             $newSceneId  = null;
             $newChoiceId = null;
 
-            if ($state === self::STATE_PUBLISHED) {
+            if ($state === self::STATE_APPROVED) {
                 $newSceneId  = $this->insertScene($adventureId, $v);
                 $newChoiceId = $this->insertChoice($sceneId, $newSceneId, $v['choice_text']);
                 $this->pdo->prepare(
@@ -448,7 +485,7 @@ final class BranchSubmissionService
                  VALUES (:a, :u, :act, NULL, :to, :note)'
             )->execute([
                 ':a' => $adventureId, ':u' => $userId,
-                ':act' => $state === self::STATE_PUBLISHED ? 'branch_published' : 'branch_submitted',
+                ':act' => $state === self::STATE_APPROVED ? 'branch_published' : 'branch_submitted',
                 ':to' => $state, ':note' => $v['choice_text'],
             ]);
 
@@ -467,7 +504,7 @@ final class BranchSubmissionService
             'submission_id' => $submissionId,
             'state'         => $state,
             'mode'          => $mode,
-            'published'     => $state === self::STATE_PUBLISHED,
+            'published'     => $state === self::STATE_APPROVED,
             'scene_id'      => $newSceneId,
             'choice_id'     => $newChoiceId,
             'attribution'   => $v['attribution'],
