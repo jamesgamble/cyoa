@@ -804,7 +804,7 @@ export interface BranchDraftInput {
 export interface BranchSubmissionResult {
   status: string;
   submission_id: number;
-  state: "published" | "pending";
+  state: "approved" | "pending";
   mode: ContributionMode;
   published: boolean;
   scene_id: number | null;
@@ -818,9 +818,14 @@ export interface ContributionHistoryEntry {
   attribution: BranchAttribution;
   choice_text: string;
   scene_title: string;
+  scene_body: string;
   scene_type: BranchSceneType;
   private_note: string | null;
   moderator_note: string | null;
+  feedback: string | null;
+  revision: number;
+  can_edit: boolean;
+  can_withdraw: boolean;
   created_at: string;
   adventure_slug: string;
   adventure_title: string;
