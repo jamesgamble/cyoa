@@ -57,6 +57,17 @@ if ($method === 'POST' && $route === '/register') {
     exit;
 }
 
+// ── Adventure creation (v0.16.0) ───────────────────────────────────
+if ($route === '/adventures/creation-settings' && $method === 'GET') {
+    handle_creation_settings();
+    exit;
+}
+if ($route === '/adventures' && $method === 'POST') {
+    handle_adventure_create();
+    exit;
+}
+
+
 // ── Authentication (login, logout, verify, reset, change) ──────────
 if (strncmp($route, '/auth', 5) === 0) {
     handle_auth($method, substr($route, 5));
