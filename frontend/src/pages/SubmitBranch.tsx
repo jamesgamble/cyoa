@@ -155,7 +155,7 @@ export function SubmitBranch() {
   const [params] = useSearchParams();
   const sceneRef = params.get("from") ?? "";
   const navigate = useNavigate();
-  useHelpContext({ section: "contributing" });
+  useHelpContext({ section: "contribute" });
 
   const [context, setContext] = useState<BranchContext | null>(null);
   const [loading, setLoading] = useState(true);
