@@ -107,7 +107,7 @@ final class BPBranchSubmissionTest
             $a['slug'], $a['scene'], $this->payload(), $this->contributorId, '10.0.0.1'
         );
         assert_same(BranchSubmissionService::OK, $out);
-        assert_same('published', $data['state']);
+        assert_same('approved', $data['state']);
         assert_true($data['published']);
         assert_true($data['scene_id'] !== null, 'a scene was created');
         assert_true($data['choice_id'] !== null, 'a choice was created');
@@ -692,7 +692,7 @@ final class BPBranchSubmissionTest
             'SELECT action, to_state FROM adventure_activity WHERE adventure_id=' . $a['id'] . ' ORDER BY id DESC LIMIT 1'
         )->fetch();
         assert_same('branch_published', (string) $row['action']);
-        assert_same('published', (string) $row['to_state']);
+        assert_same('approved', (string) $row['to_state']);
     }
 
     public function testPendingSubmissionsAreRecordedInActivity(): void
