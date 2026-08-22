@@ -533,3 +533,117 @@ export function importAccountLocalProgress(entries: Array<{ slug: string; bookma
 }
 
 
+
+
+/* ------------------------------------------------------------------ */
+/* Adventure creation (v0.16.0)                                        */
+/*                                                                     */
+/* Both routes require a live session cookie. The owner of a new       */
+/* adventure is always the authenticated caller — the request body     */
+/* cannot nominate a different author.                                 */
+/* ------------------------------------------------------------------ */
+
+export interface CreationTemplate {
+  label: string;
+  visibility: "public" | "unlisted";
+  contribution_mode: "immediate" | "approval" | "closed";
+  anonymous_contributions: boolean;
+  max_branches_per_scene: number;
+  requires_passcode: boolean;
+}
+
+export interface CreationSettings {
+  templates: Record<string, CreationTemplate>;
+  genres: string[];
+  content_ratings: string[];
+  visibilities: string[];
+  contribution_modes: string[];
+  statuses: string[];
+  max_branches_min: number;
+  max_branches_max: number;
+  limits: {
+    max_adventures_per_user: number;
+    adventures_per_user_per_hour: number;
+    owned: number;
+    recent: number;
+  };
+  can_create: boolean;
+}
+
+export interface AdventureDraftInput {
+  template: string;
+  title: string;
+  description: string;
+  genre: string;
+  content_rating: string;
+  content_warnings: string[];
+  visibility: string;
+  opening_title: string;
+  opening_body: string;
+  status: string;
+  contribution_mode: string;
+  anonymous_contributions: boolean;
+  max_branches_per_scene: number;
+  contribution_passcode: string;
+  writing_guidelines: string;
+}
+
+export interface CreatedAdventure {
+  id: number;
+  slug: string;
+  title: string;
+  state: string;
+}
+
+export type CreateAdventureOutcome =
+  | "ok"
+  | "invalid"
+  | "unauthenticated"
+  | "not_active"
+  | "rate_limited"
+  | "limit_reached"
+  | "csrf_failed"
+  | "service_unavailable";
+
+export interface CreateAdventureResult {
+  status: number;
+  outcome: CreateAdventureOutcome;
+  adventure?: CreatedAdventure;
+  fields?: Record<string, string>;
+}
+
+export async function fetchCreationSettings(): Promise<
+  { status: number; settings: CreationSettings | null }
+> {
+  try {
+    const res = await fetch(apiUrl("/adventures/creation-settings"), {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return { status: res.status, settings: null };
+    return { status: res.status, settings: (await res.json()) as CreationSettings };
+  } catch {
+    return { status: 0, settings: null };
+  }
+}
+
+export async function createAdventure(
+  input: AdventureDraftInput,
+): Promise<CreateAdventureResult> {
+  const r = await accountMutate<{ status: string; adventure: CreatedAdventure }>(
+    "/adventures",
+    "POST",
+    input,
+  );
+  if (r.ok && r.data?.adventure) {
+    return { status: r.status, outcome: "ok", adventure: r.data.adventure };
+  }
+  const known: CreateAdventureOutcome[] = [
+    "invalid", "unauthenticated", "not_active",
+    "rate_limited", "limit_reached", "csrf_failed",
+  ];
+  const outcome = known.includes(r.error as CreateAdventureOutcome)
+    ? (r.error as CreateAdventureOutcome)
+    : "service_unavailable";
+  return { status: r.status, outcome, fields: r.fields };
+}
