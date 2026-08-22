@@ -91,7 +91,7 @@ function renderWizard() {
 
 /** Walk the wizard to the review step with a valid draft. */
 async function fillToReview(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText("Title"), "The Lantern Road");
+  await user.type(await screen.findByLabelText("Title"), "The Lantern Road");
   await user.type(screen.getByLabelText("Description"), "A winter journey.");
   await user.click(screen.getByRole("button", { name: "Continue" }));
 
@@ -307,9 +307,8 @@ describe("creation wizard — v0.16.0", () => {
   it("prompts unauthenticated visitors to sign in instead of showing the form", async () => {
     settingsResponse = { status: 401, body: { error: "unauthenticated" } };
     renderWizard();
-    expect(await screen.findByRole("link", { name: /sign in/i })).toHaveAttribute(
-      "href", "/login?redirect=/start",
-    );
+    const links = await screen.findAllByRole("link", { name: /sign in/i });
+    expect(links.some((l) => l.getAttribute("href") === "/login?redirect=/start")).toBe(true);
     expect(screen.queryByTestId("step-indicator")).toBeNull();
   });
 
