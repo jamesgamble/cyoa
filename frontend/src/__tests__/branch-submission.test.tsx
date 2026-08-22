@@ -177,16 +177,18 @@ describe("branch submission — conditions that stop the form", () => {
 /* ─────────────────────────── Passcode ───────────────────────── */
 
 describe("branch submission — passcode", () => {
-  it("shows the passcode field only when the adventure requires one", async () => {
+  it("hides the passcode field when the adventure does not require one", async () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context());
-    const { unmount } = renderBranch();
+    renderBranch();
     await screen.findByTestId("branch-form");
     expect(screen.queryByLabelText("Contribution passcode")).not.toBeInTheDocument();
-    unmount();
+  });
 
+  it("shows the passcode field when the adventure requires one", async () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context({ requires_passcode: true }));
     renderBranch();
-    expect(await screen.findByLabelText("Contribution passcode")).toBeInTheDocument();
+    await screen.findByTestId("branch-form");
+    expect(screen.getByLabelText("Contribution passcode")).toBeInTheDocument();
   });
 
   it("refuses to submit without a required passcode", async () => {
