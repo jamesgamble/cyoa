@@ -211,21 +211,47 @@ describe("Adventure landing — actions", () => {
   });
 });
 
-describe("Adventure landing — follow placeholder", () => {
+describe("Adventure landing — follow", () => {
   it("is hidden by default (signed-out)", () => {
     renderAt(`/adventure/${FIRST.slug}`);
     expect(screen.queryByTestId("action-follow")).not.toBeInTheDocument();
   });
 
-  it("appears for signed-in visitors and toggles state", () => {
+  it("subscribes a signed-in reader and reflects the server state", async () => {
     window.localStorage.setItem("bp-signed-in", "1");
-    renderAt(`/adventure/${FIRST.slug}`);
-    const btn = screen.getByTestId("action-follow");
-    expect(btn).toHaveAttribute("aria-pressed", "false");
-    expect(btn).toHaveTextContent(/^Follow/);
-    fireEvent.click(btn);
-    expect(btn).toHaveAttribute("aria-pressed", "true");
-    expect(btn).toHaveTextContent(/^Following/);
-    expect(screen.getByTestId("follow-help")).toBeInTheDocument();
+    const calls: string[] = [];
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/follow")) {
+        calls.push(`${init?.method ?? "GET"} ${url}`);
+        return new Response(
+          JSON.stringify({ status: "ok", following: (init?.method ?? "GET") === "POST" }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      if (url.includes("/csrf")) {
+        return new Response(JSON.stringify({ token: "t" }), {
+          status: 200, headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response("{}", { status: 404 });
+    }) as typeof fetch;
+
+    try {
+      renderAt(`/adventure/${FIRST.slug}`);
+      const btn = await screen.findByTestId("action-follow");
+      expect(btn).toHaveAttribute("aria-pressed", "false");
+      expect(btn).toHaveTextContent(/^Follow/);
+      fireEvent.click(btn);
+      await waitFor(() => expect(btn).toHaveTextContent(/^Following/));
+      expect(btn).toHaveAttribute("aria-pressed", "true");
+      expect(calls.some((c) => c.startsWith("POST"))).toBe(true);
+      // A follow is a subscription, never a reading position.
+      expect(window.localStorage.getItem(`bp-progress:${FIRST.slug}`)).toBeNull();
+      expect(screen.getByTestId("follow-help")).toBeInTheDocument();
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   });
 });
