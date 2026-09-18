@@ -2,6 +2,36 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.22.0 — 2026-09-18
+
+### Added
+- In-site notifications for submission received, submission approved, submission rejected, changes requested, submission resubmitted, review needed, collaborator invitation, ownership transfer, followed adventure updated, and account security events (`App\NotificationService`, migration `private/migrations/0012_notifications_and_follows.sql`).
+- Inbox actions at `/account/inbox`: mark one read, mark all read, delete a routine notification, and clear every read routine notification (`POST|DELETE /api/notifications*`).
+- Per-kind email preferences at `/account/notifications` (`GET|PUT /api/notifications/preferences`); a kind with no stored row falls back to its shipped default.
+- Follows as a subscription separate from bookmarks: `GET|POST|DELETE /api/adventures/{slug}/follow`, a follow button on the adventure landing page, and a "Adventures you follow" list with unfollow in account settings.
+- Aggregated email for routine followed-adventure updates: entries queue in `notification_digests` and `scripts/process-notification-digests.php` sends one bundled message per reader.
+- Help topics: notifications, email preferences, and following versus bookmarks.
+- Tests: `tests/php/notifications_test.php` and `frontend/src/__tests__/notifications.test.tsx` cover every kind, read and delete rules, per-kind preferences, follow and bookmark separation, and digest aggregation.
+
+### Changed
+- Collaboration notices (invitations, role changes, ownership) now route through the shared notification service and honour the recipient's email preferences.
+
+### Security
+- Security and recovery email cannot be switched off, and account security notices cannot be deleted from the inbox.
+- Notifications are always scoped by recipient id; a user can neither read, mark, nor delete another account's items.
+- Follower counts are never returned by any endpoint.
+
+## 0.21.0 — 2026-09-18
+
+### Added
+- Server-side content reports on adventures, scenes, choices, and contributions with reasons for spam, harassment, hate or abuse, explicit content, personal information, broken branch, copyright, and other (`App\ReportService`, migration `private/migrations/0011_reports_and_content_warnings.sql`).
+- Owner actions on a report: dismiss, hide the content, lock the scene, or escalate to the platform; administrators may mark a report platform-private.
+- Content warnings per adventure (violence, strong language, horror, sexual themes, substance use, self-harm, other) returned with public adventure data.
+
+### Security
+- Reporting is honeypot-protected, rate-limited per reporter per hour, and folds duplicate reports of the same target within 24 hours.
+- Content is never removed automatically by report count; every removal is an explicit human decision.
+
 ## 0.20.0 — 2026-09-13
 
 ### Added
