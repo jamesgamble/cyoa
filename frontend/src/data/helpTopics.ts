@@ -438,7 +438,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       "Readers see published scenes only. A choice that leads to an unfinished or hidden scene is simply not listed, and nothing on the page hints that it exists.",
       "The outline works with a keyboard: arrow keys move between scenes, right and left open and close a branch, and Home and End jump to the first and last scene shown. Assistive software reads it as a nested list with its depth announced.",
     ],
-    related: ["story-check", "reading", "authoring"],
+    related: ["story-check", "reading", "discovering"],
     match: {
       routes: [/^\/adventure\/[^/]+\/map$/],
       sections: ["story-map"],
@@ -455,7 +455,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       "Branching Paths keeps stories as trees: every scene except the opening one has exactly one scene leading to it, and choices never loop back or join two branches together. Anything breaking that rule is reported as a broken branch shape rather than drawn on the map.",
       "The check never changes or removes anything. It tells you what to look at; every fix is yours to make.",
     ],
-    related: ["story-map", "publishing", "moderation"],
+    related: ["story-map", "managing-adventures", "moderation"],
     match: {
       routes: [/^\/manage\//],
       sections: ["publishing", "story-map"],
