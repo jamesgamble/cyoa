@@ -13,6 +13,7 @@ import { Adventure } from "./pages/Adventure";
 import { CreateAdventure } from "./pages/CreateAdventure";
 import { SubmitBranch } from "./pages/SubmitBranch";
 import { Reader } from "./pages/Reader";
+import { StoryMap } from "./pages/StoryMap";
 import { Preview } from "./pages/Preview";
 import { ManageAdventure } from "./pages/ManageAdventure";
 import { Help, HelpTopic } from "./pages/help";
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/discover" element={<Discover />} />
         <Route path="/adventure/:slug" element={<Adventure />} />
+        <Route path="/adventure/:slug/map" element={<StoryMap />} />
         <Route path="/adventure/:slug/preview" element={<Preview />} />
         <Route path="/adventure/:slug/branch" element={<SubmitBranch />} />
         <Route path="/adventure/:slug/read" element={<Reader />} />

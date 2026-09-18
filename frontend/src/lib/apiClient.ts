@@ -93,6 +93,125 @@ export async function fetchOutline(
 }
 
 /* ------------------------------------------------------------------ */
+/* Story map and validation (v0.23.0)                                  */
+/* ------------------------------------------------------------------ */
+
+export interface StoryMapNode {
+  id: string;
+  scene_id: number;
+  number: number;
+  title: string;
+  type: "story" | "ending";
+  is_start: boolean;
+  depth: number;
+  choice_label: string | null;
+  child_count: number;
+  has_more: boolean;
+  children: StoryMapNode[];
+  /** Manage scope only. */
+  state?: string;
+  label?: string;
+  locked?: boolean;
+}
+
+export interface StoryMapMatch {
+  id: string;
+  title: string;
+  number: number;
+  type: "story" | "ending";
+  path: string[];
+  reachable: boolean;
+  state?: string;
+  label?: string;
+}
+
+export interface StoryMapIssue {
+  code: string;
+  severity: "error" | "warning";
+  scene: string;
+  scene_title: string;
+  choice: string | null;
+  message: string;
+}
+
+export interface StoryMapPayload {
+  adventure: { slug: string; title: string; state: string };
+  scope: "public" | "manage";
+  role: string | null;
+  root: string | null;
+  depth: number;
+  max_depth: number;
+  total_scenes: number;
+  loaded_scenes: number;
+  truncated: boolean;
+  tree: StoryMapNode[];
+  query?: string;
+  matches?: StoryMapMatch[];
+  issues?: StoryMapIssue[];
+  issue_summary?: { errors: number; warnings: number; total: number };
+  unreachable?: string[];
+}
+
+export interface StoryValidationPayload {
+  adventure: { slug: string; title: string; state: string };
+  issues: StoryMapIssue[];
+  summary: { errors: number; warnings: number; total: number };
+}
+
+export interface StoryMapOptions {
+  /** Load only the sub-tree beginning at this scene. */
+  root?: string;
+  /** How many levels to load in one request (lazy loading). */
+  depth?: number;
+  /** Title search across the whole story. */
+  q?: string;
+}
+
+function storyMapQuery(opts: StoryMapOptions = {}): string {
+  const p = new URLSearchParams();
+  if (opts.root) p.set("root", opts.root);
+  if (typeof opts.depth === "number") p.set("depth", String(opts.depth));
+  if (opts.q) p.set("q", opts.q);
+  const s = p.toString();
+  return s ? `?${s}` : "";
+}
+
+/** The public outline: published scenes only. */
+export async function fetchStoryMap(
+  slug: string,
+  opts: StoryMapOptions = {},
+  signal?: AbortSignal,
+): Promise<StoryMapPayload | null> {
+  return await getJson<StoryMapPayload>(
+    `/adventures/${encodeURIComponent(slug)}/map${storyMapQuery(opts)}`,
+    signal,
+  );
+}
+
+/** The owner map: drafts and hidden scenes included, with labels. */
+export async function fetchManageStoryMap(
+  slug: string,
+  opts: StoryMapOptions = {},
+  signal?: AbortSignal,
+): Promise<StoryMapPayload | null> {
+  return await getJson<StoryMapPayload>(
+    `/adventures/${encodeURIComponent(slug)}/moderation/map${storyMapQuery(opts)}`,
+    signal,
+  );
+}
+
+/** The validation report — managers only. */
+export async function fetchStoryValidation(
+  slug: string,
+  signal?: AbortSignal,
+): Promise<StoryValidationPayload | null> {
+  return await getJson<StoryValidationPayload>(
+    `/adventures/${encodeURIComponent(slug)}/moderation/validation`,
+    signal,
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Registration                                                        */
 /* ------------------------------------------------------------------ */
 

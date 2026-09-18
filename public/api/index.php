@@ -41,6 +41,7 @@ use App\PublicRepository;
 use App\ReportService;
 use App\RegistrationService;
 use App\SettingsRepository;
+use App\StoryMapService;
 use App\SessionRepository;
 use App\SmtpSettingsRepository;
 use App\WriteLock;
@@ -111,6 +112,12 @@ if (preg_match('#^/invitations(/.*)?$#', $route, $im)) {
 }
 if (preg_match('#^/notifications(/.*)?$#', $route, $nm)) {
     handle_notifications($method, rtrim($nm[1] ?? '', '/'));
+    exit;
+}
+
+// ── Story map (v0.23.0) ────────────────────────────────────────────
+if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/map$#', $route, $smm)) {
+    handle_story_map($method, $smm[1]);
     exit;
 }
 
@@ -1156,6 +1163,18 @@ function handle_moderation(string $method, string $slug, string $tail): void
                 moderation_respond($o, $d);
                 return;
             }
+            if ($tail === '/map') {
+                [$o, $d] = (new StoryMapService($pdo))->manageMap(
+                    $slug, $userId, $isAdmin, story_map_options()
+                );
+                story_map_respond($o, $d);
+                return;
+            }
+            if ($tail === '/validation') {
+                [$o, $d] = (new StoryMapService($pdo))->validation($slug, $userId, $isAdmin);
+                story_map_respond($o, $d);
+                return;
+            }
             if ($tail === '/permissions') {
                 [$o, $d] = $svc->permissions($slug, $userId, $isAdmin);
                 moderation_respond($o, $d);
@@ -1310,6 +1329,57 @@ function handle_moderation(string $method, string $slug, string $tail): void
     }
 
     respond_error(404, 'not_found');
+}
+
+/**
+ * Read the shared story-map query parameters (v0.23.0).
+ *
+ * `root` names the scene a sub-tree starts at, `depth` how many levels
+ * to include, and `q` a title search. All three are optional; the
+ * service clamps depth to its own ceiling.
+ *
+ * @return array<string,mixed>
+ */
+function story_map_options(): array
+{
+    $opts = [];
+    if (isset($_GET['root']) && is_string($_GET['root'])) $opts['root'] = $_GET['root'];
+    if (isset($_GET['q']) && is_string($_GET['q']))       $opts['q']    = mb_substr($_GET['q'], 0, 120);
+    if (isset($_GET['depth']) && is_numeric($_GET['depth'])) $opts['depth'] = (int) $_GET['depth'];
+    return $opts;
+}
+
+function story_map_respond(string $outcome, ?array $data): void
+{
+    if ($outcome === StoryMapService::NOT_FOUND) { respond_error(404, 'not_found'); return; }
+    if ($outcome === StoryMapService::FORBIDDEN) { respond_error(403, 'forbidden'); return; }
+    echo json_encode(['status' => 'ok'] + ($data ?? []));
+}
+
+/**
+ * GET /api/adventures/{slug}/map (v0.23.0).
+ *
+ * The public outline. Only published scenes inside a publicly visible
+ * adventure are returned, and a choice pointing at anything else is
+ * absent rather than hinted at.
+ */
+function handle_story_map(string $method, string $slug): void
+{
+    if ($method !== 'GET') { respond_error(405, 'method_not_allowed'); return; }
+    try {
+        $pdo = Database::open();
+    } catch (\Throwable $e) {
+        error_log('[bp] story map db error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+        return;
+    }
+    try {
+        [$o, $d] = (new StoryMapService($pdo))->publicMap($slug, story_map_options());
+        story_map_respond($o, $d);
+    } catch (\Throwable $e) {
+        error_log('[bp] story map error: ' . $e->getMessage());
+        respond_error(503, 'service_unavailable');
+    }
 }
 
 /**
