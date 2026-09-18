@@ -426,6 +426,59 @@ export const HELP_TOPICS: HelpTopic[] = [
       roles: ["author", "master"],
     },
   },
+  {
+    slug: "notifications",
+    title: "Notifications",
+    summary:
+      "What lands in your inbox, how to mark items read, and which notices you cannot delete.",
+    body: [
+      "Your inbox at Account → Inbox collects everything the site needs to tell you: a branch was submitted to your adventure, your branch was published or declined, changes were requested, a revised submission is ready, a review is needed, a collaborator invitation arrived, ownership of an adventure changed, an adventure you follow was updated, and account security events such as a new sign-in.",
+      "You can mark one notification read, mark everything read at once, and delete routine notifications you no longer need. 'Clear read' removes every routine item you have already read.",
+      "Account security notices cannot be deleted. They are your own record of what happened to your account, so they stay in the inbox even after you have read them.",
+      "Notifications always appear in the inbox regardless of your email settings. Turning email off changes where a message reaches you, never whether it is recorded.",
+    ],
+    related: ["email-preferences", "following-and-bookmarks", "collaborators"],
+    match: {
+      routes: [/^\/account\/inbox$/],
+      sections: ["notifications"],
+      signedIn: true,
+    },
+  },
+  {
+    slug: "email-preferences",
+    title: "Email preferences",
+    summary:
+      "Choose which notifications also reach you by email, and what stays on permanently.",
+    body: [
+      "Account → Notifications lists every kind of notification with a single switch for email. The switch controls email only; the inbox always receives the notification.",
+      "Security and recovery email cannot be switched off. Sign-in alerts, password changes, email-address confirmations, and account recovery are how an account is protected and regained, so those messages are always sent.",
+      "Updates from adventures you follow are bundled. Instead of one email per new branch, a single message gathers everything that happened since the last one was sent, so following an active adventure never floods your inbox.",
+      "Changing a preference takes effect immediately for messages sent after you save it. Anything already queued for delivery still goes out.",
+    ],
+    related: ["notifications", "following-and-bookmarks", "accounts"],
+    match: {
+      routes: [/^\/account\/notifications$/],
+      sections: ["notifications", "account"],
+      signedIn: true,
+    },
+  },
+  {
+    slug: "following-and-bookmarks",
+    title: "Following and bookmarks",
+    summary:
+      "A follow subscribes you to updates; a bookmark remembers where you stopped reading.",
+    body: [
+      "These are two separate things and neither one implies the other. Following an adventure subscribes you to its updates: when a new branch is published, you hear about it. Bookmarking records a reading position so you can pick the story back up where you left it.",
+      "You can follow an adventure from its landing page while signed in, and unfollow it there or from Account → Notifications, which lists everything you currently follow.",
+      "Unfollowing stops the updates and leaves your reading position untouched. Clearing a bookmark changes nothing about your subscriptions.",
+      "Follower counts are not shown anywhere on the site, to you or to the adventure's team. Following is a private choice about what you want to hear about.",
+    ],
+    related: ["notifications", "reading", "email-preferences"],
+    match: {
+      routes: [/^\/adventure\/[^/]+$/, /^\/account\/notifications$/],
+      sections: ["notifications", "adventure"],
+    },
+  },
 ];
 
 
