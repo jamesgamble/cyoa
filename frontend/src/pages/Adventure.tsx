@@ -16,7 +16,12 @@ import type {
   StoryStatus,
 } from "../components/AdventureCard";
 import { findAdventureBySlug } from "../data/discover";
-import { fetchAdventure } from "../lib/apiClient";
+import {
+  fetchAdventure,
+  fetchFollowState,
+  followAdventure,
+  unfollowAdventure,
+} from "../lib/apiClient";
 import { useLocalProgress } from "../hooks/useLocalProgress";
 import { useSignedIn } from "../hooks/useSignedIn";
 import { useHelpContext } from "../components/GlobalHelp";
@@ -83,6 +88,25 @@ function AdventureView({ adventure }: ViewProps) {
   const progress = useLocalProgress(adventure.slug);
   const signedIn = useSignedIn();
   const [following, setFollowing] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // A follow is a subscription to updates, stored on the account. It is
+  // deliberately unrelated to the local bookmark above.
+  useEffect(() => {
+    if (!signedIn) { setFollowing(false); return; }
+    void fetchFollowState(adventure.slug).then((r) => {
+      if (r.data) setFollowing(r.data.following);
+    });
+  }, [signedIn, adventure.slug]);
+
+  async function onToggleFollow() {
+    setBusy(true);
+    const r = following
+      ? await unfollowAdventure(adventure.slug)
+      : await followAdventure(adventure.slug);
+    if (r.ok) setFollowing(!following);
+    setBusy(false);
+  }
 
   const storyStatus = resolveStoryStatus(adventure);
   const contributionState = resolveContributionState(adventure);
