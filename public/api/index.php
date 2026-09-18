@@ -35,6 +35,7 @@ use App\EmailTemplateRepository;
 use App\Mailer\SmtpTransport;
 use App\Migrator;
 use App\ModerationService;
+use App\NotificationService;
 use App\PublicationService;
 use App\PublicRepository;
 use App\ReportService;
@@ -112,6 +113,13 @@ if (preg_match('#^/notifications(/.*)?$#', $route, $nm)) {
     handle_notifications($method, rtrim($nm[1] ?? '', '/'));
     exit;
 }
+
+// ── Follows (v0.22.0) ──────────────────────────────────────────────
+if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/follow$#', $route, $fm)) {
+    handle_follow($method, $fm[1]);
+    exit;
+}
+
 
 // ── Branch submissions (v0.18.0) ───────────────────────────────────
 if (preg_match('#^/adventures/([A-Za-z0-9\-]+)/scenes/([A-Za-z0-9\-]+)/branch$#', $route, $bm)) {
@@ -526,6 +534,13 @@ function handle_auth(string $method, string $tail): void
                 [$outcome, $cookie] = $result;
                 if ($outcome === AuthService::OK && is_string($cookie)) {
                     auth_set_cookie($cookie);
+                    $uid = $auth->authenticate($cookie);
+                    if ($uid !== null) {
+                        notify_security_event(
+                            $pdo, $uid, 'New sign-in to your account',
+                            'If this was not you, change your password and sign out other sessions.'
+                        );
+                    }
                     echo json_encode([
                         'status'   => 'ok',
                         'redirect' => AuthService::isSafeRedirect($redirect) ? $redirect : '/',
@@ -714,6 +729,9 @@ function handle_account(string $method, string $tail): void
         [$outcome, $data] = (new WriteLock())->withLock(
             static fn () => $mod->contributorUpdate($subId, $userId, $body, $resubmit)
         );
+        if ($outcome === ModerationService::OK && $resubmit) {
+            notify_resubmitted($pdo, $subId, $userId);
+        }
         moderation_respond($outcome, $data);
         return;
     }
@@ -1037,6 +1055,7 @@ function handle_branch_submission(string $method, string $slug, string $sceneRef
             }
         );
         if ($outcome === BranchSubmissionService::OK) {
+            notify_branch_submitted($pdo, $slug, $data ?? [], $userId);
             http_response_code(201);
             echo json_encode(['status' => 'ok'] + ($data ?? []));
             return;
@@ -1178,6 +1197,9 @@ function handle_moderation(string $method, string $slug, string $tail): void
             [$o, $d] = $lock->withLock(
                 static fn () => $svc->decide($slug, $id, $userId, $isAdmin, $action, $body)
             );
+            if ($o === ModerationService::OK && is_array($d)) {
+                notify_submission_decided($pdo, $slug, $d, $userId);
+            }
             moderation_respond($o, $d);
             return;
         }
@@ -1615,7 +1637,17 @@ function handle_invitations(string $method, string $tail): void
     respond_error(404, 'not_found');
 }
 
-/** /api/notifications — the signed-in user's inbox. */
+/**
+ * /api/notifications — the signed-in user's inbox (v0.22.0).
+ *
+ *   GET    /api/notifications              — inbox + unread count
+ *   GET    /api/notifications/preferences  — per-kind email settings
+ *   PUT    /api/notifications/preferences  — save them
+ *   POST   /api/notifications/read         — mark all read
+ *   POST   /api/notifications/{id}/read    — mark one read
+ *   DELETE /api/notifications/{id}         — delete one routine item
+ *   DELETE /api/notifications/read         — delete read routine items
+ */
 function handle_notifications(string $method, string $tail): void
 {
     try { $pdo = Database::open(); }
@@ -1623,24 +1655,217 @@ function handle_notifications(string $method, string $tail): void
 
     $userId = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
     if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
-    $svc = new CollaborationService($pdo);
+    $svc = new NotificationService($pdo);
 
     if ($method === 'GET' && $tail === '') {
         echo json_encode([
-            'notifications' => $svc->notifications($userId),
+            'status'        => 'ok',
+            'notifications' => $svc->inbox($userId),
             'unread'        => $svc->unreadCount($userId),
         ]);
         return;
     }
+    if ($method === 'GET' && $tail === '/preferences') {
+        echo json_encode([
+            'status'      => 'ok',
+            'preferences' => $svc->preferences($userId),
+            'following'   => $svc->following($userId),
+        ]);
+        return;
+    }
+
+    if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+    $lock = new WriteLock();
+
+    if ($method === 'PUT' && $tail === '/preferences') {
+        $body = read_json_body();
+        $prefs = (array) ($body['preferences'] ?? $body);
+        $saved = $lock->withLock(static fn () => $svc->updatePreferences($userId, $prefs));
+        echo json_encode(['status' => 'ok', 'preferences' => $saved]);
+        return;
+    }
     if ($method === 'POST' && ($tail === '/read' || preg_match('#^/(\d+)/read$#', $tail, $m))) {
-        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
         $id = isset($m[1]) ? (int) $m[1] : null;
-        (new WriteLock())->withLock(static function () use ($svc, $userId, $id) {
-            $svc->markRead($userId, $id);
-            return null;
-        });
+        $lock->withLock(static function () use ($svc, $userId, $id) { $svc->markRead($userId, $id); return null; });
         echo json_encode(['status' => 'ok', 'unread' => $svc->unreadCount($userId)]);
         return;
     }
+    if ($method === 'DELETE' && $tail === '/read') {
+        $removed = $lock->withLock(static fn () => $svc->deleteRead($userId));
+        echo json_encode(['status' => 'ok', 'deleted' => $removed, 'unread' => $svc->unreadCount($userId)]);
+        return;
+    }
+    if ($method === 'DELETE' && preg_match('#^/(\d+)$#', $tail, $dm)) {
+        $outcome = $lock->withLock(static fn () => $svc->delete($userId, (int) $dm[1]));
+        if ($outcome === NotificationService::OK) {
+            echo json_encode(['status' => 'ok', 'unread' => $svc->unreadCount($userId)]);
+            return;
+        }
+        respond_error($outcome === NotificationService::FORBIDDEN ? 403 : 404, $outcome);
+        return;
+    }
     respond_error(404, 'not_found');
+}
+
+/**
+ * /api/adventures/{slug}/follow — an update subscription.
+ *
+ * Distinct from a bookmark, which records a reading position. POST
+ * subscribes, DELETE unsubscribes. Follower counts are never returned.
+ */
+function handle_follow(string $method, string $slug): void
+{
+    try { $pdo = Database::open(); }
+    catch (\Throwable $e) { error_log('[bp] follow db error: ' . $e->getMessage()); respond_error(503, 'service_unavailable'); return; }
+
+    $userId = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+    if ($userId === null) { respond_error(401, 'unauthenticated'); return; }
+    $svc = new NotificationService($pdo);
+
+    if ($method === 'GET') {
+        $adv = $svc->adventureBySlug($slug);
+        if ($adv === null) { respond_error(404, 'not_found'); return; }
+        echo json_encode(['status' => 'ok', 'following' => $svc->isFollowing((int) $adv['id'], $userId)]);
+        return;
+    }
+    if ($method !== 'POST' && $method !== 'DELETE') { respond_error(405, 'method_not_allowed'); return; }
+    if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+
+    $lock = new WriteLock();
+    [$outcome, $data] = $lock->withLock(
+        static fn () => $method === 'POST' ? $svc->follow($slug, $userId) : $svc->unfollow($slug, $userId)
+    );
+    if ($outcome !== NotificationService::OK) { respond_error(404, 'not_found'); return; }
+    echo json_encode(['status' => 'ok'] + $data);
+}
+
+/* ─────────────────── Notification fan-out (v0.22.0) ────────────────
+ *
+ * Emission lives here, at the edge, so the services that own the
+ * transaction stay focused on their invariants. Each helper runs
+ * after its write has committed: a failed notification can never
+ * roll back an approved branch.
+ */
+
+/** One submitted branch: tell the team, and the reviewers who gate it. */
+function notify_branch_submitted(PDO $pdo, string $slug, array $data, ?int $userId): void
+{
+    try {
+        $svc = new NotificationService($pdo);
+        $adv = $svc->adventureBySlug($slug);
+        if ($adv === null) return;
+        $advId = (int) $adv['id'];
+        $title = (string) $adv['title'];
+        $url   = '/manage/' . $slug;
+
+        if (!empty($data['published'])) {
+            $svc->announceUpdate(
+                $advId, $title . ' has a new branch',
+                'A new branch was published.', '/adventure/' . $slug, $userId
+            );
+            return;
+        }
+        (new WriteLock())->withLock(static function () use ($svc, $advId, $title, $url, $userId) {
+            $svc->emitMany($svc->teamIds($advId), 'submission_received',
+                'New submission for ' . $title,
+                'A reader submitted a branch and it is waiting for a decision.',
+                $url, $advId, ['actor_id' => $userId]);
+            $svc->emitMany($svc->teamIds($advId, ['reviewer']), 'review_needed',
+                'A submission needs review in ' . $title,
+                'Add a note or a recommendation when you have a moment.',
+                $url, $advId, ['actor_id' => $userId]);
+            return null;
+        });
+    } catch (\Throwable $e) {
+        error_log('[bp] submission notification failed: ' . $e->getMessage());
+    }
+}
+
+/** A decision on one submission: tell the contributor, then followers. */
+function notify_submission_decided(PDO $pdo, string $slug, array $data, ?int $actorId): void
+{
+    try {
+        $svc = new NotificationService($pdo);
+        $adv = $svc->adventureBySlug($slug);
+        if ($adv === null) return;
+        $advId  = (int) $adv['id'];
+        $title  = (string) $adv['title'];
+        $action = (string) ($data['action'] ?? '');
+
+        $s = $pdo->prepare('SELECT user_id, choice_text FROM branch_submissions WHERE id = :i');
+        $s->execute([':i' => (int) ($data['submission_id'] ?? 0)]);
+        $sub = $s->fetch(PDO::FETCH_ASSOC);
+        $contributor = ($sub !== false && $sub['user_id'] !== null) ? (int) $sub['user_id'] : null;
+
+        $map = [
+            'approve'          => ['submission_approved', 'Your branch was published',
+                                   'Your contribution is now part of the story.'],
+            'edit_and_approve' => ['submission_approved', 'Your branch was published',
+                                   'An editor made small changes and published your contribution.'],
+            'reject'           => ['submission_rejected', 'Your submission was not accepted',
+                                   'Open your contributions page to read the feedback.'],
+            'request_changes'  => ['changes_requested', 'Changes were requested',
+                                   'Edit your submission and send it back when you are ready.'],
+        ];
+
+        (new WriteLock())->withLock(static function () use ($svc, $map, $action, $contributor, $title, $slug, $advId, $actorId) {
+            if ($contributor !== null && isset($map[$action])) {
+                [$kind, $subject, $body] = $map[$action];
+                $svc->emit($contributor, $kind, $subject . ' — ' . $title, $body,
+                    '/account/contributions', $advId, ['actor_id' => null]);
+            }
+            if ($action === 'approve' || $action === 'edit_and_approve') {
+                $svc->announceUpdate($advId, $title . ' has a new branch',
+                    'A new branch was published.', '/adventure/' . $slug, $actorId);
+            }
+            return null;
+        });
+    } catch (\Throwable $e) {
+        error_log('[bp] decision notification failed: ' . $e->getMessage());
+    }
+}
+
+/** A contributor sent their revised branch back to the team. */
+function notify_resubmitted(PDO $pdo, int $submissionId, int $userId): void
+{
+    try {
+        $svc = new NotificationService($pdo);
+        $s = $pdo->prepare(
+            'SELECT b.adventure_id, a.slug, a.title
+               FROM branch_submissions b JOIN adventures a ON a.id = b.adventure_id
+              WHERE b.id = :i'
+        );
+        $s->execute([':i' => $submissionId]);
+        $row = $s->fetch(PDO::FETCH_ASSOC);
+        if ($row === false) return;
+        $advId = (int) $row['adventure_id'];
+        $title = (string) $row['title'];
+        $url   = '/manage/' . (string) $row['slug'];
+        (new WriteLock())->withLock(static function () use ($svc, $advId, $title, $url, $userId) {
+            $svc->emitMany($svc->teamIds($advId), 'submission_resubmitted',
+                'A revised submission is ready in ' . $title,
+                'The contributor addressed the requested changes.',
+                $url, $advId, ['actor_id' => $userId]);
+            return null;
+        });
+    } catch (\Throwable $e) {
+        error_log('[bp] resubmission notification failed: ' . $e->getMessage());
+    }
+}
+
+/**
+ * An account security event. This kind can never be switched off, so
+ * it always reaches the inbox and the account's email address.
+ */
+function notify_security_event(PDO $pdo, int $userId, string $subject, string $body): void
+{
+    try {
+        $svc = new NotificationService($pdo);
+        (new WriteLock())->withLock(static function () use ($svc, $userId, $subject, $body) {
+            $svc->emit($userId, 'account_security', $subject, $body, '/account/security');
+            return null;
+        });
+    } catch (\Throwable $e) {
+        error_log('[bp] security notification failed: ' . $e->getMessage());
+    }
 }

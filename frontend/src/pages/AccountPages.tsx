@@ -17,7 +17,9 @@ import {
   fetchContributionHistory,
   fetchAccountBookmarks,
   updateAccountProfile,
-  updateAccountNotifications,
+  fetchNotificationPreferences,
+  saveNotificationPreferences,
+  unfollowAdventure,
   requestAccountEmailChange,
   confirmAccountEmailChange,
   revokeOtherAccountSessions,
@@ -28,6 +30,8 @@ import {
   type AccountAdventure,
   type AccountBookmark,
   type ContributionHistoryEntry,
+  type NotificationPreference,
+  type FollowedAdventure,
 } from "../lib/apiClient";
 import { readLocalProgress } from "../hooks/useLocalProgress";
 
@@ -290,53 +294,110 @@ export function AccountSecurityPage() {
 
 /* ─────────────────────────── Notifications ───────────────────── */
 
+/**
+ * Email preferences (reworked in v0.22.0).
+ *
+ * One switch per notification kind. Security and recovery mail is
+ * locked on: those messages are how an account is recovered. Routine
+ * updates from adventures you follow are bundled into one digest
+ * rather than one email per branch.
+ */
 export function AccountNotificationsPage() {
-  useHelpContext({ section: "account" });
-  const { profile, state, refresh } = useProfile();
-  const [replies, setReplies] = useState(true);
-  const [moderation, setModeration] = useState(true);
-  const [updates, setUpdates] = useState(false);
+  useHelpContext({ section: "notifications" });
+  const [prefs, setPrefs] = useState<NotificationPreference[]>([]);
+  const [following, setFollowing] = useState<FollowedAdventure[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "unauth">("loading");
   const [msg, setMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!profile) return;
-    setReplies(profile.notify_replies);
-    setModeration(profile.notify_moderation);
-    setUpdates(profile.notify_updates);
-  }, [profile]);
+  const refresh = useCallback(async () => {
+    const r = await fetchNotificationPreferences();
+    if (r.status === 401) { setState("unauth"); return; }
+    setPrefs(r.data?.preferences ?? []);
+    setFollowing(r.data?.following ?? []);
+    setState("ready");
+  }, []);
+  useEffect(() => { void refresh(); }, [refresh]);
 
   if (state === "loading") return <Loading />;
-  if (state === "unauth" || !profile) return <UnauthorizedState />;
+  if (state === "unauth") return <UnauthorizedState />;
+
+  function toggle(kind: string, value: boolean) {
+    setPrefs((rows) => rows.map((p) => (p.kind === kind ? { ...p, email: value } : p)));
+  }
 
   async function onSave(e: FormEvent) {
     e.preventDefault();
     setMsg(null);
-    const r = await updateAccountNotifications({
-      notify_replies: replies, notify_moderation: moderation, notify_updates: updates,
-    });
-    if (r.ok) { setMsg("Preferences saved."); await refresh(); return; }
+    const payload: Record<string, boolean> = {};
+    for (const p of prefs) if (!p.locked) payload[p.kind] = p.email;
+    const r = await saveNotificationPreferences(payload);
+    if (r.ok) { setMsg("Preferences saved."); setPrefs(r.data?.preferences ?? prefs); return; }
     setMsg("Could not save — please try again.");
+  }
+
+  async function onUnfollow(slug: string) {
+    setMsg(null);
+    const r = await unfollowAdventure(slug);
+    if (r.ok) { await refresh(); return; }
+    setMsg("Could not update that subscription.");
   }
 
   return (
     <section aria-labelledby="notifications-h">
       <h1 id="notifications-h">Notifications</h1>
+      <p>
+        Everything below also appears in your{" "}
+        <Link to="/account/inbox">inbox</Link>. These switches only control email.
+      </p>
       <form onSubmit={onSave}>
-        <label>
-          <input type="checkbox" checked={replies} onChange={(e) => setReplies(e.target.checked)} />
-          <span>Replies to my contributions and comments</span>
-        </label>
-        <label>
-          <input type="checkbox" checked={moderation} onChange={(e) => setModeration(e.target.checked)} />
-          <span>Moderation decisions on my content</span>
-        </label>
-        <label>
-          <input type="checkbox" checked={updates} onChange={(e) => setUpdates(e.target.checked)} />
-          <span>Occasional product updates</span>
-        </label>
+        <ul className="bp-list" data-testid="preference-list">
+          {prefs.map((p) => (
+            <li key={p.kind}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={p.email}
+                  disabled={p.locked}
+                  data-testid={`pref-${p.kind}`}
+                  onChange={(e) => toggle(p.kind, e.target.checked)}
+                />
+                <span>{p.label}</span>
+              </label>
+              {p.locked && (
+                <p className="bp-muted">
+                  Security and recovery email cannot be switched off.
+                </p>
+              )}
+              {p.aggregated && !p.locked && (
+                <p className="bp-muted">Sent as one bundled update, not one email per change.</p>
+              )}
+            </li>
+          ))}
+        </ul>
         <StatusMessage msg={msg} />
         <button type="submit">Save preferences</button>
       </form>
+
+      <hr />
+      <h2>Adventures you follow</h2>
+      <p>
+        Following an adventure subscribes you to its updates. It is separate
+        from a bookmark, which remembers where you stopped reading.
+      </p>
+      {following.length === 0 ? (
+        <p data-testid="following-empty">You are not following any adventures yet.</p>
+      ) : (
+        <ul className="bp-list" data-testid="following-list">
+          {following.map((f) => (
+            <li key={f.slug}>
+              <Link to={`/adventure/${f.slug}`}>{f.title}</Link>{" "}
+              <button type="button" onClick={() => void onUnfollow(f.slug)}>
+                Unfollow
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

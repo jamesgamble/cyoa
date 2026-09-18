@@ -316,7 +316,7 @@ final class CollaborationService
             $url,
             $adventureId
         );
-        $this->queue->enqueue('adventure_invitation', (string) $invitee['email'], (string) $invitee['display_name'], [
+        if ($this->wantsEmail($inviteeId, 'collaborator_invitation')) $this->queue->enqueue('adventure_invitation', (string) $invitee['email'], (string) $invitee['display_name'], [
             'display_name'    => (string) $invitee['display_name'],
             'inviter_name'    => $inviter,
             'adventure_title' => (string) $adv['title'],
@@ -673,7 +673,7 @@ final class CollaborationService
                 : 'You have left the team for this adventure.',
             $url, $adventureId);
 
-        $this->queue->enqueue('ownership_transferred', (string) $target['email'], (string) $target['display_name'], [
+        if ($this->wantsEmail($targetUserId, 'ownership_transfer')) $this->queue->enqueue('ownership_transferred', (string) $target['email'], (string) $target['display_name'], [
             'display_name'    => (string) $target['display_name'],
             'previous_owner'  => $previous,
             'adventure_title' => $title,
@@ -728,6 +728,13 @@ final class CollaborationService
         )->execute([':i' => $id, ':u' => $userId]);
     }
 
+    /**
+     * Collaboration notices go through NotificationService (v0.22.0)
+     * so they land in the same inbox and honour the same preference
+     * table. The email side is suppressed here because invitations and
+     * transfers each have their own dedicated template, enqueued by the
+     * caller once the recipient's preference has been checked.
+     */
     public function notify(
         int $userId,
         string $kind,
@@ -736,13 +743,15 @@ final class CollaborationService
         ?string $url,
         ?int $adventureId
     ): void {
-        $this->pdo->prepare(
-            'INSERT INTO notifications (user_id, kind, title, body, url, adventure_id)
-             VALUES (:u, :k, :t, :b, :url, :a)'
-        )->execute([
-            ':u' => $userId, ':k' => $kind, ':t' => $title,
-            ':b' => $body, ':url' => $url, ':a' => $adventureId,
-        ]);
+        (new NotificationService($this->pdo))->emit(
+            $userId, $kind, $title, $body, $url, $adventureId, ['email' => false]
+        );
+    }
+
+    /** Does this recipient still want collaboration email? */
+    public function wantsEmail(int $userId, string $kind): bool
+    {
+        return (new NotificationService($this->pdo))->emailEnabled($userId, $kind);
     }
 
     /* ───────────────────────── Helpers ─────────────────────────── */

@@ -22,6 +22,40 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.22.0",
+    date: "2026-09-18",
+    sections: {
+      Added: [
+        "A notification for everything that concerns you: a branch submitted to your adventure, your branch approved or declined, changes requested, a revised submission ready, a review needed, a collaborator invitation, an ownership change, an update to an adventure you follow, and account security events.",
+        "Inbox controls: mark one read, mark everything read, delete a routine notification, and clear everything you have already read.",
+        "Email preferences with one switch per kind of notification, so you choose what also reaches your inbox by email.",
+        "Following an adventure to hear about new branches — separate from a bookmark, which only remembers where you stopped reading.",
+        "A list of the adventures you follow in your account settings, with one-click unfollow.",
+        "Updates from adventures you follow arrive as one bundled email instead of one message per change.",
+        "Help topics covering notifications, email preferences, and following versus bookmarks.",
+      ],
+      Security: [
+        "Security and recovery email cannot be switched off, and account security notices stay in your inbox as your own record.",
+        "Follower counts are not shown to anyone, including the adventure's team.",
+      ],
+    },
+  },
+  {
+    version: "0.21.0",
+    date: "2026-09-18",
+    sections: {
+      Added: [
+        "Readers can report an adventure, scene, choice, or contribution for spam, harassment, hate or abuse, explicit content, personal information, a broken branch, copyright, or another reason.",
+        "Owners can dismiss a report, hide the content, lock the scene, or escalate it to the site administrators.",
+        "Content warnings on an adventure for violence, strong language, horror, sexual themes, substance use, self-harm, or another concern.",
+      ],
+      Security: [
+        "Reports are rate-limited and repeat reports of the same thing are folded together.",
+        "Nothing is ever removed automatically because it was reported often; a person always makes the decision.",
+      ],
+    },
+  },
+  {
     version: "0.20.0",
     date: "2026-09-13",
     sections: {
