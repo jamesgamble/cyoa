@@ -61,7 +61,7 @@ final class BPNotificationsTest
         ]);
         assert_same('ok', $outcome, 'fixture adventure: ' . json_encode($errors));
         $this->slug        = (string) $data['slug'];
-        $this->adventureId = (int) $data['adventure_id'];
+        $this->adventureId = (int) $data['id'];
         $this->svc = new NotificationService($this->pdo);
     }
 
