@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { Adventure } from "../pages/Adventure";
 import { DISCOVER_ADVENTURES, findAdventureBySlug } from "../data/discover";
