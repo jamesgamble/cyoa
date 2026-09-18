@@ -1301,16 +1301,18 @@ export const markNotificationRead = (id: number | null) =>
 export interface NotificationPreference {
   kind: string;
   label: string;
-  email_enabled: boolean;
+  /** Email for this kind. Locked kinds are always true. */
+  email: boolean;
+  /** Security and recovery mail cannot be switched off. */
   locked: boolean;
-  routine: boolean;
+  /** Routine followed-adventure mail is bundled into one digest. */
+  aggregated: boolean;
 }
 
 export interface FollowedAdventure {
-  adventure_id: number;
   slug: string;
   title: string;
-  followed_at: string;
+  created_at: string;
 }
 
 export const fetchNotificationPreferences = () =>
