@@ -274,7 +274,7 @@ final class BPNotificationsTest
             ['slug' => $this->slug, 'bookmarks' => ['the-lamp-room'], 'history' => []],
         ]);
 
-        assert_true(count($account->bookmarks($this->readerId)) > 0, 'the bookmark was stored');
+        assert_true(count($account->listBookmarks($this->readerId)) > 0, 'the bookmark was stored');
         assert_true(
             !$this->svc->isFollowing($this->adventureId, $this->readerId),
             'bookmarking never subscribes'
@@ -285,7 +285,7 @@ final class BPNotificationsTest
     {
         $this->svc->follow($this->slug, $this->readerId);
         $account = new AccountService($this->pdo);
-        assert_same(0, count($account->bookmarks($this->readerId)), 'following stores no position');
+        assert_same(0, count($account->listBookmarks($this->readerId)), 'following stores no position');
     }
 
     /* ───────────────────── Digest aggregation ───────────────────── */
@@ -302,10 +302,11 @@ final class BPNotificationsTest
         assert_same(3, $this->svc->unreadCount($this->readerId), 'three inbox rows');
         $c = $this->pdo->query('SELECT COUNT(*) AS c FROM email_queue')->fetch();
         assert_same(0, (int) $c['c'], 'nothing emailed yet');
-        assert_same(3, $this->svc->pendingDigestCount(), 'three entries are waiting');
+        assert_same(3, $this->svc->pendingDigestCount($this->readerId), 'three entries are waiting');
 
         $sent = $this->svc->flushDigests();
-        assert_same(1, $sent, 'one email for the whole batch');
+        assert_same(1, (int) $sent['users'], 'one email for the whole batch');
+        assert_same(3, (int) $sent['entries'], 'covering all three updates');
         $c2 = $this->pdo->query('SELECT COUNT(*) AS c FROM email_queue')->fetch();
         assert_same(1, (int) $c2['c'], 'exactly one queued message');
     }
@@ -316,9 +317,9 @@ final class BPNotificationsTest
         $this->svc->announceUpdate(
             $this->adventureId, 'Branch', 'B.', '/adventure/' . $this->slug, $this->ownerId
         );
-        assert_same(1, $this->svc->flushDigests());
-        assert_same(0, $this->svc->pendingDigestCount(), 'queue drained');
-        assert_same(0, $this->svc->flushDigests(), 'second flush sends nothing');
+        assert_same(1, (int) $this->svc->flushDigests()['users']);
+        assert_same(0, $this->svc->pendingDigestCount($this->readerId), 'queue drained');
+        assert_same(0, (int) $this->svc->flushDigests()['users'], 'second flush sends nothing');
         $c = $this->pdo->query('SELECT COUNT(*) AS c FROM email_queue')->fetch();
         assert_same(1, (int) $c['c'], 'still one message');
     }
@@ -331,6 +332,8 @@ final class BPNotificationsTest
             $this->adventureId, 'Branch', 'B.', '/adventure/' . $this->slug, $this->ownerId
         );
         assert_same(1, $this->svc->unreadCount($this->readerId), 'the inbox still shows it');
-        assert_same(0, $this->svc->flushDigests(), 'no digest email');
+        assert_same(0, (int) $this->svc->flushDigests()['users'], 'no digest email');
+        $c = $this->pdo->query('SELECT COUNT(*) AS c FROM email_queue')->fetch();
+        assert_same(0, (int) $c['c'], 'nothing was queued');
     }
 }

@@ -451,6 +451,13 @@ final class NotificationService
         $users = 0; $entries = 0;
         foreach ($byUser as $uid => $bundle) {
             if ($users >= $limitUsers) break;
+            // A reader who switched this email off still sees every
+            // update in their inbox; the rows are marked sent so the
+            // queue cannot grow without bound.
+            if (!$this->emailEnabled($uid, 'followed_adventure_updated')) {
+                foreach ($bundle['ids'] as $id) { $mark->execute([':i' => $id]); }
+                continue;
+            }
             $this->queue->enqueue('followed_updates_digest', $bundle['email'], $bundle['name'], [
                 'display_name' => $bundle['name'],
                 'summary'      => implode("\n", $bundle['lines']),
