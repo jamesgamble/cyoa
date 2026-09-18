@@ -17,7 +17,9 @@ import {
   fetchContributionHistory,
   fetchAccountBookmarks,
   updateAccountProfile,
-  updateAccountNotifications,
+  fetchNotificationPreferences,
+  saveNotificationPreferences,
+  unfollowAdventure,
   requestAccountEmailChange,
   confirmAccountEmailChange,
   revokeOtherAccountSessions,
@@ -28,6 +30,8 @@ import {
   type AccountAdventure,
   type AccountBookmark,
   type ContributionHistoryEntry,
+  type NotificationPreference,
+  type FollowedAdventure,
 } from "../lib/apiClient";
 import { readLocalProgress } from "../hooks/useLocalProgress";
 
