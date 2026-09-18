@@ -22,6 +22,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.23.0",
+    date: "2026-09-18",
+    sections: {
+      Added: [
+        "A story outline for every adventure: each scene listed under the choice that leads to it, with branches you can fold and unfold.",
+        "Search the outline by scene title and see the path back to the opening scene.",
+        "Large stories load a branch at a time, so the outline opens quickly however big the adventure gets.",
+        "The outline works with a keyboard and reads correctly with assistive software, with each scene's depth announced.",
+        "Owners and editors get a fuller map that also shows drafts and hidden scenes, each clearly labelled.",
+        "A story check for the team, listing choices that lead nowhere, published choices into unfinished scenes, empty scenes, choices that read the same, published scenes with no way onward, scenes nothing leads to, broken branch shapes, and stories that run very deep.",
+        "Help topics covering the outline and the story check.",
+      ],
+      Security: [
+        "Readers see published scenes only; a choice into an unfinished or hidden scene is absent, with nothing to suggest it exists.",
+        "The fuller map and the story check are limited to the adventure's team.",
+      ],
+    },
+  },
+  {
     version: "0.22.0",
     date: "2026-09-18",
     sections: {

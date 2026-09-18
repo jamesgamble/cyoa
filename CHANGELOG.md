@@ -2,6 +2,21 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.23.0 — 2026-09-18
+
+### Added
+- A public story outline at `/adventure/{slug}/map`: every published scene nested under the choice that leads to it, with collapsible branches and title search (`App\StoryMapService`, `GET /api/adventures/{slug}/map`).
+- An owner story map on the manage page that also shows draft and hidden scenes, each with a plain label, plus the scenes nothing leads to.
+- A story check listing missing destinations, published choices into unpublished scenes, empty scenes, duplicate sibling choices, published non-ending scenes with no choices, unreachable scenes, invalid parent relationships, and excessive depth (`GET /api/adventures/{slug}/moderation/validation`).
+- Lazy loading for large stories: the map returns a bounded slice with `root` and `depth`, and a folded branch loads when it is opened.
+- Keyboard and screen-reader support for the outline: a real tree with arrow, Home, and End navigation and announced depth.
+- Help topics: the story outline and the story check.
+- Tests: `tests/php/story_map_test.php` and `frontend/src/__tests__/story-map.test.tsx` cover visibility per audience, lazy loading, search, accessibility, and every integrity rule.
+
+### Security
+- The public map returns published scenes only; titles and choice labels of drafts and hidden scenes never appear in the payload.
+- The owner map and the story check require a team role on the adventure; strangers and signed-out visitors are refused.
+
 ## 0.22.0 — 2026-09-18
 
 ### Added

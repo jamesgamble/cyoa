@@ -427,6 +427,42 @@ export const HELP_TOPICS: HelpTopic[] = [
     },
   },
   {
+    slug: "story-map",
+    title: "The story outline",
+    summary:
+      "How to read the outline of an adventure, open branches, and search for a scene.",
+    body: [
+      "Every adventure has an outline: each scene listed under the choice that leads to it, so you can see the shape of the story without reading it all.",
+      "Branches fold and unfold. A folded branch says how many choices lead out of it; unfolding it shows them. Very large stories are loaded a branch at a time, so opening one may take a moment.",
+      "The search box finds scenes by title and shows the path back to the opening scene, so you can tell where a match sits in the story.",
+      "Readers see published scenes only. A choice that leads to an unfinished or hidden scene is simply not listed, and nothing on the page hints that it exists.",
+      "The outline works with a keyboard: arrow keys move between scenes, right and left open and close a branch, and Home and End jump to the first and last scene shown. Assistive software reads it as a nested list with its depth announced.",
+    ],
+    related: ["story-check", "reading", "authoring"],
+    match: {
+      routes: [/^\/adventure\/[^/]+\/map$/],
+      sections: ["story-map"],
+    },
+  },
+  {
+    slug: "story-check",
+    title: "The story check",
+    summary:
+      "The problems the owner map reports, and what each one means.",
+    body: [
+      "On the manage page, the story map shows the whole story — including drafts and hidden scenes, each with a label saying so — and a story check lists anything that looks broken.",
+      "The check looks for: a choice pointing at a scene that is gone; a published choice leading into a scene readers cannot see; a scene with no text; two choices on the same scene that read the same; a published scene that is not an ending yet offers no way onward; a scene nothing leads to; a broken branch shape; and a story that runs unusually deep.",
+      "Branching Paths keeps stories as trees: every scene except the opening one has exactly one scene leading to it, and choices never loop back or join two branches together. Anything breaking that rule is reported as a broken branch shape rather than drawn on the map.",
+      "The check never changes or removes anything. It tells you what to look at; every fix is yours to make.",
+    ],
+    related: ["story-map", "publishing", "moderation"],
+    match: {
+      routes: [/^\/manage\//],
+      sections: ["publishing", "story-map"],
+      roles: ["author", "master"],
+    },
+  },
+  {
     slug: "notifications",
     title: "Notifications",
     summary:
