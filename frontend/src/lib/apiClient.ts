@@ -474,7 +474,7 @@ async function accountGet<T extends object>(path: string): Promise<AccountFetchR
 
 async function accountMutate<T>(
   path: string,
-  method: "POST" | "PUT",
+  method: "POST" | "PUT" | "DELETE",
   body: unknown,
 ): Promise<{ ok: boolean; status: number; data: T | null; fields?: Record<string, string>; error?: string }> {
   const token = await fetchCsrfToken();
