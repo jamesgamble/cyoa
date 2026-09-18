@@ -231,7 +231,7 @@ export interface QueueResponse {
 
 async function masterMutate<T>(
   path: string,
-  method: "POST" | "PUT",
+  method: "POST" | "PUT" | "DELETE",
   body: unknown,
 ): Promise<{ ok: boolean; status: number; data: T | null; error?: string; fields?: Record<string, string> }> {
   const token = await fetchCsrfToken();
@@ -1219,6 +1219,10 @@ export interface InboxNotification {
   adventure_id: number | null;
   read_at: string | null;
   created_at: string;
+  /** v0.22.0 — routine items may be deleted; security notices may not. */
+  routine?: boolean;
+  label?: string;
+  adventure_slug?: string | null;
 }
 
 const rosterBase = (slug: string) => `/adventures/${encodeURIComponent(slug)}/collaborators`;
@@ -1287,3 +1291,54 @@ export const markNotificationRead = (id: number | null) =>
   accountMutate<{ status: string; unread: number }>(
     id === null ? "/notifications/read" : `/notifications/${id}/read`, "POST", {},
   );
+
+/* ───────────── Notifications and follows (v0.22.0) ─────────────
+ *
+ * A bookmark is a reading position; a follow is a subscription to
+ * updates. They are deliberately separate calls with separate state.
+ */
+
+export interface NotificationPreference {
+  kind: string;
+  label: string;
+  email_enabled: boolean;
+  locked: boolean;
+  routine: boolean;
+}
+
+export interface FollowedAdventure {
+  adventure_id: number;
+  slug: string;
+  title: string;
+  followed_at: string;
+}
+
+export const fetchNotificationPreferences = () =>
+  collabGet<{ preferences: NotificationPreference[]; following: FollowedAdventure[] }>(
+    "/notifications/preferences",
+  );
+
+export const saveNotificationPreferences = (preferences: Record<string, boolean>) =>
+  accountMutate<{ status: string; preferences: NotificationPreference[] }>(
+    "/notifications/preferences", "PUT", { preferences },
+  );
+
+/** Routine notifications only — security notices cannot be deleted. */
+export const deleteNotification = (id: number) =>
+  accountMutate<{ status: string; unread: number }>(`/notifications/${id}`, "DELETE", {});
+
+export const deleteReadNotifications = () =>
+  accountMutate<{ status: string; deleted: number; unread: number }>(
+    "/notifications/read", "DELETE", {},
+  );
+
+const followPath = (slug: string) => `/adventures/${encodeURIComponent(slug)}/follow`;
+
+export const fetchFollowState = (slug: string) =>
+  collabGet<{ following: boolean }>(followPath(slug));
+
+export const followAdventure = (slug: string) =>
+  accountMutate<{ status: string; following: boolean }>(followPath(slug), "POST", {});
+
+export const unfollowAdventure = (slug: string) =>
+  accountMutate<{ status: string; following: boolean }>(followPath(slug), "DELETE", {});
