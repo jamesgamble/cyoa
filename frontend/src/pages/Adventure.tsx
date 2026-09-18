@@ -216,13 +216,15 @@ function AdventureView({ adventure }: ViewProps) {
               type="button"
               variant="ghost"
               aria-pressed={following}
-              onClick={() => setFollowing((f) => !f)}
+              disabled={busy}
+              onClick={() => void onToggleFollow()}
               data-testid="action-follow"
             >
-              {following ? "Following (placeholder)" : "Follow (placeholder)"}
+              {following ? "Following" : "Follow"}
             </Button>
             <p className="bp-inline-help" data-testid="follow-help">
-              Following notifications arrive with the account system.
+              Following subscribes you to updates. Your bookmark is separate — it
+              remembers where you stopped reading.
             </p>
           </div>
         )}
