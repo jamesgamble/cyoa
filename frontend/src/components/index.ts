@@ -63,6 +63,9 @@ export { AdminTable } from "./AdminTable";
 export type { AdminColumn } from "./AdminTable";
 export { SearchFilterBar } from "./SearchFilterBar";
 
+export { StoryOutline } from "./StoryOutline";
+export { StoryValidationPanel } from "./StoryValidationPanel";
+
 export { EmptyState } from "./EmptyState";
 export { ErrorState } from "./ErrorState";
 

@@ -12,9 +12,10 @@
  *   manage  — the team also sees drafts and hidden scenes, each with a
  *             plain label saying so.
  *
- * The markup is a real tree: `role="tree"` with nested `role="group"`,
- * `aria-expanded` on every branch, and roving-tabindex keyboard
- * navigation (arrows, Home, End) as screen-reader users expect.
+ * The markup is a real tree: `role="tree"` with `role="treeitem"` rows
+ * carrying `aria-level` and `aria-expanded`, plus roving-tabindex
+ * keyboard navigation (arrows, Home, End) as screen-reader users
+ * expect.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";

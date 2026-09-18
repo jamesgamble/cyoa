@@ -19,6 +19,8 @@ import {
   DangerZone,
   Dialog,
   Panel,
+  StoryOutline,
+  StoryValidationPanel,
   TextArea,
 } from "../components";
 import { LoadingState, NotFoundState, UnauthorizedState } from "../states";
@@ -177,6 +179,21 @@ export function ManageAdventure() {
           Add a title and some text to the opening scene before publishing.
         </Alert>
       )}
+
+      <Panel title="Story map">
+        <p>
+          The whole story, branch by branch. Drafts and hidden scenes are
+          shown here with a label; readers never see them.
+        </p>
+        <StoryOutline
+          slug={adventure.slug}
+          scope="manage"
+          linkToReader={false}
+          heading="Story map"
+        />
+      </Panel>
+
+      <StoryValidationPanel slug={adventure.slug} />
 
       <Panel title="Preview">
         <p>
