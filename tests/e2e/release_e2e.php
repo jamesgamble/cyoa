@@ -429,8 +429,9 @@ try {
     $adm2 = new Client($base);
     $adm2->req('POST', '/api/auth/login', ['email' => 'admin@example.test', 'password' => $adminPass]);
     check($adm2->status === 200, 'administrator can still sign in');
-    $admin->req('PUT', '/api/master/settings/maintenance', ['maintenance_mode' => false, 'maintenance_message' => '']);
-    check($admin->status === 200, 'disable read-only', $admin->raw);
+    // (signing in again revokes the earlier session: one session per account)
+    $adm2->req('PUT', '/api/master/settings/maintenance', ['maintenance_mode' => false, 'maintenance_message' => '']);
+    check($adm2->status === 200, 'disable read-only', $adm2->raw);
     $b->req('POST', "/api/adventures/$slug/follow");
     check($b->status === 200, 'writes resume after read-only', [$b->status, $b->raw]);
     ok('enable and disable read-only mode');
