@@ -42,6 +42,7 @@ use App\ReportService;
 use App\RegistrationService;
 use App\SettingsRepository;
 use App\StoryMapService;
+use App\RevisionService;
 use App\SessionRepository;
 use App\SmtpSettingsRepository;
 use App\WriteLock;
@@ -953,7 +954,7 @@ function handle_publication(string $method, string $slug, string $tail): void
             $body = read_json_body();
             $lock = new WriteLock();
             [$outcome, $fields] = $lock->withLock(static function () use ($svc, $adv, $role, $body): array {
-                return $svc->saveDraft((int) $adv['id'], $role, $body);
+                return $svc->saveDraft((int) $adv['id'], $role, $body, $userId);
             });
             if ($outcome === PublicationService::OK) { echo json_encode(['status' => 'ok']); return; }
             if ($outcome === PublicationService::INVALID) {
@@ -1170,6 +1171,17 @@ function handle_moderation(string $method, string $slug, string $tail): void
                 story_map_respond($o, $d);
                 return;
             }
+            if ($tail === '/revisions') {
+                [$o, $d] = (new RevisionService($pdo))->list($slug, $userId, $isAdmin);
+                revision_respond($o, $d);
+                return;
+            }
+            if (preg_match('#^/revisions/(\d+)/compare$#', $tail, $rm)) {
+                $other = isset($_GET['with']) && ctype_digit((string) $_GET['with']) ? (int) $_GET['with'] : null;
+                [$o, $d] = (new RevisionService($pdo))->compare($slug, (int) $rm[1], $other, $userId, $isAdmin);
+                revision_respond($o, $d);
+                return;
+            }
             if ($tail === '/validation') {
                 [$o, $d] = (new StoryMapService($pdo))->validation($slug, $userId, $isAdmin);
                 story_map_respond($o, $d);
@@ -1210,6 +1222,14 @@ function handle_moderation(string $method, string $slug, string $tail): void
         $body = read_json_body();
         $lock = new WriteLock();
 
+        if ($method === 'POST' && preg_match('#^/revisions/(\d+)/restore$#', $tail, $m)) {
+            $rid = (int) $m[1];
+            [$o, $d] = $lock->withLock(
+                static fn () => (new RevisionService($pdo))->restore($slug, $rid, $userId, $isAdmin)
+            );
+            revision_respond($o, $d);
+            return;
+        }
         if ($method === 'POST' && preg_match('#^/submissions/(\d+)/decision$#', $tail, $m)) {
             $id     = (int) $m[1];
             $action = (string) ($body['action'] ?? '');
@@ -1347,6 +1367,14 @@ function story_map_options(): array
     if (isset($_GET['q']) && is_string($_GET['q']))       $opts['q']    = mb_substr($_GET['q'], 0, 120);
     if (isset($_GET['depth']) && is_numeric($_GET['depth'])) $opts['depth'] = (int) $_GET['depth'];
     return $opts;
+}
+
+function revision_respond(string $outcome, ?array $data): void
+{
+    if ($outcome === RevisionService::NOT_FOUND) { respond_error(404, 'not_found'); return; }
+    if ($outcome === RevisionService::FORBIDDEN) { respond_error(403, 'forbidden'); return; }
+    if ($outcome === RevisionService::READ_ONLY) { respond_error(409, 'read_only'); return; }
+    echo json_encode(['status' => 'ok'] + ($data ?? []));
 }
 
 function story_map_respond(string $outcome, ?array $data): void

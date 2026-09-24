@@ -766,6 +766,13 @@ final class ModerationService
 
         $this->pdo->beginTransaction();
         try {
+            $revs = new RevisionService($this->pdo);
+            $revs->beforeSceneChange($sceneId, $userId, ['title' => $title, 'body' => $bodyHtml]);
+            foreach ($choices as $c) {
+                if ($c['id'] > 0 && $this->choiceInScene($c['id'], $sceneId)) {
+                    $revs->beforeChoiceChange($c['id'], $userId, $c['label']);
+                }
+            }
             $this->pdo->prepare(
                 "UPDATE scenes
                     SET title = :t, body = :b, body_plain = :p, scene_type = :ty,
@@ -1024,6 +1031,9 @@ final class ModerationService
 
         if ($errors !== []) return [self::INVALID, ['fields' => $errors]];
 
+        (new RevisionService($this->pdo))->beforeAdventureChange($adventureId, $userId, [
+            'description' => $description, 'writing_guidelines' => $guidelinesHtml,
+        ]);
         $this->pdo->prepare(
             "UPDATE adventures
                 SET title = :t, description = :d, synopsis = :syn, genre = :g,
@@ -1339,6 +1349,13 @@ final class ModerationService
         if (!$this->canDecide($role)) return [self::FORBIDDEN, null];
         if ($this->isReadOnly((string) $adv['state'])) return [self::READ_ONLY, null];
         return [self::OK, ['adventure' => $adv, 'role' => (string) $role]];
+    }
+
+    private function choiceInScene(int $choiceId, int $sceneId): bool
+    {
+        $s = $this->pdo->prepare('SELECT 1 FROM choices WHERE id = :i AND scene_id = :s');
+        $s->execute([':i' => $choiceId, ':s' => $sceneId]);
+        return $s->fetchColumn() !== false;
     }
 
     /** @return array<string,mixed>|null */

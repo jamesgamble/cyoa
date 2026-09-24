@@ -19,6 +19,7 @@ import {
   DangerZone,
   Dialog,
   Panel,
+  RevisionHistoryPanel,
   StoryOutline,
   StoryValidationPanel,
   TextArea,
@@ -245,6 +246,8 @@ export function ManageAdventure() {
           </Button>
         </DangerZone>
       )}
+
+      <RevisionHistoryPanel slug={adventure.slug} onRestored={() => void load()} />
 
       <CollaboratorsPanel slug={adventure.slug} />
 

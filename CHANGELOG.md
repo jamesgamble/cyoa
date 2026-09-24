@@ -2,6 +2,21 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.24.0 — 2026-09-24
+
+### Added
+- Revision history (`App\RevisionService`, migration `0013_revision_history.sql`): before a published adventure description, published writing guidelines, a published scene title or body, or a published scene's choice text changes, the previous value is stored with its editor and date.
+- Manager endpoints: `GET /api/adventures/{slug}/moderation/revisions`, `GET …/revisions/{id}/compare[?with={id}]` (paragraph diff), `POST …/revisions/{id}/restore` (CSRF + write lock, transactional).
+- Revision history panel on the manage page with compare and confirmed restore.
+- Help topic: revision history.
+- Tests: `tests/php/revision_test.php` and `frontend/src/__tests__/revisions.test.tsx` cover recording, retention, comparison, restoration, and authorization.
+
+### Changed
+- Retention keeps the most recent 20 revisions per field; restoring creates a new revision.
+
+### Security
+- Revisions return only story text and the editor's display name — no emails, credentials, sessions, SMTP data, or IP addresses. Only owners, editors, and administrators can read or restore them.
+
 ## 0.23.0 — 2026-09-18
 
 ### Added

@@ -169,7 +169,7 @@ final class PublicationService
      * @param array<string,mixed> $input
      * @return array{0:string,1:array<string,string>}
      */
-    public function saveDraft(int $adventureId, ?string $role, array $input): array
+    public function saveDraft(int $adventureId, ?string $role, array $input, ?int $editorId = null): array
     {
         if (!$this->canManage($role)) return [self::FORBIDDEN, []];
         $adv = $this->adventureById($adventureId);
@@ -198,6 +198,16 @@ final class PublicationService
 
         $this->pdo->beginTransaction();
         try {
+            $revs = new RevisionService($this->pdo);
+            $revs->beforeAdventureChange($adventureId, $editorId, [
+                'description' => $description, 'writing_guidelines' => $guidelinesHtml,
+            ]);
+            if ($hasOpening) {
+                $os = $this->pdo->prepare('SELECT id FROM scenes WHERE adventure_id = :a AND is_start = 1');
+                $os->execute([':a' => $adventureId]);
+                $openingId = $os->fetchColumn();
+                if ($openingId !== false) $revs->beforeSceneChange((int) $openingId, $editorId, ['body' => $openingHtml]);
+            }
             $this->pdo->prepare(
                 "UPDATE adventures
                     SET title = :t, description = :d, synopsis = :syn,

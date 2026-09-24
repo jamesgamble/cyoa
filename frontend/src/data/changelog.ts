@@ -22,6 +22,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.24.0",
+    date: "2026-09-24",
+    sections: {
+      Added: [
+        "Revision history: earlier wording of published descriptions, writing guidelines, scene titles, scene text, and choice text is saved automatically before each change.",
+        "Owners, editors, and administrators can see when each version was saved and by whom, compare it with the current text, and restore it.",
+        "Restoring saves the replaced text as a new revision, so nothing is lost.",
+        "A help topic on revision history.",
+      ],
+      Changed: ["The latest 20 versions of each piece of text are kept."],
+      Security: ["Revision history shows only story text and the editor's display name."],
+    },
+  },
+  {
     version: "0.23.0",
     date: "2026-09-18",
     sections: {

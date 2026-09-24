@@ -463,6 +463,24 @@ export const HELP_TOPICS: HelpTopic[] = [
     },
   },
   {
+    slug: "revision-history",
+    title: "Revision history",
+    summary:
+      "How earlier versions of published text are kept, compared, and restored.",
+    body: [
+      "Once an adventure or scene is published, Branching Paths saves the old wording automatically before anyone changes the adventure description, the writing guidelines, a scene title, a scene's text, or a choice's text.",
+      "The latest 20 versions of each piece of text are kept; older ones are removed as new ones arrive.",
+      "On the manage page, owners, editors, and administrators can see when each version was saved and who made the change, compare it with the current text, and restore it.",
+      "Restoring never throws anything away: the text being replaced is saved as a new revision first, so you can always switch back. Archived adventures can be viewed but not restored.",
+    ],
+    related: ["managing-adventures", "story-check"],
+    match: {
+      routes: [/^\/manage\//],
+      sections: ["publishing"],
+      roles: ["author", "master"],
+    },
+  },
+  {
     slug: "notifications",
     title: "Notifications",
     summary:

@@ -26,6 +26,7 @@ Semantic versioning. Each version implements only its stated scope.
 - `0.22.0` Notifications and follows
 - `0.23.0` Story map and validation
 - `0.24.0` Revision history
+- `0.24.0` Revision history
 - `0.25.0` Master administration
 - `0.26.0` Exports
 - `0.27.0` Backups, maintenance, and hosting

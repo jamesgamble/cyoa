@@ -1463,3 +1463,60 @@ export const followAdventure = (slug: string) =>
 
 export const unfollowAdventure = (slug: string) =>
   accountMutate<{ status: string; following: boolean }>(followPath(slug), "DELETE", {});
+
+/* ------------------------------------------------------------------ */
+/* Revision history (v0.24.0)                                          */
+/* ------------------------------------------------------------------ */
+
+export type RevisionTarget = "adventure" | "scene" | "choice";
+export type RevisionField = "description" | "writing_guidelines" | "title" | "body" | "label";
+
+export interface RevisionEntry {
+  id: number;
+  target_type: RevisionTarget;
+  target_id: number;
+  target_label: string;
+  field: RevisionField;
+  reason: "edit" | "restore";
+  editor: string;
+  created_at: string;
+}
+
+export interface RevisionList {
+  status: string;
+  retain: number;
+  read_only: boolean;
+  revisions: RevisionEntry[];
+}
+
+export interface RevisionDiffLine { op: "same" | "added" | "removed"; text: string }
+
+export interface RevisionComparison {
+  status: string;
+  revision_id: number;
+  field: RevisionField;
+  older_label: string;
+  newer_label: string;
+  older: string;
+  newer: string;
+  diff: RevisionDiffLine[];
+}
+
+export async function fetchRevisions(slug: string, signal?: AbortSignal) {
+  return await getJson<RevisionList>(
+    `/adventures/${encodeURIComponent(slug)}/moderation/revisions`, signal,
+  );
+}
+
+export async function compareRevision(slug: string, id: number, withId?: number) {
+  const q = withId ? `?with=${withId}` : "";
+  return await getJson<RevisionComparison>(
+    `/adventures/${encodeURIComponent(slug)}/moderation/revisions/${id}/compare${q}`,
+  );
+}
+
+export async function restoreRevision(slug: string, id: number) {
+  return accountMutate<{ status: string; restored_from: number; revision_id: number }>(
+    `/adventures/${encodeURIComponent(slug)}/moderation/revisions/${id}/restore`, "POST", {},
+  );
+}
