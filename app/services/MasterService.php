@@ -59,7 +59,7 @@ final class MasterService
     ];
 
     /** Actions that need a recent reauthentication. */
-    public const REAUTH = [
+    public const REAUTH_ACTIONS = [
         'manage_roles', 'transfer_ownership', 'configure_smtp_credentials',
         'configure_maintenance', 'hide_content', 'suspend_adventure', 'suspend_user',
     ];
@@ -151,7 +151,7 @@ final class MasterService
         $s->execute([':u' => $actor]);
         $name = (string) ($s->fetchColumn() ?: '');
         return [self::OK, ['user_id' => $actor, 'display_name' => $name, 'role' => $role,
-            'permissions' => self::permissionsFor($role), 'reauth_required_for' => self::REAUTH]];
+            'permissions' => self::permissionsFor($role), 'reauth_required_for' => self::REAUTH_ACTIONS]];
     }
 
     /* ───────────────────────── Overview ───────────────────────── */
