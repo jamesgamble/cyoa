@@ -5,8 +5,9 @@
  * the same shape (`AdventureSummary`) is returned by the API.
  */
 import type { AdventureSummary } from "../components/AdventureCard";
+import { FIXTURES_ENABLED } from "./fixtureGate";
 
-export const DISCOVER_ADVENTURES: ReadonlyArray<AdventureSummary> = [
+const DISCOVER_FIXTURES: ReadonlyArray<AdventureSummary> = [
   {
     slug: "the-lantern-road",
     title: "The Lantern Road",
@@ -273,3 +274,6 @@ export function findAdventureBySlug(
 ): AdventureSummary | undefined {
   return DISCOVER_ADVENTURES.find((a) => a.slug === slug);
 }
+
+/** Sample library — empty in production builds. */
+export const DISCOVER_ADVENTURES: ReadonlyArray<AdventureSummary> = FIXTURES_ENABLED ? DISCOVER_FIXTURES : [];
