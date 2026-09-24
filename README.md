@@ -37,6 +37,15 @@ npm run test      # run tests
 npm run typecheck # TypeScript check
 ```
 
+## Production build
+
+```
+bash scripts/build.sh    # build frontend into public/
+bash scripts/deploy.sh   # build + initialize + migrate + system check
+```
+
+See `docs/HOSTING.md` for server setup.
+
 ## Version
 
 Current version: see `VERSION`. Public changelog is available at `/changelog` in the app.
