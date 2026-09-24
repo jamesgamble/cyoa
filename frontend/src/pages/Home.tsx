@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import type { AdventureSummary } from "../components/AdventureCard";
+import { fetchDiscover } from "../lib/apiClient";
 import {
   AdventureCard,
   FeaturedAdventureCard,
@@ -17,6 +20,21 @@ import { FEATURED_ADVENTURE, RECENTLY_UPDATED } from "../data/adventures";
  * comments, and social profiles.
  */
 export function Home() {
+  // Start from sample content (tests/dev only — empty in production) and
+  // replace it with the live library as soon as it loads.
+  const [featured, setFeatured] = useState<(AdventureSummary & { synopsis?: string }) | null>(FEATURED_ADVENTURE);
+  const [recent, setRecent] = useState<AdventureSummary[]>(RECENTLY_UPDATED);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetchDiscover(ctrl.signal).then((remote) => {
+      if (remote && remote.length > 0) {
+        setFeatured(remote[0]);
+        setRecent(remote.slice(1, 4));
+      }
+    });
+    return () => ctrl.abort();
+  }, []);
+
   return (
     <div className="bp-home" data-testid="home">
       <section
@@ -76,7 +94,11 @@ export function Home() {
         <h2 id="home-featured-heading" className="bp-home__section-title">
           Featured adventure
         </h2>
-        <FeaturedAdventureCard adventure={FEATURED_ADVENTURE} />
+        {featured ? (
+          <FeaturedAdventureCard adventure={{ ...featured, synopsis: featured.synopsis ?? "" }} />
+        ) : (
+          <p className="bp-muted">No adventures have been published yet. <Link to="/start">Begin the first one</Link>.</p>
+        )}
       </section>
 
       <section
@@ -92,13 +114,17 @@ export function Home() {
             All adventures →
           </Link>
         </div>
-        <ul className="bp-home__grid" aria-label="Recently updated adventures">
-          {RECENTLY_UPDATED.map((adventure) => (
-            <li key={adventure.slug}>
-              <AdventureCard adventure={adventure} />
-            </li>
-          ))}
-        </ul>
+        {recent.length > 0 ? (
+          <ul className="bp-home__grid" aria-label="Recently updated adventures">
+            {recent.map((adventure) => (
+              <li key={adventure.slug}>
+                <AdventureCard adventure={adventure} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="bp-muted">Recently updated adventures will appear here.</p>
+        )}
       </section>
 
       <section

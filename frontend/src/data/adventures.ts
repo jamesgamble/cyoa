@@ -6,12 +6,13 @@
  * `AdventureSummary` so cards render identically once real data arrives.
  */
 import type { AdventureSummary } from "../components/AdventureCard";
+import { FIXTURES_ENABLED } from "./fixtureGate";
 
 export interface FeaturedAdventure extends AdventureSummary {
   synopsis: string;
 }
 
-export const FEATURED_ADVENTURE: FeaturedAdventure = {
+const FEATURED_FIXTURE: FeaturedAdventure = {
   slug: "the-lantern-road",
   title: "The Lantern Road",
   author: "Marisol Vega",
@@ -22,7 +23,7 @@ export const FEATURED_ADVENTURE: FeaturedAdventure = {
   updatedAt: "three days ago",
 };
 
-export const RECENTLY_UPDATED: AdventureSummary[] = [
+const RECENT_FIXTURES: AdventureSummary[] = [
   {
     slug: "the-clockmakers-daughter",
     title: "The Clockmaker's Daughter",
@@ -64,3 +65,7 @@ export const RECENTLY_UPDATED: AdventureSummary[] = [
     updatedAt: "a week ago",
   },
 ];
+
+/** Sample homepage content — absent from production builds. */
+export const FEATURED_ADVENTURE: FeaturedAdventure | null = FIXTURES_ENABLED ? FEATURED_FIXTURE : null;
+export const RECENTLY_UPDATED: AdventureSummary[] = FIXTURES_ENABLED ? RECENT_FIXTURES : [];
