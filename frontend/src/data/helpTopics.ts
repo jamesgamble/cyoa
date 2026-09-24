@@ -270,12 +270,12 @@ export const HELP_TOPICS: HelpTopic[] = [
     slug: "privacy-and-security",
     title: "Privacy and security",
     summary:
-      "What data Branching Paths stores locally today, and how future account data will be handled.",
+      "What Branching Paths stores in your browser and on the server, and how it is protected.",
     body: [
-      "Reading today does not require an account. Reading position, bookmarks, and discovered endings are stored only in your browser under the key bp-progress:<adventure>. Clearing local progress from the reader erases every trace for that adventure and cannot be undone.",
-      "No analytics, tracking pixels, or third-party scripts are loaded by the reading surfaces. The design system uses only same-origin CSS.",
-      "When accounts ship, the full privacy notice will be published alongside them. It will describe what fields are collected, how they are used, how long they are kept, and how to delete them.",
-      "Credentials are never included in any URL. If you land on a help URL that contains a password or token in its query string or fragment, treat it as a bug and report it — Branching Paths does not construct such URLs.",
+      "Reading does not require an account. Reading position, bookmarks, and discovered endings are stored only in your browser under the key bp-progress:<adventure>. Clearing local progress from the reader erases every trace for that adventure and cannot be undone.",
+      "No analytics, tracking pixels, or third-party scripts are loaded. The site uses only same-origin files.",
+      "If you create an account, the server stores your email, username, display name, a one-way password hash, your sessions, and what you write. The Privacy help topic explains how each is used.",
+      "Passwords are never included in any URL. Email verification, password reset, and collaborator invitation links carry a one-time token that is stored only as a hash, expires, and stops working once used. Do not forward those emails.",
     ],
     related: ["accounts", "moderation", "common-errors"],
     match: {
