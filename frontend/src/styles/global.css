@@ -2151,3 +2151,12 @@ html[data-contrast="high"] body::before { display: none; }
 .bp-diff li[data-op="added"] { border-left-color: var(--bp-ink, currentColor); }
 .bp-diff li[data-op="removed"] { border-left-color: var(--bp-red, currentColor); opacity: 0.8; }
 .bp-diff ins { text-decoration: underline; }
+
+/* v0.25.0 — master administration */
+.bp-master { display: grid; grid-template-columns: minmax(11rem, 14rem) 1fr; gap: 2rem; align-items: start; }
+.bp-master__who { font-size: 0.9rem; color: var(--bp-ink-muted, inherit); }
+.bp-master__stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 1rem; }
+.bp-master__stats > div { border: 1px solid currentColor; padding: 0.75rem 1rem; }
+.bp-master__stats dd { font-size: 1.75rem; margin: 0; }
+.bp-master__actions { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; }
+@media (max-width: 760px) { .bp-master { grid-template-columns: 1fr; } }

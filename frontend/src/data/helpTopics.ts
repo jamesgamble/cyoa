@@ -463,6 +463,20 @@ export const HELP_TOPICS: HelpTopic[] = [
     },
   },
   {
+    slug: "master-administration",
+    title: "Master administration",
+    summary: "What moderators and administrators can do in the platform console.",
+    body: [
+      "The master console at /master has sections for users, adventures, submissions, reports, the email queue, settings, and activity. You only see the sections your role can use.",
+      "Moderators can review reports, hide or restore reported scenes, suspend or restore adventures, and escalate account problems to administrators.",
+      "Administrators can also change platform roles, suspend or restore accounts, configure registration, anonymous use, global limits, email sending and maintenance mode, manage the email queue, send password-reset emails, transfer adventure ownership, and review security-related activity.",
+      "Role changes, ownership transfers, email sign-in changes, maintenance mode, and destructive moderation (hiding content or suspending) ask for your password again first.",
+      "The console never shows passwords, sign-in tokens, reset or verification links, the email server password, encryption keys, or where data is stored. The last administrator cannot be removed or suspended.",
+    ],
+    related: ["moderation", "email-preferences"],
+    match: { routes: [/^\/master/], roles: ["master"] },
+  },
+  {
     slug: "revision-history",
     title: "Revision history",
     summary:

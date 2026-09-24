@@ -35,6 +35,7 @@ use App\EmailTemplateRepository;
 use App\Mailer\SmtpTransport;
 use App\Migrator;
 use App\ModerationService;
+use App\MasterService;
 use App\NotificationService;
 use App\PublicationService;
 use App\PublicRepository;
@@ -58,6 +59,23 @@ $path   = parse_url($uri, PHP_URL_PATH) ?: '/';
 $route  = preg_replace('#^/api#', '', $path) ?: '/';
 $route  = rtrim($route, '/');
 if ($route === '') { $route = '/'; }
+
+// ── Maintenance mode (v0.25.0) ─────────────────────────────────────
+// While maintenance is on, only reads, sign-in, and the master console
+// accept requests. Platform administrators are never locked out.
+if ($method !== 'GET' && strncmp($route, '/master', 7) !== 0 && strncmp($route, '/auth', 5) !== 0 && $route !== '/csrf-token') {
+    try {
+        $mpdo = Database::open();
+        if (MasterService::maintenanceActive($mpdo)) {
+            $muid = (new AuthService($mpdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null);
+            if ((new MasterService($mpdo))->platformRole($muid) !== MasterService::ROLE_ADMIN) {
+                http_response_code(503);
+                echo json_encode(['error' => 'maintenance', 'message' => (new SettingsRepository($mpdo))->get('maintenance_message', '')]);
+                exit;
+            }
+        }
+    } catch (\Throwable $e) { /* fall through; handlers report their own db errors */ }
+}
 
 // ── Registration (POST) ────────────────────────────────────────────
 if ($method === 'POST' && $route === '/register') {
@@ -395,15 +413,18 @@ function handle_master(string $method, string $tail): void
     }
     $session = new AdminSession();
 
-    // ── Login ───────────────────────────────────────────────────
+    // ── Login (v0.25.0: a normal account session, then a platform-role check) ──
     if ($method === 'POST' && $tail === '/login') {
         if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
         $body = read_json_body();
-        $email = (string) ($body['email'] ?? '');
-        $pass  = (string) ($body['password'] ?? '');
-        $uid = $session->login($pdo, $email, $pass);
-        if ($uid === null) { respond_error(401, 'invalid_credentials'); return; }
-        echo json_encode(['status' => 'ok', 'user_id' => $uid]);
+        $auth = new AuthService($pdo);
+        [$o, $cookie] = (new WriteLock())->withLock(static fn () => $auth->login((string) ($body['email'] ?? ''), (string) ($body['password'] ?? '')));
+        if ($o !== AuthService::OK || !is_string($cookie)) { respond_error(401, 'invalid_credentials'); return; }
+        $uid = $auth->authenticate($cookie);
+        $role = (new MasterService($pdo))->platformRole($uid);
+        if (!MasterService::can($role, 'view_console')) { $auth->logout($cookie); respond_error(401, 'invalid_credentials'); return; }
+        auth_set_cookie($cookie);
+        echo json_encode(['status' => 'ok', 'user_id' => $uid, 'role' => $role]);
         return;
     }
     if ($method === 'POST' && $tail === '/logout') {
@@ -412,77 +433,91 @@ function handle_master(string $method, string $tail): void
         return;
     }
     if ($method === 'GET' && $tail === '/session') {
-        $uid = $session->authenticate($pdo);
-        echo json_encode(['authenticated' => $uid !== null, 'user_id' => $uid]);
+        $uid = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null) ?? $session->authenticate($pdo);
+        $role = (new MasterService($pdo))->platformRole($uid);
+        $ok = $uid !== null && MasterService::can($role, 'view_console');
+        echo json_encode(['authenticated' => $ok, 'user_id' => $ok ? $uid : null, 'role' => $ok ? $role : null]);
         return;
     }
 
-    // Every other master route needs a live admin session.
-    $uid = $session->authenticate($pdo);
+    // v0.25.0 — every other master route uses the regular account
+    // session so reauthentication applies. The legacy admin cookie is
+    // still accepted for reads, but it has no session to reauthenticate,
+    // so sensitive actions answer `reauthentication_required`.
+    $cookie = $_COOKIE[AuthService::SESSION_COOKIE] ?? null;
+    $uid = (new AuthService($pdo))->authenticate($cookie);
+    $sessionId = $uid !== null ? AccountService::sessionIdFromCookie($cookie) : null;
+    if ($uid === null) { $uid = $session->authenticate($pdo); }
     if ($uid === null) { respond_error(401, 'unauthenticated'); return; }
+    $svc = new MasterService($pdo);
+    if ($method !== 'GET' && !Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
+    $body = $method === 'GET' ? [] : read_json_body();
+    $q = isset($_GET['q']) && is_string($_GET['q']) ? mb_substr($_GET['q'], 0, 100) : '';
+    $state = isset($_GET['state']) && is_string($_GET['state']) ? $_GET['state'] : '';
 
-    // ── GET /master/settings/email ─────────────────────────────
-    if ($method === 'GET' && $tail === '/settings/email') {
-        $repo = new SmtpSettingsRepository($pdo);
-        echo json_encode(['settings' => $repo->loadForApi()]);
-        return;
-    }
-    // ── PUT /master/settings/email ─────────────────────────────
-    if ($method === 'PUT' && $tail === '/settings/email') {
-        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
-        $body = read_json_body();
-        try {
-            $result = (new WriteLock())->withLock(static function () use ($pdo, $body): array {
-                return (new SmtpSettingsRepository($pdo))->save($body);
-            });
-        } catch (\Throwable $e) {
-            error_log('[bp] smtp save error: ' . $e->getMessage());
-            respond_error(503, 'service_unavailable');
-            return;
-        }
-        [$ok, $errors] = $result;
-        if (!$ok) { http_response_code(422); echo json_encode(['error'=>'invalid','fields'=>$errors]); return; }
-        echo json_encode(['status' => 'saved']);
-        return;
-    }
-    // ── POST /master/settings/email/test ───────────────────────
-    if ($method === 'POST' && $tail === '/settings/email/test') {
-        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
-        $body = read_json_body();
+    $run = static function (callable $fn) {
+        try { return (new WriteLock())->withLock($fn); }
+        catch (\Throwable $e) { error_log('[bp] master write error: ' . $e->getMessage()); return ['error', null]; }
+    };
+    $result = null;
+    if ($method === 'GET') {
+        $result = match (true) {
+            $tail === '/me'             => $svc->me($uid),
+            $tail === '' || $tail === '/overview' => $svc->overview($uid),
+            $tail === '/users'          => $svc->users($uid, $q),
+            $tail === '/adventures'     => $svc->adventures($uid, $q),
+            $tail === '/submissions'    => $svc->submissions($uid, $state ?: 'pending'),
+            $tail === '/reports'        => $svc->reports($uid, $state ?: 'open'),
+            $tail === '/settings'       => $svc->settings($uid),
+            $tail === '/settings/email' => $svc->smtp($uid),
+            $tail === '/email-queue'    => $svc->emailQueue($uid, $_GET['status'] ?? null ?: null),
+            $tail === '/activity'       => $svc->activity($uid, ($_GET['security'] ?? '') === '1'),
+            default => null,
+        };
+    } elseif ($method === 'PUT' && $tail === '/settings/email') {
+        $result = $run(static fn () => $svc->saveSmtp($uid, $sessionId, $body));
+    } elseif ($method === 'PUT' && preg_match('#^/settings/(registration|anonymous|limits|maintenance)$#', $tail, $m)) {
+        $result = $run(static fn () => $svc->saveSettings($uid, $sessionId, $m[1], $body));
+    } elseif ($method === 'POST' && $tail === '/settings/email/test') {
         $to = (string) ($body['to'] ?? '');
+        if (!MasterService::can($svc->platformRole($uid), 'configure_smtp')) { respond_error(403, 'forbidden'); return; }
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) { respond_error(422, 'invalid_recipient'); return; }
-        try {
-            $smtp = (new SmtpSettingsRepository($pdo))->load();
-            (new EmailQueueRepository($pdo))->enqueue(
-                'operator_test', $to, '', ['recipient' => $to]
-            );
-        } catch (\Throwable $e) {
-            error_log('[bp] test email error: ' . $e->getMessage());
-            respond_error(503, 'service_unavailable');
-            return;
-        }
-        echo json_encode(['status' => 'queued']);
-        return;
+        (new EmailQueueRepository($pdo))->enqueue('operator_test', $to, '', ['recipient' => $to]);
+        $result = [MasterService::OK, ['status' => 'queued']];
+    } elseif ($method === 'POST' && preg_match('#^/email-queue/(\d+)/(cancel|retry)$#', $tail, $m)) {
+        $result = $run(static fn () => $svc->queueAction($uid, (int) $m[1], $m[2]));
+    } elseif ($method === 'POST' && preg_match('#^/users/(\d+)/(role|suspend|restore|escalate|reset)$#', $tail, $m)) {
+        $id = (int) $m[1];
+        $result = $run(static fn () => match ($m[2]) {
+            'role'     => $svc->setRole($uid, $sessionId, $id, (string) ($body['role'] ?? '')),
+            'suspend'  => $svc->setUserStatus($uid, $sessionId, $id, true, (string) ($body['note'] ?? '')),
+            'restore'  => $svc->setUserStatus($uid, $sessionId, $id, false, (string) ($body['note'] ?? '')),
+            'escalate' => $svc->escalateAccount($uid, $id, (string) ($body['note'] ?? '')),
+            'reset'    => $svc->triggerReset($uid, $id),
+        });
+    } elseif ($method === 'POST' && preg_match('#^/adventures/(\d+)/(suspend|restore|transfer)$#', $tail, $m)) {
+        $id = (int) $m[1];
+        $result = $run(static fn () => match ($m[2]) {
+            'suspend'  => $svc->setAdventureSuspended($uid, $sessionId, $id, true, (string) ($body['note'] ?? '')),
+            'restore'  => $svc->setAdventureSuspended($uid, $sessionId, $id, false, (string) ($body['note'] ?? '')),
+            'transfer' => $svc->transferOwnership($uid, $sessionId, $id, (int) ($body['user_id'] ?? 0), !empty($body['confirm'])),
+        });
+    } elseif ($method === 'POST' && preg_match('#^/reports/(\d+)/(dismiss|resolve|hide|restore)$#', $tail, $m)) {
+        $result = $run(static fn () => $svc->actOnReport($uid, $sessionId, (int) $m[1], $m[2], (string) ($body['note'] ?? '')));
+    } elseif ($method === 'POST' && preg_match('#^/activity/(\d+)/close$#', $tail, $m)) {
+        $result = $run(static fn () => $svc->closeEscalation($uid, (int) $m[1]));
     }
-    // ── GET /master/email-queue ────────────────────────────────
-    if ($method === 'GET' && $tail === '/email-queue') {
-        $status = isset($_GET['status']) && is_string($_GET['status']) ? $_GET['status'] : null;
-        $repo = new EmailQueueRepository($pdo);
-        echo json_encode([
-            'counts'   => $repo->counts(),
-            'messages' => $repo->recent(100, $status),
-        ]);
-        return;
+    if ($result === null) { respond_error(404, 'not_found'); return; }
+    [$o, $d] = $result;
+    switch ($o) {
+        case MasterService::OK: echo json_encode(['status' => 'ok'] + ($d ?? [])); return;
+        case MasterService::FORBIDDEN: respond_error(403, 'forbidden'); return;
+        case MasterService::REAUTH: respond_error(403, 'reauthentication_required'); return;
+        case MasterService::NOT_FOUND: respond_error(404, 'not_found'); return;
+        case MasterService::CONFLICT: http_response_code(409); echo json_encode(['error' => 'conflict'] + ($d ?? [])); return;
+        case MasterService::INVALID: http_response_code(422); echo json_encode(['error' => 'invalid'] + ($d ?? [])); return;
+        default: respond_error(503, 'service_unavailable'); return;
     }
-    // ── POST /master/email-queue/{id}/cancel ───────────────────
-    if ($method === 'POST' && preg_match('#^/email-queue/(\d+)/cancel$#', $tail, $m)) {
-        if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
-        $ok = (new EmailQueueRepository($pdo))->cancel((int) $m[1]);
-        echo json_encode(['status' => $ok ? 'cancelled' : 'noop']);
-        return;
-    }
-
-    respond_error(404, 'not_found');
 }
 
 function read_json_body(): array
