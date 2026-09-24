@@ -224,7 +224,7 @@ describe("branch submission — submitting", () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context());
     const submit = vi.spyOn(api, "submitBranch").mockResolvedValue({
       ok: true, status: 201, data: {
-        status: "ok", submission_id: 1, state: "published", mode: "immediate",
+        status: "ok", submission_id: 1, state: "approved", mode: "immediate",
         published: true, scene_id: 30, choice_id: 40, attribution: "username",
       },
     });
@@ -249,7 +249,7 @@ describe("branch submission — submitting", () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context());
     vi.spyOn(api, "submitBranch").mockResolvedValue({
       ok: true, status: 201, data: {
-        status: "ok", submission_id: 1, state: "published", mode: "immediate",
+        status: "ok", submission_id: 1, state: "approved", mode: "immediate",
         published: true, scene_id: 30, choice_id: 40, attribution: "username",
       },
     });
@@ -340,7 +340,7 @@ describe("branch submission — attribution", () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context());
     const submit = vi.spyOn(api, "submitBranch").mockResolvedValue({
       ok: true, status: 201, data: {
-        status: "ok", submission_id: 1, state: "published", mode: "immediate",
+        status: "ok", submission_id: 1, state: "approved", mode: "immediate",
         published: true, scene_id: 1, choice_id: 1, attribution: "anonymous",
       },
     });
@@ -387,7 +387,7 @@ describe("branch submission — autosave", () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context());
     vi.spyOn(api, "submitBranch").mockResolvedValue({
       ok: true, status: 201, data: {
-        status: "ok", submission_id: 1, state: "published", mode: "immediate",
+        status: "ok", submission_id: 1, state: "approved", mode: "immediate",
         published: true, scene_id: 1, choice_id: 1, attribution: "username",
       },
     });
@@ -433,6 +433,7 @@ describe("branch submission — client validation mirror", () => {
 /* ──────────────────── Contribution history ──────────────────── */
 
 function historyEntry(over: Partial<ContributionHistoryEntry> = {}): ContributionHistoryEntry {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return {
     id: 1,
     state: "pending",
