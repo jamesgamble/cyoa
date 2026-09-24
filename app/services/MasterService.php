@@ -497,7 +497,8 @@ final class MasterService
         $repo = new SmtpSettingsRepository($this->pdo);
         $cur = $repo->load();
         $pw = (string) ($input['password'] ?? SmtpSettingsRepository::PASSWORD_UNCHANGED_MARKER);
-        $credChange = $pw !== SmtpSettingsRepository::PASSWORD_UNCHANGED_MARKER
+        $pwChanged = $pw !== SmtpSettingsRepository::PASSWORD_UNCHANGED_MARKER && !($pw === '' && !$cur['has_password']);
+        $credChange = $pwChanged
             || trim((string) ($input['host'] ?? $cur['host'])) !== $cur['host']
             || (int) ($input['port'] ?? $cur['port']) !== $cur['port']
             || trim((string) ($input['username'] ?? $cur['username'])) !== $cur['username'];
