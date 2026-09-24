@@ -18,7 +18,11 @@ import { Preview } from "./pages/Preview";
 import { ManageAdventure } from "./pages/ManageAdventure";
 import { Help, HelpTopic } from "./pages/help";
 import { ChangelogIndex, ChangelogVersion } from "./pages/changelog";
-import { MasterLogin, Master, MasterEmailSettings, MasterEmailQueue } from "./pages/protected";
+import { MasterLogin, MasterEmailSettings, MasterEmailQueue } from "./pages/protected";
+import {
+  MasterOverview, MasterUsers, MasterAdventures, MasterSubmissions,
+  MasterReports, MasterSettings, MasterActivity,
+} from "./pages/master";
 import {
   AccountOverview, AccountProfilePage, AccountSecurityPage,
   AccountNotificationsPage, AccountAdventuresPage,
@@ -71,7 +75,13 @@ export default function App() {
       </Route>
       <Route element={<MasterLayout />}>
         <Route path="/master/login" element={<MasterLogin />} />
-        <Route path="/master" element={<Master />} />
+        <Route path="/master" element={<MasterOverview />} />
+        <Route path="/master/users" element={<MasterUsers />} />
+        <Route path="/master/adventures" element={<MasterAdventures />} />
+        <Route path="/master/submissions" element={<MasterSubmissions />} />
+        <Route path="/master/reports" element={<MasterReports />} />
+        <Route path="/master/settings" element={<MasterSettings />} />
+        <Route path="/master/activity" element={<MasterActivity />} />
         <Route path="/master/settings/email" element={<MasterEmailSettings />} />
         <Route path="/master/email-queue" element={<MasterEmailQueue />} />
       </Route>
