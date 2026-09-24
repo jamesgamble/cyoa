@@ -3,6 +3,10 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./styles/global.css";
+import { applyPreferences, loadPreferences } from "./components/ReaderPreferences";
+
+// Apply saved reading settings before the first paint.
+applyPreferences(loadPreferences());
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
