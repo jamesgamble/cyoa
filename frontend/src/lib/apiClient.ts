@@ -348,7 +348,7 @@ export interface QueueResponse {
   messages: QueueMessage[];
 }
 
-async function masterMutate<T>(
+export async function masterMutate<T>(
   path: string,
   method: "POST" | "PUT" | "DELETE",
   body: unknown,
