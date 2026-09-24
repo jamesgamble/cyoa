@@ -18,6 +18,7 @@ import {
   CollaboratorsPanel,
   DangerZone,
   Dialog,
+  ExportPanel,
   Panel,
   RevisionHistoryPanel,
   StoryOutline,
@@ -248,6 +249,8 @@ export function ManageAdventure() {
       )}
 
       <RevisionHistoryPanel slug={adventure.slug} onRestored={() => void load()} />
+
+      <ExportPanel slug={adventure.slug} />
 
       <CollaboratorsPanel slug={adventure.slug} />
 

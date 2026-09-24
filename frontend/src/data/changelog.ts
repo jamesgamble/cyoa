@@ -22,6 +22,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.26.0",
+    date: "2026-09-24",
+    sections: {
+      Added: [
+        "Owners and editors can export an adventure as JSON, plain text, printable HTML, or a standalone playable HTML file.",
+        "Exports include published scenes, choices, endings, details, content warnings, writing guidelines, and credits.",
+        "Help topic: exporting an adventure.",
+      ],
+      Security: [
+        "Exports leave out drafts, hidden scenes, private notes, reports, activity, and all account or server details. Anonymous contributors are never credited.",
+        "The playable file works offline with no outside scripts, tracking, or editing tools.",
+      ],
+    },
+  },
+  {
     version: "0.25.0",
     date: "2026-09-24",
     sections: {

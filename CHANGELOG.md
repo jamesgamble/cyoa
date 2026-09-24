@@ -2,6 +2,17 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.26.0 — 2026-09-24
+
+### Added
+- Exports (`App\ExportService`): `GET /api/adventures/{slug}/moderation/export?format=json|text|print|play` for owners, editors, and administrators; export panel on the manage page.
+- JSON schema version 1: schema version, export timestamp, metadata, content warnings, writing guidelines, published scenes, published choices, endings, safe attribution.
+- Help topic: exporting an adventure.
+
+### Security
+- Exports are built from an allowlisted snapshot: no credentials, sessions, tokens, SMTP data, IP data, rate limits, reports, private notes, activity, or paths. Drafts, hidden scenes, and anonymous contributors are excluded.
+- Plain text contains no HTML; HTML formats re-sanitize all story text. The standalone file sets a no-network Content Security Policy and has no external scripts or tracking.
+
 ## 0.25.0 — 2026-09-24
 
 ### Added
