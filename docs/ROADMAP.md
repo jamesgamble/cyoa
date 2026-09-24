@@ -36,3 +36,5 @@ Semantic versioning. Each version implements only its stated scope.
 - 0.27.0 — Backups, maintenance, and hosting (done)
 
 - 0.28.0 — Accessibility and production QA (done)
+
+- 1.0.0 — Production release (done)
