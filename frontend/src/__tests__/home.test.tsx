@@ -49,8 +49,8 @@ describe("homepage — content", () => {
   it("renders the featured adventure fixture", () => {
     renderHome();
     const featured = screen.getByTestId("featured-adventure-card");
-    expect(within(featured).getByRole("heading", { name: FEATURED_ADVENTURE.title })).toBeInTheDocument();
-    expect(within(featured).getByText(new RegExp(`by ${FEATURED_ADVENTURE.author}`, "i"))).toBeInTheDocument();
+    expect(within(featured).getByRole("heading", { name: FEATURED_ADVENTURE!.title })).toBeInTheDocument();
+    expect(within(featured).getByText(new RegExp(`by ${FEATURED_ADVENTURE!.author}`, "i"))).toBeInTheDocument();
   });
 
   it("renders every recently-updated adventure fixture", () => {

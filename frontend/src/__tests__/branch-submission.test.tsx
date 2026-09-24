@@ -45,7 +45,7 @@ function context(over: Partial<BranchContext> = {}): BranchContext {
     attribution_options: ["username", "display_name", "anonymous"],
     limits: { choice_max: 120, title_max: 120, body_max: 20000, note_max: 1000 },
     ...over,
-  };
+  } as ContributionHistoryEntry;
 }
 
 function renderBranch() {
@@ -433,13 +433,13 @@ describe("branch submission — client validation mirror", () => {
 /* ──────────────────── Contribution history ──────────────────── */
 
 function historyEntry(over: Partial<ContributionHistoryEntry> = {}): ContributionHistoryEntry {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return {
     id: 1,
     state: "pending",
     attribution: "anonymous",
     choice_text: "Follow the lantern north",
     scene_title: "The frozen mile",
+    scene_body: "",
     scene_type: "story",
     private_note: null,
     moderator_note: null,
