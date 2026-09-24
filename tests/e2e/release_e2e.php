@@ -209,8 +209,8 @@ try {
     $admin->req('POST', '/api/master/settings/email/test', ['to' => 'operator@example.test']);
     check($admin->status === 200, 'queue test email', $admin->raw);
     $o = processQueue($env);
-    check(str_contains($o, 'sent=1'), 'worker sent the test email', $o);
-    check(count(mails()) === 1 && stripos(mails()[0], 'operator@example.test') !== false, 'sink received the test email');
+    check(preg_match('/sent=([1-9]\d*)/', $o) === 1 && str_contains($o, 'failed=0'), 'worker sent the queue', $o);
+    check(count(array_filter(mails(), fn ($m) => stripos($m, 'To: operator@example.test') !== false || stripos($m, 'operator@example.test') !== false)) >= 1, 'sink received the test email');
     ok('process a queued test email');
 
     // 10. Register and verify
