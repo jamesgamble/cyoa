@@ -407,6 +407,7 @@ try {
     $rb->req('GET', "/api/adventures/$slug/manage");
     check($rb->status === 200 && str_contains($rb->raw, '"owner"'), 'restored ownership', $rb->raw);
     $old = new Client('http://127.0.0.1:8098'); $old->cookies = $a->cookies;
+    $a->req('GET', '/api/auth/session'); out('      original server, author cookie: ' . $a->raw . ' cookies=' . implode(',', array_keys($a->cookies)));
     $old->req('GET', '/api/auth/session');
     check(str_contains($old->raw, '"authenticated":true'), 'existing sessions survive restore (same database)', $old->raw);
     $rp = new Client('http://127.0.0.1:8098');
