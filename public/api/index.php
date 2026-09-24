@@ -185,6 +185,13 @@ if ($route === '/csrf-token') {
     exit;
 }
 
+// ── Public maintenance status (v0.27.0) ────────────────────────────
+if ($route === '/status' && $method === 'GET') {
+    try { echo json_encode(MasterService::maintenanceStatus(Database::open())); }
+    catch (\Throwable $e) { respond_error(503, 'service_unavailable'); }
+    exit;
+}
+
 // ── Public registration settings ───────────────────────────────────
 if ($route === '/registration/settings') {
     try {

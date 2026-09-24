@@ -1,0 +1,23 @@
+# Branching Paths — Apache virtual host example (recommended layout).
+<VirtualHost *:443>
+    ServerName cyoa.gamblelan.com
+    DocumentRoot /var/www/branching-paths/public
+
+    <Directory /var/www/branching-paths/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    # Defence in depth: never serve anything outside public/.
+    <DirectoryMatch "^/var/www/branching-paths/(private|app|scripts|tests|docs)">
+        Require all denied
+    </DirectoryMatch>
+
+    SetEnv APP_ENV production
+    SetEnv APP_URL https://cyoa.gamblelan.com
+    SetEnv DATABASE_PATH /var/lib/branching-paths/data/branching-paths.sqlite
+    SetEnv WRITE_LOCK_PATH /var/lib/branching-paths/locks/write.lock
+
+    SSLEngine on
+    # SSLCertificateFile / SSLCertificateKeyFile ...
+</VirtualHost>

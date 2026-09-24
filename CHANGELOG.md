@@ -2,6 +2,20 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.27.0 — 2026-09-24
+
+### Added
+- `App\BackupService` and scripts: `scripts/backup.php` (SQLite `VACUUM INTO` under the write lock, integrity-checked, `.sha256` sidecar), `scripts/restore.php` (checksum + integrity verification, pre-restore safety backup, WAL checkpoint, atomic swap under lock), `scripts/prune-backups.php` (keep newest N plus one per day for D days), `scripts/integrity-check.php` (`integrity_check` + `foreign_key_check`).
+- `scripts/system-check.php` now also checks `openssl`, the backups directory, pending migrations, database integrity, and that `private/` is outside `public/`.
+- Migration `0015_maintenance_controls.sql`: `new_adventures_enabled`, `contributions_globally_paused`. The maintenance settings group now covers read-only mode, the maintenance notice, registrations, new adventures, and the global contribution pause.
+- `GET /api/status` — public-safe maintenance status and notice.
+- Hosting: `public/.htaccess` (rewrites, file-type denial), deny-all `.htaccess` in `private/`, `app/`, `scripts/`, `tests/`, `docs/`; `docs/deploy/apache.conf.example`, `nginx.conf.example`, `crontab.example`; `docs/HOSTING.md` with deployment, upgrade, rollback, storage-outside-web-root, fallback layout, extensions, and writable directories.
+- Help topic: maintenance, backups, and hosting.
+- Tests: `tests/php/backup_test.php` — backup, lock coordination, restore, tamper/corruption rejection, retention, integrity, maintenance controls, and clean install.
+
+### Changed
+- Adventure creation is refused with `creation_disabled` when new adventures are turned off; branch submissions close everywhere while contributions are globally paused.
+
 ## 0.26.0 — 2026-09-24
 
 ### Added

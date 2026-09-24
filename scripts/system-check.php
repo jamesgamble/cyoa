@@ -32,7 +32,7 @@ if (PHP_VERSION_ID >= 80200) {
     fail('php >= 8.2 required, found ' . PHP_VERSION);
 }
 
-foreach (['pdo', 'pdo_sqlite', 'json', 'mbstring'] as $ext) {
+foreach (['pdo', 'pdo_sqlite', 'json', 'mbstring', 'openssl'] as $ext) {
     if (extension_loaded($ext)) {
         pass("extension $ext");
     } else {
@@ -49,6 +49,7 @@ $paths = [
     'lock dir'    => dirname($config['lock']['path']),
     'logs dir'    => BP_ROOT . '/private/logs',
     'migrations'  => $config['migrations']['path'],
+    'backups dir' => BP_ROOT . '/private/backups',
 ];
 foreach ($paths as $label => $path) {
     if (!is_dir($path)) {
@@ -94,6 +95,27 @@ try {
 } catch (\Throwable $e) {
     fail('could not open database');
 }
+
+fwrite(STDOUT, "\nSchema\n");
+try {
+    $mig = new App\Migrator(Database::open());
+    $pending = array_diff(array_map(static fn ($m) => $m['version'], $mig->availableMigrations()), $mig->appliedVersions());
+    $pending === [] ? pass('no pending migrations') : warn(count($pending) . ' pending migration(s) — run scripts/migrate.php');
+    $ic = App\BackupService::integrityOf($config['database']['path']);
+    $ic['ok'] ? pass('integrity_check ok') : fail('integrity problems: ' . implode('; ', $ic['problems']));
+} catch (\Throwable $e) {
+    fail('schema check failed');
+}
+
+fwrite(STDOUT, "\nWeb root safety\n");
+$priv = realpath(BP_ROOT . '/private') ?: '';
+$pub  = realpath(BP_ROOT . '/public') ?: '';
+if ($priv !== '' && $pub !== '' && str_starts_with($priv, $pub . DIRECTORY_SEPARATOR)) {
+    fail('private/ is inside the public web root');
+} else {
+    pass('private/ is outside public/');
+}
+is_file(BP_ROOT . '/private/.htaccess') ? pass('private/.htaccess present (fallback layout protection)') : warn('private/.htaccess missing');
 
 fwrite(STDOUT, "\nWrite lock\n");
 try {

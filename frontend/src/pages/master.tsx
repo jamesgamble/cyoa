@@ -366,7 +366,7 @@ const LABELS: Record<string, string> = {
   anonymous_contributions_allowed: "Allow anonymous contributions",
   max_adventures_per_user: "Adventures per user", adventures_per_user_per_hour: "New adventures per user per hour",
   contributions_per_user_per_hour: "Contributions per user per hour", contributions_per_ip_per_hour: "Contributions per address per hour",
-  maintenance_mode: "Maintenance mode (only administrators can make changes)", maintenance_message: "Maintenance message",
+  maintenance_mode: "Read-only mode (reading and administrator sign-in still work)", maintenance_message: "Maintenance notice shown to visitors", new_adventures_enabled: "Allow new adventures", contributions_globally_paused: "Pause all contributions",
 };
 const GROUP_TITLES: Record<string, string> = { registration: "Registration", anonymous: "Anonymous use", limits: "Global limits", maintenance: "Maintenance" };
 

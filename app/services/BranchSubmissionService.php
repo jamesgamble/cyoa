@@ -122,6 +122,7 @@ final class BranchSubmissionService
         $mode = (string) $adv['contribution_state'];
         if ((int) ($adv['allow_branching'] ?? 1) !== 1) return false;
         if ((int) ($adv['contributions_paused'] ?? 0) === 1) return false;
+        if ((new SettingsRepository($this->pdo))->getBool('contributions_globally_paused', false)) return false;
         return ($mode === 'immediate' || $mode === 'approval')
             && in_array((string) $adv['state'], self::CONTRIBUTABLE_STATES, true);
     }

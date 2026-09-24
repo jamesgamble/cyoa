@@ -22,6 +22,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.27.0",
+    date: "2026-09-24",
+    sections: {
+      Added: [
+        "Maintenance controls for administrators: read-only mode, a custom maintenance notice, and switches to turn off registrations, new adventures, and contributions.",
+        "Scheduled, verified backups with automatic retention, plus restore and integrity-check tools for site operators.",
+        "Deployment, upgrade, and rollback instructions for Apache and Nginx hosting.",
+        "Help topic: maintenance, backups, and hosting.",
+      ],
+      Changed: [
+        "Read-only mode keeps public reading and administrator sign-in and maintenance working.",
+      ],
+      Security: [
+        "Private server folders are protected from web access even on hosts that place them inside the public folder.",
+      ],
+    },
+  },
+  {
     version: "0.26.0",
     date: "2026-09-24",
     sections: {
