@@ -1,0 +1,35 @@
+# Branching Paths — Nginx + PHP-FPM example.
+server {
+    listen 443 ssl http2;
+    server_name cyoa.gamblelan.com;
+    root /var/www/branching-paths/public;
+    index index.html;
+
+    # Never serve dotfiles, SQLite files, locks, logs, or keys.
+    location ~ /\.(?!well-known) { deny all; }
+    location ~* \.(sqlite|sqlite-wal|sqlite-shm|lock|log|sql|key)$ { deny all; }
+
+    # API front controller.
+    location ^~ /api/ {
+        try_files $uri /api/index.php$is_args$args;
+    }
+    location = /api/index.php {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root/api/index.php;
+        fastcgi_param APP_ENV production;
+        fastcgi_param DATABASE_PATH /var/lib/branching-paths/data/branching-paths.sqlite;
+        fastcgi_param WRITE_LOCK_PATH /var/lib/branching-paths/locks/write.lock;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+    }
+    location ~ \.php$ { deny all; }
+
+    # Hashed build assets can be cached for a long time.
+    location /assets/ { expires 1y; add_header Cache-Control "public, immutable"; }
+
+    # SPA fallback.
+    location / { try_files $uri $uri/ /index.html; }
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Frame-Options DENY always;
+}

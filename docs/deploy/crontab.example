@@ -1,0 +1,12 @@
+# Branching Paths — cron examples (run as the web server user, e.g. www-data).
+# Adjust /var/www/branching-paths to your install path.
+
+# Send queued email every minute.
+* * * * *   php /var/www/branching-paths/scripts/process-email-queue.php >> /var/www/branching-paths/private/logs/cron.log 2>&1
+# Followed-adventure digests every hour.
+5 * * * *   php /var/www/branching-paths/scripts/process-notification-digests.php >> /var/www/branching-paths/private/logs/cron.log 2>&1
+# Nightly backup at 03:15 UTC, then retention.
+15 3 * * *  php /var/www/branching-paths/scripts/backup.php nightly >> /var/www/branching-paths/private/logs/cron.log 2>&1
+45 3 * * *  php /var/www/branching-paths/scripts/prune-backups.php 14 30 >> /var/www/branching-paths/private/logs/cron.log 2>&1
+# Weekly integrity check (Sunday 04:00 UTC).
+0 4 * * 0   php /var/www/branching-paths/scripts/integrity-check.php >> /var/www/branching-paths/private/logs/cron.log 2>&1
