@@ -382,8 +382,8 @@ try {
 
     // 25. Restore into a clean test location
     $R = "$WORK/restore";
-    [$c, $o] = sh('mkdir -p ' . escapeshellarg("$R/storage/data") . ' ' . escapeshellarg("$R/storage/locks")
-        . ' && tar -C ' . escapeshellarg($SITE) . ' --exclude=./private/backups/* --exclude=./private/data/* -cf - . | tar -C ' . escapeshellarg("$R/site") . ' -xf - 2>/dev/null || (mkdir -p ' . escapeshellarg("$R/site") . ' && tar -C ' . escapeshellarg($SITE) . ' --exclude=./private/backups/* --exclude=./private/data/* -cf - . | tar -C ' . escapeshellarg("$R/site") . ' -xf -)');
+    [$c, $o] = sh('mkdir -p ' . escapeshellarg("$R/storage/data") . ' ' . escapeshellarg("$R/storage/locks") . ' ' . escapeshellarg("$R/site")
+        . ' && tar -C ' . escapeshellarg($SITE) . " --exclude='./private/backups/*' --exclude='./private/data/*' -cf - . | tar -C " . escapeshellarg("$R/site") . ' -xf -');
     check($c === 0, 'copy code to restore location', $o);
     sh('mkdir -p ' . escapeshellarg("$R/site/private/backups") . ' && cp ' . escapeshellarg("$SITE/private/backups/$backupName") . '* ' . escapeshellarg("$R/site/private/backups/"));
     $renv = ['APP_ENV' => 'production', 'APP_URL' => 'http://127.0.0.1:8098',
