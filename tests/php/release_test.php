@@ -59,4 +59,16 @@ final class BPReleaseTest
         $pdo->exec($sql);
         assert_same('https://stories.example.org', $pdo->query("SELECT value FROM settings WHERE key='canonical_url'")->fetchColumn());
     }
+
+    /** Both web-server configurations send a same-origin CSP and the standard hardening headers. */
+    public function testWebServerConfigsSendSecurityHeaders(): void
+    {
+        foreach (['public/.htaccess', 'docs/deploy/nginx.conf.example'] as $f) {
+            $src = (string) file_get_contents(BP_ROOT . '/' . $f);
+            foreach (['Content-Security-Policy', "default-src 'self'", "frame-ancestors 'none'", "object-src 'none'", 'Permissions-Policy', 'X-Frame-Options', 'Referrer-Policy', 'nosniff'] as $needle) {
+                assert_true(str_contains($src, $needle), "$f missing $needle");
+            }
+            assert_true(!preg_match('/https?:\/\/[^\s"]*/', (string) preg_replace('/^.*(Content-Security-Policy[^\n]*).*$/s', '$1', $src)), "$f CSP must not allow external origins");
+        }
+    }
 }

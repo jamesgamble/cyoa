@@ -18,6 +18,10 @@
     SetEnv DATABASE_PATH /var/lib/branching-paths/data/branching-paths.sqlite
     SetEnv WRITE_LOCK_PATH /var/lib/branching-paths/locks/write.lock
 
+    # Security headers are set in public/.htaccess (mod_headers required).
+    # After confirming HTTPS works, enable HSTS there or here:
+    # Header always set Strict-Transport-Security "max-age=31536000"
+
     SSLEngine on
     # SSLCertificateFile / SSLCertificateKeyFile ...
 </VirtualHost>

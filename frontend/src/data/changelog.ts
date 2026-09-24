@@ -22,6 +22,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.1",
+    date: "2026-09-24",
+    sections: {
+      Security: [
+        "Strengthened the browser security settings the site asks web servers to send, so pages only load code and styles from the site itself.",
+      ],
+      Changed: ["Hosting guide explains when to turn on strict HTTPS enforcement."],
+    },
+  },
+  {
     version: "1.0.0",
     date: "2026-09-24",
     sections: {

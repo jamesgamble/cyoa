@@ -2,6 +2,16 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 1.0.1 — 2026-09-24
+
+Release-readiness review. No new features.
+
+### Security
+- The Apache and Nginx configurations now send a same-origin Content-Security-Policy and a Permissions-Policy alongside the existing hardening headers. HSTS guidance added to the hosting guide.
+
+### Changed
+- `VERSION` and `frontend/package.json` set to 1.0.1.
+
 ## 1.0.0 — 2026-09-24
 
 First production release. No new features.
