@@ -224,7 +224,7 @@ describe("branch submission — submitting", () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context());
     const submit = vi.spyOn(api, "submitBranch").mockResolvedValue({
       ok: true, status: 201, data: {
-        status: "ok", submission_id: 1, state: "published", mode: "immediate",
+        status: "ok", submission_id: 1, state: "approved", mode: "immediate",
         published: true, scene_id: 30, choice_id: 40, attribution: "username",
       },
     });
@@ -249,7 +249,7 @@ describe("branch submission — submitting", () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context());
     vi.spyOn(api, "submitBranch").mockResolvedValue({
       ok: true, status: 201, data: {
-        status: "ok", submission_id: 1, state: "published", mode: "immediate",
+        status: "ok", submission_id: 1, state: "approved", mode: "immediate",
         published: true, scene_id: 30, choice_id: 40, attribution: "username",
       },
     });
@@ -340,7 +340,7 @@ describe("branch submission — attribution", () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context());
     const submit = vi.spyOn(api, "submitBranch").mockResolvedValue({
       ok: true, status: 201, data: {
-        status: "ok", submission_id: 1, state: "published", mode: "immediate",
+        status: "ok", submission_id: 1, state: "approved", mode: "immediate",
         published: true, scene_id: 1, choice_id: 1, attribution: "anonymous",
       },
     });
@@ -387,7 +387,7 @@ describe("branch submission — autosave", () => {
     vi.spyOn(api, "fetchBranchContext").mockResolvedValue(context());
     vi.spyOn(api, "submitBranch").mockResolvedValue({
       ok: true, status: 201, data: {
-        status: "ok", submission_id: 1, state: "published", mode: "immediate",
+        status: "ok", submission_id: 1, state: "approved", mode: "immediate",
         published: true, scene_id: 1, choice_id: 1, attribution: "username",
       },
     });
@@ -439,6 +439,7 @@ function historyEntry(over: Partial<ContributionHistoryEntry> = {}): Contributio
     attribution: "anonymous",
     choice_text: "Follow the lantern north",
     scene_title: "The frozen mile",
+    scene_body: "",
     scene_type: "story",
     private_note: null,
     moderator_note: null,
@@ -448,7 +449,7 @@ function historyEntry(over: Partial<ContributionHistoryEntry> = {}): Contributio
     source_scene_slug: "the-gate-at-dusk",
     source_scene_title: "The gate at dusk",
     ...over,
-  };
+  } as ContributionHistoryEntry;
 }
 
 describe("contribution history", () => {

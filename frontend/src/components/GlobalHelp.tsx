@@ -165,6 +165,8 @@ function ContextualHelpDrawer({
 
   useEffect(() => {
     if (!open) return;
+    // Remember what had focus so closing returns the reader there.
+    const previous = document.activeElement as HTMLElement | null;
     // Move focus to the close button once the drawer mounts.
     closeRef.current?.focus();
 
@@ -193,7 +195,10 @@ function ContextualHelpDrawer({
       }
     }
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      previous?.focus?.();
+    };
   }, [open, onClose]);
 
   if (!open) return null;

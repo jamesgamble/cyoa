@@ -2160,3 +2160,53 @@ html[data-contrast="high"] body::before { display: none; }
 .bp-master__stats dd { font-size: 1.75rem; margin: 0; }
 .bp-master__actions { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; }
 @media (max-width: 760px) { .bp-master { grid-template-columns: 1fr; } }
+
+/* =====================================================================
+ * v0.28.0 — Accessibility pass and local reader preferences
+ * ===================================================================== */
+
+/* Text size applies without the resolution guard as well. */
+html[data-text-size="large"] { font-size: 112.5%; }
+html[data-text-size="x-large"] { font-size: 125%; }
+
+html[data-line-spacing="relaxed"] { --bp-lh-reading: 1.9; }
+html[data-line-spacing="loose"]   { --bp-lh-reading: 2.2; }
+html[data-column-width="narrow"]  { --bp-w-reading: 34rem; }
+html[data-column-width="wide"]    { --bp-w-reading: 52rem; }
+
+/* Explicit reduced-motion preference mirrors the OS setting. */
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* High contrast: stronger focus ring and underlined links. */
+html[data-contrast="high"] { --bp-focus-ring: 0 0 0 3px #000, 0 0 0 5px #fff; }
+html[data-contrast="high"] a { text-decoration: underline; }
+
+/* Windows High Contrast / forced colours: keep focus and borders visible. */
+@media (forced-colors: active) {
+  :focus-visible { outline: 3px solid CanvasText !important; outline-offset: 2px; box-shadow: none !important; }
+  .bp-btn, .bp-input, .bp-textarea, .bp-select, .bp-choice { border: 1px solid ButtonText; }
+  body::before { display: none; }
+}
+
+/* Touch targets: small buttons grow to 44px on touch screens. */
+@media (pointer: coarse) {
+  .bp-btn--sm { min-height: 44px; min-width: 44px; }
+  .bp-prefs__option { min-height: 44px; }
+}
+
+/* Long words and URLs never force sideways scrolling on phones. */
+.bp-story, .bp-state, td, th { overflow-wrap: anywhere; }
+.bp-admin-table-wrap, table { max-width: 100%; }
+
+/* Reader preferences panel */
+.bp-prefs__group { border: 0; padding: 0; margin: 0 0 var(--bp-s-3); }
+.bp-prefs__group legend { font-weight: 600; margin-bottom: var(--bp-s-1); }
+.bp-prefs__option { display: inline-flex; align-items: center; gap: 0.4em; margin-right: var(--bp-s-4); min-height: 32px; cursor: pointer; }
+.bp-prefs__option input { width: 1.1rem; height: 1.1rem; accent-color: var(--bp-red); }

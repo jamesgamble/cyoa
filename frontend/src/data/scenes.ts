@@ -7,6 +7,7 @@
  * rendered as plain text through the StoryBody / SceneTitle / EndingPanel
  * primitives; the containment guarantees from v0.3.0 apply.
  */
+import { FIXTURES_ENABLED } from "./fixtureGate";
 
 export interface EndingContent {
   /** Ending title — plain text. */
@@ -195,7 +196,7 @@ const INN_AT_CROSSING: Scene[] = [
 ];
 
 /** All scenes across every adventure with fixture content. */
-export const SCENES: readonly Scene[] = [...LANTERN_ROAD, ...INN_AT_CROSSING];
+export const SCENES: readonly Scene[] = FIXTURES_ENABLED ? [...LANTERN_ROAD, ...INN_AT_CROSSING] : [];
 
 /** Scenes that have any fixture content — used by the reader to decide
  *  whether an adventure is currently readable. */

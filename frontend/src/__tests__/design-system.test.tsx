@@ -115,7 +115,7 @@ describe("accessibility — controls and focus", () => {
     const user = userEvent.setup();
     renderAt("/design-system");
     await user.click(screen.getByRole("button", { name: /open help drawer/i }));
-    expect(screen.getByRole("button", { name: /close help drawer/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /close help/i })).toBeInTheDocument();
   });
 
   it("skip link exists on public pages", () => {

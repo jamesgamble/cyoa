@@ -22,6 +22,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.28.0",
+    date: "2026-09-24",
+    sections: {
+      Added: [
+        "Reading settings in the reader: text size, line spacing, column width, high contrast, and reduced motion. They are saved only in your browser and apply across the site.",
+        "Help topics: about Branching Paths, community guidelines, and privacy.",
+      ],
+      Changed: [
+        "Dialogs and help panels return focus to the button that opened them, and closed panels can no longer be reached by keyboard or screen readers.",
+        "Stronger focus outlines in high contrast and Windows high-contrast mode; small buttons grow to finger size on touch screens; long words no longer cause sideways scrolling on phones.",
+        "The homepage now shows the real library instead of sample stories.",
+        "Help about moderation and reading brought up to date.",
+      ],
+      Removed: [
+        "The Report link in the reader, which led to a page that does not exist yet.",
+      ],
+      Fixed: [
+        "Links in the footer to About, Community Guidelines, and Privacy now open real help pages.",
+        "Sample stories no longer appear on the live site.",
+      ],
+    },
+  },
+  {
     version: "0.27.0",
     date: "2026-09-24",
     sections: {

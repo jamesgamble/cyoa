@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ReaderPreferencesPanel } from "../components/ReaderPreferences";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
@@ -320,13 +321,6 @@ function ReaderView({ adventure, scene, opener, progress }: ViewProps) {
           </LinkButton>
         )}
         <LinkButton
-          href={`/report?adventure=${slug}&scene=${scene.id}`}
-          variant="ghost"
-          data-testid="action-report"
-        >
-          Report
-        </LinkButton>
-        <LinkButton
           href="/help/reading"
           variant="ghost"
           data-testid="action-help"
@@ -334,6 +328,8 @@ function ReaderView({ adventure, scene, opener, progress }: ViewProps) {
           Help
         </LinkButton>
       </nav>
+
+      <ReaderPreferencesPanel />
 
       <details className="bp-reader__local" data-testid="reader-local">
         <summary>Your local reading data</summary>
