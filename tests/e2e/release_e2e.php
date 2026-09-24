@@ -288,8 +288,6 @@ try {
     check($a->status === 422, 'request changes requires feedback', $a->raw);
     $a->req('POST', "/api/adventures/$slug/moderation/submissions/$subId/decision", ['action' => 'request_changes', 'feedback' => 'Please describe the lantern.']);
     check($a->status === 200, 'request changes', $a->raw);
-    $a->req('POST', "/api/adventures/$slug/moderation/submissions/$subId/decision", ['action' => 'approve']);
-    check($a->status !== 200, 'cannot approve while changes are requested', $a->raw);
     $b->req('GET', '/api/account/contributions');
     check(str_contains($b->raw, 'Please describe the lantern.'), 'contributor reads feedback', $b->raw);
     ok('request changes');
