@@ -495,6 +495,23 @@ export const HELP_TOPICS: HelpTopic[] = [
     },
   },
   {
+    slug: "exports",
+    title: "Exporting an adventure",
+    summary: "Download your adventure as data, plain text, a printable page, or an offline playable file.",
+    body: [
+      "Owners, editors, and administrators can export an adventure from the manage page in four formats: JSON data, plain text, a printable page, and a standalone playable page.",
+      "Exports contain only published scenes, the choices between them, endings, the adventure's details, content warnings, writing guidelines, and credits. Drafts and hidden scenes are left out.",
+      "Credits use display names only. Anonymous contributions are never credited, and exports never include email addresses, sign-in details, reports, private notes, or activity records.",
+      "The playable page works offline in any modern browser: it loads nothing from the internet, contains no tracking, and has no editing or moderation tools.",
+    ],
+    related: ["managing-adventures", "revision-history"],
+    match: {
+      routes: [/^\/manage\//],
+      sections: ["publishing"],
+      roles: ["author", "master"],
+    },
+  },
+  {
     slug: "notifications",
     title: "Notifications",
     summary:

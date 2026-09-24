@@ -1206,6 +1206,19 @@ function handle_moderation(string $method, string $slug, string $tail): void
                 story_map_respond($o, $d);
                 return;
             }
+            if ($tail === '/export') {
+                $fmt = isset($_GET['format']) ? (string) $_GET['format'] : 'json';
+                [$o, $d] = (new \App\ExportService($pdo))->export($slug, $fmt, $userId, $isAdmin);
+                if ($o === \App\ExportService::BAD_FORMAT) { respond_error(400, 'bad_format'); return; }
+                if ($o !== \App\ExportService::OK || $d === null) { revision_respond($o, null); return; }
+                header('Content-Type: ' . $d['mime']);
+                header('Content-Disposition: attachment; filename="' . $d['filename'] . '"');
+                header('X-Content-Type-Options: nosniff');
+                header('Cache-Control: no-store');
+                header('X-Robots-Tag: noindex, nofollow');
+                echo $d['body'];
+                return;
+            }
             if ($tail === '/revisions') {
                 [$o, $d] = (new RevisionService($pdo))->list($slug, $userId, $isAdmin);
                 revision_respond($o, $d);
