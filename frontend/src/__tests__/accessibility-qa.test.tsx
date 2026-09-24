@@ -137,7 +137,7 @@ describe("Production QA", () => {
   });
 
   it("help text no longer promises a reader Report button", () => {
-    for (const t of HELP_TOPICS) expect(t.body.join(" ")).not.toMatch(/Report and Help are always available|placeholder/);
+    for (const t of HELP_TOPICS) expect(t.body.join(" ")).not.toMatch(/Report and Help are always available|remain placeholders|planned for (a )?later release/);
   });
 
   it("the public changelog lists every release from 0.1.0 to the current version", () => {

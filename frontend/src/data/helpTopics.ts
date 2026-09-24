@@ -50,7 +50,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     body: [
       "Branching Paths is a collaborative choose-your-own-adventure library. Readers follow numbered choices through branching stories; writers publish adventures and, when the creator allows it, contribute new branches to other people's stories.",
       "Reading does not require an account. Open Discover, pick an adventure, and start reading. Your reading position, bookmarks, and discovered endings are stored only in your browser.",
-      "Creating an adventure and contributing branches will require an account. Account creation, sign-in, and the writing tools are planned for later releases; today the Create and Contribute pages describe what is coming without collecting any personal information.",
+      "Creating an adventure and contributing branches require a free account. Register, verify your email, and sign in; then use Create an adventure or Add a branch from any adventure that is open to contributions.",
       "The three primary actions on the home page are: Read an adventure, Create an adventure, and Continue someone else's story. Each links to the surface where that flow lives.",
     ],
     related: ["discovering", "reading", "accounts"],
@@ -183,7 +183,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       "You can register an account today at /register. Registration collects an email address, a username, a display name, a password, a confirmation of that password, and your acceptance of the community guidelines. Reading, searching, and bookmarking continue to work without an account.",
       "Email and username are matched case-insensitively. \"Alice\" and \"alice\" are the same account; so are \"Alice@Example.com\" and \"alice@example.com\". The username must be between three and thirty-two characters and may contain letters, digits, hyphens, and underscores. Passwords must meet the minimum length set by the operator (twelve characters by default).",
       "After you submit the form the site always shows the same acknowledgement whether the email or username was new, was already taken, or triggered the spam-protection honeypot. This is deliberate: the endpoint is designed so that it cannot be used to check whether a specific email or username exists.",
-      "The operator can require email verification, administrator approval, or both before an account becomes active. Email delivery and sign-in are planned for later releases, so today the account is stored in a pending state and Follow, Manage, and Master areas remain placeholders.",
+      "The operator can require email verification, administrator approval, or both before an account becomes active. Until those steps are complete the account stays pending and cannot sign in.",
       "If registration is temporarily closed, the /register page will say so. If too many attempts come from your network in a short time, the site will pause new registrations from that network for an hour.",
     ],
     related: ["privacy-and-security", "managing-adventures", "getting-started"],
@@ -207,7 +207,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       "Set in progress, Set complete, and Set on hold tell readers where the story stands without hiding it. Archive preserves the adventure and makes it read-only: no more edits, no more status changes.",
       "Publishing, unpublishing, and archiving ask for confirmation first, because each one changes what readers see.",
       "Every accepted status change is recorded in the adventure's activity list with who made it, what changed, and when.",
-      "A contribution queue for pending branches is planned for a later release.",
+      "Pending branches wait in the Submissions section of the manage page, where owners and editors approve, reject, or request changes.",
     ],
     related: ["creating", "moderation", "accounts"],
     match: {
