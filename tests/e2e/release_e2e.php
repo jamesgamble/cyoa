@@ -398,6 +398,9 @@ try {
 
     // 26. Verify restored auth + content
     startServer("$R/site/public", 8098, $renv);
+    $old = new Client('http://127.0.0.1:8098'); $old->cookies = $a->cookies;
+    $old->req('GET', '/api/auth/session');
+    check(str_contains($old->raw, '"authenticated":true'), 'existing sessions survive restore (same database)', $old->raw);
     $ra = new Client('http://127.0.0.1:8098');
     $ra->req('POST', '/api/auth/login', ['email' => 'author@example.test', 'password' => $passA]);
     check($ra->status === 200, 'restored author login', $ra->raw);
@@ -406,10 +409,6 @@ try {
     check($rb->status === 200, 'restored new-owner login', $rb->raw);
     $rb->req('GET', "/api/adventures/$slug/manage");
     check($rb->status === 200 && str_contains($rb->raw, '"owner"'), 'restored ownership', $rb->raw);
-    $old = new Client('http://127.0.0.1:8098'); $old->cookies = $a->cookies;
-    $a->req('GET', '/api/auth/session'); out('      original server, author cookie: ' . $a->raw . ' cookies=' . implode(',', array_keys($a->cookies)));
-    $old->req('GET', '/api/auth/session');
-    check(str_contains($old->raw, '"authenticated":true'), 'existing sessions survive restore (same database)', $old->raw);
     $rp = new Client('http://127.0.0.1:8098');
     $rp->req('GET', "/api/adventures/$slug/scenes/$next");
     check($rp->status === 200 && str_contains($rp->raw, 'brass lantern'), 'restored content readable', $rp->raw);
