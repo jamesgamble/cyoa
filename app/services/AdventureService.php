@@ -276,6 +276,10 @@ final class AdventureService
             return [self::FORBIDDEN, ['account' => 'not_active'], null];
         }
 
+        if (!$this->settings->getBool('new_adventures_enabled', true)) {
+            return [self::FORBIDDEN, ['account' => 'creation_disabled'], null];
+        }
+
         $limits = $this->creationLimits($userId);
         if ($limits['owned'] >= $limits['max_adventures_per_user']) {
             return [self::LIMIT_REACHED, ['account' => 'limit_reached'], null];

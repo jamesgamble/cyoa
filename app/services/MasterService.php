@@ -80,6 +80,8 @@ final class MasterService
         ],
         'maintenance' => [
             'maintenance_mode' => 'bool', 'maintenance_message' => 'text:280',
+            'registration_enabled' => 'bool', 'new_adventures_enabled' => 'bool',
+            'contributions_globally_paused' => 'bool',
         ],
     ];
     private const GROUP_PERMISSION = [
@@ -557,6 +559,24 @@ final class MasterService
     }
 
     /* ───────────────────────── Helpers ───────────────────────── */
+
+    /** Public-safe snapshot of the maintenance controls (v0.27.0). */
+    public static function maintenanceStatus(PDO $pdo): array
+    {
+        try {
+            $s = new SettingsRepository($pdo);
+            return [
+                'read_only'             => $s->getBool('maintenance_mode', false),
+                'notice'                => (string) $s->get('maintenance_message', ''),
+                'registration_enabled'  => $s->getBool('registration_enabled', true),
+                'new_adventures_enabled'=> $s->getBool('new_adventures_enabled', true),
+                'contributions_paused'  => $s->getBool('contributions_globally_paused', false),
+            ];
+        } catch (\Throwable $e) {
+            return ['read_only' => false, 'notice' => '', 'registration_enabled' => true,
+                    'new_adventures_enabled' => true, 'contributions_paused' => false];
+        }
+    }
 
     public static function maintenanceActive(PDO $pdo): bool
     {
