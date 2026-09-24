@@ -953,7 +953,7 @@ function handle_publication(string $method, string $slug, string $tail): void
             $body = read_json_body();
             $lock = new WriteLock();
             [$outcome, $fields] = $lock->withLock(static function () use ($svc, $adv, $role, $body): array {
-                return $svc->saveDraft((int) $adv['id'], $role, $body);
+                return $svc->saveDraft((int) $adv['id'], $role, $body, $userId);
             });
             if ($outcome === PublicationService::OK) { echo json_encode(['status' => 'ok']); return; }
             if ($outcome === PublicationService::INVALID) {
