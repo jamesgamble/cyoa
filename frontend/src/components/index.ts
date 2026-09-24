@@ -76,3 +76,4 @@ export {
   richTextToPlainText,
   richTextLength,
 } from "../lib/richTextSanitizer";
+export { RevisionHistoryPanel } from "./RevisionHistoryPanel";
