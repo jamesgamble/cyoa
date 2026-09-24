@@ -517,7 +517,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     title: "Maintenance, backups, and hosting",
     summary: "Maintenance switches, read-only mode, and how backups and upgrades work.",
     body: [
-      "In the master console under Settings, Maintenance, administrators can turn on read-only mode, show a custom notice to visitors, turn off new registrations, stop new adventures being created, and pause contributions everywhere.",
+      "In the master console under Settings, Maintenance, administrators can turn on read-only mode, set a maintenance notice, turn off new registrations, stop new adventures being created, and pause contributions everywhere. The notice is returned with every change that read-only mode refuses; it is not yet shown as a banner on every page.",
       "Read-only mode keeps public reading working, and administrators can still sign in and use the maintenance tools. Every other change waits until it is turned off.",
       "Backups are made by the server on a schedule using the database's own safe copy method, so they are never taken mid-change. Each backup is checked before it is kept, and older backups are thinned out automatically.",
       "Before an upgrade, turn on read-only mode and take a backup. If an upgrade has to be undone, the previous version is put back together with that backup; the database at that moment is saved first, so nothing is lost.",

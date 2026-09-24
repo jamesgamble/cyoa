@@ -47,7 +47,7 @@ Everything else should be read-only to the web server.
 ## First deployment
 
 1. Upload the project; build the frontend (`cd frontend && npm ci && npm run build`) on a build machine and copy `frontend/dist/*` into `public/`.
-2. Copy `.env.example` values into your server environment.
+2. Set the environment variables described in `docs/ENVIRONMENT.md` (template: `.env.example`). `APP_URL` must be the public address — every emailed link is built from it.
 3. `php scripts/initialize.php`
 4. `php scripts/migrate.php`
 5. `php scripts/bootstrap-admin.php` to create the first administrator.
@@ -78,10 +78,23 @@ Migrations only move forward, so rolling back code always pairs with restoring t
 - `scripts/backup.php` uses SQLite's `VACUUM INTO` while holding the write lock, so the live file is never copied directly. Each backup is integrity-checked and gets a `.sha256` file.
 - `scripts/restore.php` verifies checksum and integrity, saves the current database, checkpoints the WAL, removes stale `-wal`/`-shm` files and swaps the file in under the lock.
 - `scripts/prune-backups.php [keep] [days]` keeps the newest `keep` backups plus one per day for `days` days.
-- Copy `private/backups/` off the server regularly.
+- Copy `private/backups/` off the server regularly, **and keep a separate copy of `private/keys/`**. `app.key` decrypts the stored SMTP password and `session.key` signs legacy administrator sessions; a database restored without them loses the SMTP password (re-enter it in `/master/settings`).
+
+## Restoring onto a new server
+
+1. Deploy the same release, set the environment (`docs/ENVIRONMENT.md`), run `php scripts/initialize.php`.
+2. Copy `private/keys/` from the old server, and the backup file plus its `.sha256` into `private/backups/`.
+3. `php scripts/restore.php <backup> --yes`, then `php scripts/migrate.php` and `php scripts/integrity-check.php`.
+4. `php scripts/system-check.php` must report `failures: 0`.
+
+Accounts, passwords, content, and roles come back exactly as backed up. Each account keeps one session at a time, so signing in anywhere ends that account's older session.
+
+## Release verification
+
+`php tests/e2e/release_e2e.php` performs a clean install in a temporary directory (npm ci, build, stage, initialize, migrate, first administrator), then drives every core workflow over HTTP against PHP's built-in server with a local SMTP sink: registration and verification, sign-in, creation, publishing, branch submission, change requests, approval, reading, reporting, invitations, ownership transfer, exports, backup, restore into a second location, and read-only mode. Nothing leaves `127.0.0.1`. Add `--skip-frontend` to reuse an existing `frontend/dist`.
 
 ## Maintenance controls (`/master/settings` → Maintenance)
 
 - Read-only mode — blocks every change except administrator sign-in and administrator maintenance; public reading keeps working.
-- Custom maintenance notice — shown to visitors.
+- Custom maintenance notice — returned by `GET /api/status` and with every change refused by read-only mode (no site-wide banner yet).
 - Disable registrations, disable new adventures, pause all contributions.
