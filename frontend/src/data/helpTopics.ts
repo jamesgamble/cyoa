@@ -473,8 +473,21 @@ export const HELP_TOPICS: HelpTopic[] = [
       "Role changes, ownership transfers, email sign-in changes, maintenance mode, and destructive moderation (hiding content or suspending) ask for your password again first.",
       "The console never shows passwords, sign-in tokens, reset or verification links, the email server password, encryption keys, or where data is stored. The last administrator cannot be removed or suspended.",
     ],
-    related: ["moderation", "email-preferences"],
+    related: ["moderation", "email-preferences", "maintenance-and-backups"],
     match: { routes: [/^\/master/], roles: ["master"] },
+  },
+  {
+    slug: "maintenance-and-backups",
+    title: "Maintenance, backups, and hosting",
+    summary: "Maintenance switches, read-only mode, and how backups and upgrades work.",
+    body: [
+      "In the master console under Settings, Maintenance, administrators can turn on read-only mode, show a custom notice to visitors, turn off new registrations, stop new adventures being created, and pause contributions everywhere.",
+      "Read-only mode keeps public reading working, and administrators can still sign in and use the maintenance tools. Every other change waits until it is turned off.",
+      "Backups are made by the server on a schedule using the database's own safe copy method, so they are never taken mid-change. Each backup is checked before it is kept, and older backups are thinned out automatically.",
+      "Before an upgrade, turn on read-only mode and take a backup. If an upgrade has to be undone, the previous version is put back together with that backup; the database at that moment is saved first, so nothing is lost.",
+    ],
+    related: ["master-administration"],
+    match: { routes: [/^\/master\/settings/], roles: ["master"] },
   },
   {
     slug: "revision-history",
