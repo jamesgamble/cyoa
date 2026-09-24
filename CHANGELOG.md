@@ -2,6 +2,22 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.28.0 — 2026-09-24
+
+### Added
+- Local reader preferences (`components/ReaderPreferences.tsx`): text size, line spacing, column width, high contrast, reduced motion; stored in `localStorage` (`bp:reader-preferences`), validated on load, applied to `<html>` before first paint.
+- Help topics `about`, `community-guidelines`, `privacy` (previously dead footer/registration links).
+- `__tests__/accessibility-qa.test.tsx`: preferences, dialog/drawer focus behaviour, no debug output, no placeholder controls, help-link and route-link resolution, help coverage, changelog completeness, fixture gating.
+
+### Changed
+- `Dialog`: unique title ids via `useId`; focus returns to the opener. `HelpDrawer`: `inert` while closed, Tab trap, unique title id, focus return, visible name matches accessible name. Global help drawer restores focus on close.
+- CSS: explicit reduced-motion/contrast/line-spacing/column-width hooks, `forced-colors` support, 44px touch targets for small buttons on coarse pointers, `overflow-wrap` for story text and tables.
+- Sample data (`data/discover.ts`, `scenes.ts`, `adventures.ts`) is gated by `data/fixtureGate.ts` and is empty in production builds; the homepage loads featured and recent adventures from the API.
+- Help: moderation and reading topics corrected to describe shipped behaviour.
+
+### Removed
+- Reader "Report" action linking to the non-existent `/report` route.
+
 ## 0.27.0 — 2026-09-24
 
 ### Added
