@@ -121,7 +121,7 @@ final class BPRevisionTest
         for ($i = 1; $i <= 25; $i++) $this->editScene('Title number ' . $i, '<p>The tide is out.</p>');
         assert_same(20, $this->count());
         $oldest = $this->pdo->query("SELECT content FROM content_revisions ORDER BY id LIMIT 1")->fetchColumn();
-        assert_same('Title number 4', $oldest);
+        assert_same('Title number 5', $oldest); // 25 revisions: 'The jetty', 1..24
     }
 
     public function testRetentionLimitIsConfigurable(): void
