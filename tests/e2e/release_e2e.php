@@ -220,7 +220,7 @@ try {
             'password' => $pass, 'password_confirmation' => $pass, 'terms_accepted' => true, 'nickname_url' => '']);
         check($c->status === 202, "register $user", $c->raw);
         processQueue($env);
-        $tok = tokenFromMail($email, '#/verify\?token=([A-Za-z0-9_\-]+)#');
+        $tok = tokenFromMail($email, '#127\.0\.0\.1:8099/verify\?token=([A-Za-z0-9_\-]+)#');
         check($tok !== null, "verification email for $user", substr(implode("\n----\n", mails()), -1500));
         $c->req('POST', '/api/auth/verify-email', ['token' => $tok]);
         check($c->status === 200, "verify $user", $c->raw);
@@ -293,9 +293,8 @@ try {
     ok('request changes');
 
     // 16. Resubmit
-    $b->req('PUT', "/api/account/contributions/$subId", $branch + ['resubmit' => true, 'scene_body' => '<p>A hollow lit by a brass lantern.</p>']);
     $b->req('PUT', "/api/account/contributions/$subId", array_merge($branch, ['scene_body' => '<p>A hollow lit by a brass lantern.</p>', 'resubmit' => true]));
-    check(in_array($b->status, [200, 409], true), 'resubmit', $b->raw);
+    check($b->status === 200, 'resubmit', $b->raw);
     $b->req('GET', '/api/account/contributions');
     check(str_contains($b->raw, 'brass lantern'), 'resubmitted content stored', $b->raw);
     ok('resubmit');
