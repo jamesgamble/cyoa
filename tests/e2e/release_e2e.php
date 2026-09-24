@@ -36,8 +36,8 @@ function fail(string $label, $detail = null): never {
 function check(bool $cond, string $label, $detail = null): void { if (!$cond) fail($label, $detail); }
 function sh(string $cmd, array $env = [], ?string $cwd = null): array {
     $full = '';
-    foreach ($env as $k => $v) $full .= $k . '=' . escapeshellarg($v) . ' ';
-    $full .= $cmd . ' 2>&1';
+    foreach ($env as $k => $v) $full .= 'export ' . $k . '=' . escapeshellarg($v) . '; ';
+    $full .= '{ ' . $cmd . '; } 2>&1';
     $o = []; $code = 0;
     exec(($cwd ? 'cd ' . escapeshellarg($cwd) . ' && ' : '') . $full, $o, $code);
     return [$code, implode("\n", $o)];
