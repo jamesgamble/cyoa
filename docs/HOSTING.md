@@ -56,6 +56,21 @@ Everything else should be read-only to the web server.
 7. Install the cron entries.
 8. Configure SMTP in `/master/settings`.
 
+## Deploying from GitHub (Forge, Ploi, Cloudways and similar)
+
+1. Point the site's web root at the repository's `public/` folder.
+2. Set the four environment variables from `docs/ENVIRONMENT.md` for both the web server and the PHP command line. Use absolute paths outside the repository for `DATABASE_PATH` and `WRITE_LOCK_PATH` so redeploys never touch the database.
+3. The server needs Node.js 18+ and npm for the build (not for running the site).
+4. Deploy script (run after each pull):
+
+```bash
+bash scripts/deploy.sh
+```
+
+It builds the frontend into `public/`, prepares private folders, applies migrations and runs the system check. First deployment only: run `php scripts/bootstrap-admin.php` once afterwards.
+
+5. `private/keys/`, `private/logs/` and `private/backups/` are created on the server and never committed. If your platform deploys each release into a new folder (zero-downtime deploys), mark `private/keys`, `private/logs` and `private/backups` as shared folders so they persist between releases.
+
 ## Upgrade
 
 1. Turn on **Read-only mode** in `/master/settings` (reading and administrator sign-in keep working).
