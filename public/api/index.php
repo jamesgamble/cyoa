@@ -27,6 +27,7 @@ use App\AdventureService;
 use App\AdminSession;
 use App\AuthService;
 use App\BranchSubmissionService;
+use App\CollaborationService;
 use App\Csrf;
 use App\Database;
 use App\EmailQueueRepository;
