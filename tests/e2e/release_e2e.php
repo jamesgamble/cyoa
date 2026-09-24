@@ -343,7 +343,7 @@ try {
     $a->req('POST', "/api/adventures/$slug/collaborators/invitations", ['email' => 'contrib@example.test', 'role' => 'editor']);
     check(in_array($a->status, [200, 201], true), 'invite', $a->raw);
     processQueue($env);
-    $inv = tokenFromMail('contrib@example.test', '#/invitations/([A-Za-z0-9_\-]{20,})#');
+    $inv = tokenFromMail('contrib@example.test', '#127\.0\.0\.1:8099/invitations/([A-Za-z0-9_\-]{20,})#');
     check($inv !== null, 'invitation email delivered', substr(implode("\n----\n", mails()), -1500));
     $b->req('POST', "/api/invitations/$inv/accept");
     check($b->status === 200, 'accept invitation', $b->raw);
