@@ -413,15 +413,18 @@ function handle_master(string $method, string $tail): void
     }
     $session = new AdminSession();
 
-    // ── Login ───────────────────────────────────────────────────
+    // ── Login (v0.25.0: a normal account session, then a platform-role check) ──
     if ($method === 'POST' && $tail === '/login') {
         if (!Csrf::validate()) { respond_error(403, 'csrf_failed'); return; }
         $body = read_json_body();
-        $email = (string) ($body['email'] ?? '');
-        $pass  = (string) ($body['password'] ?? '');
-        $uid = $session->login($pdo, $email, $pass);
-        if ($uid === null) { respond_error(401, 'invalid_credentials'); return; }
-        echo json_encode(['status' => 'ok', 'user_id' => $uid]);
+        $auth = new AuthService($pdo);
+        [$o, $cookie] = (new WriteLock())->withLock(static fn () => $auth->login((string) ($body['email'] ?? ''), (string) ($body['password'] ?? '')));
+        if ($o !== AuthService::OK || !is_string($cookie)) { respond_error(401, 'invalid_credentials'); return; }
+        $uid = $auth->authenticate($cookie);
+        $role = (new MasterService($pdo))->platformRole($uid);
+        if (!MasterService::can($role, 'view_console')) { $auth->logout($cookie); respond_error(401, 'invalid_credentials'); return; }
+        auth_set_cookie($cookie);
+        echo json_encode(['status' => 'ok', 'user_id' => $uid, 'role' => $role]);
         return;
     }
     if ($method === 'POST' && $tail === '/logout') {
@@ -430,8 +433,10 @@ function handle_master(string $method, string $tail): void
         return;
     }
     if ($method === 'GET' && $tail === '/session') {
-        $uid = $session->authenticate($pdo);
-        echo json_encode(['authenticated' => $uid !== null, 'user_id' => $uid]);
+        $uid = (new AuthService($pdo))->authenticate($_COOKIE[AuthService::SESSION_COOKIE] ?? null) ?? $session->authenticate($pdo);
+        $role = (new MasterService($pdo))->platformRole($uid);
+        $ok = $uid !== null && MasterService::can($role, 'view_console');
+        echo json_encode(['authenticated' => $ok, 'user_id' => $ok ? $uid : null, 'role' => $ok ? $role : null]);
         return;
     }
 
