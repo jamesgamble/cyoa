@@ -16,7 +16,7 @@ import type { AdventureSummary } from "../components/AdventureCard";
 import type { Scene } from "../data/scenes";
 
 /** Any fetch/parse failure returns null — pages fall back to fixtures. */
-async function getJson<T>(path: string, signal?: AbortSignal): Promise<T | null> {
+export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T | null> {
   try {
     const res = await fetch(apiUrl(path), {
       signal,
