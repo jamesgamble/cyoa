@@ -163,10 +163,14 @@ final class BPMasterTest
 
     public function testSmtpNonCredentialChangeNeedsNoReauth(): void
     {
+        $base = ['host' => 'smtp.example.com', 'port' => 587, 'encryption' => 'starttls', 'username' => 'u',
+                 'password' => 'pw-one', 'from_email' => 'no-reply@example.com'];
+        assert_same('ok', $this->svc()->saveSmtp($this->u['admin'], 1, $base)[0]);
         $this->reauthOk = false;
-        $cur = (new \App\SmtpSettingsRepository($this->pdo))->loadForApi();
-        [$o] = $this->svc()->saveSmtp($this->u['admin'], 1, ['from_name' => 'Paths', 'from_email' => 'no-reply@example.com', 'host' => $cur['host'] ?: 'x'] + $cur);
+        [$o] = $this->svc()->saveSmtp($this->u['admin'], 1, ['from_name' => 'Paths', 'password' => '__unchanged__'] + $base);
         assert_same('ok', $o);
+        [$o] = $this->svc()->saveSmtp($this->u['admin'], 1, ['password' => 'pw-two'] + $base);
+        assert_same('reauthentication_required', $o);
     }
 
     public function testRealReauthUsesSessionWindow(): void
