@@ -1,0 +1,8 @@
+{
+  "name": "branching-paths",
+  "private": true,
+  "scripts": {
+    "dev": "cd frontend && npm install --no-audit --no-fund && npx vite --port 8080 --host 0.0.0.0 --strictPort",
+    "build": "bash scripts/build.sh"
+  }
+}
