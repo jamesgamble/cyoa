@@ -22,6 +22,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.0",
+    date: "2026-09-24",
+    sections: {
+      Changed: [
+        "First production release. Every core workflow was checked end to end on a fresh install: sign-up and email verification, writing and publishing, branch review, reading, reporting, collaborators, ownership transfer, exports, backup and restore, and read-only mode.",
+        "Help about privacy and maintenance brought up to date.",
+      ],
+      Fixed: [
+        "Confirming your password before sensitive actions (such as transferring ownership or changing email settings) failed with an error.",
+        "Links in emails on a new site pointed at a development address instead of the site's own address.",
+        "Saving draft edits to an adventure could fail.",
+      ],
+      "Known Issues": [
+        "There is no Report button in the reader yet.",
+        "The maintenance notice is not yet shown as a banner on every page.",
+      ],
+    },
+  },
+  {
     version: "0.28.0",
     date: "2026-09-24",
     sections: {

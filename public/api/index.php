@@ -27,6 +27,7 @@ use App\AdventureService;
 use App\AdminSession;
 use App\AuthService;
 use App\BranchSubmissionService;
+use App\CollaborationService;
 use App\Csrf;
 use App\Database;
 use App\EmailQueueRepository;
@@ -995,7 +996,7 @@ function handle_publication(string $method, string $slug, string $tail): void
             $role = $svc->roleFor((int) $adv['id'], $userId, $isAdmin);
             $body = read_json_body();
             $lock = new WriteLock();
-            [$outcome, $fields] = $lock->withLock(static function () use ($svc, $adv, $role, $body): array {
+            [$outcome, $fields] = $lock->withLock(static function () use ($svc, $adv, $role, $body, $userId): array {
                 return $svc->saveDraft((int) $adv['id'], $role, $body, $userId);
             });
             if ($outcome === PublicationService::OK) { echo json_encode(['status' => 'ok']); return; }

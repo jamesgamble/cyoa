@@ -2,6 +2,32 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 1.0.0 — 2026-09-24
+
+First production release. No new features.
+
+### Added
+- `tests/e2e/release_e2e.php` (+ `router.php`, `smtp-sink.php`): clean install into a temp directory and a 27-step HTTP walkthrough of every core workflow against PHP's built-in server with a local SMTP sink.
+- `tests/php/release_test.php`: front-controller import check, fresh-install email-link base, operator canonical URL preserved.
+- `docs/ENVIRONMENT.md`; hosting guide gains restore-onto-a-new-server and release-verification sections.
+- Migration `0016_canonical_url_default.sql`.
+
+### Fixed
+- `POST /api/auth/reauthenticate` and all collaborator routes crashed (`CollaborationService` not imported in `public/api/index.php`), blocking reauthentication, ownership transfer, and reauth-gated master actions.
+- Fresh installs seeded `canonical_url = http://localhost:8000`, so every emailed link pointed at localhost; the untouched default is removed and links fall back to `APP_URL`.
+- `PUT /api/adventures/{slug}/draft` passed an undefined `$userId` to `saveDraft`.
+- Frontend production build (`tsc -b`) failed on a clean checkout: `@types/node` added as a dev dependency, `lib` raised to ES2022, stale `tsconfig.tsbuildinfo` removed and ignored.
+
+### Changed
+- `.env.example` lists only the variables the application reads; unused `SMTP_*`/`SESSION_*` entries removed.
+- Help: privacy-and-security and maintenance topics corrected. Hosting guide no longer claims the maintenance notice is shown to visitors.
+- `VERSION` and `frontend/package.json` set to 1.0.0.
+
+### Known issues
+- No frontend report form (the report API exists).
+- The maintenance notice is exposed by `GET /api/status` but not rendered as a banner.
+- Anonymous-use settings in `/master/settings` are stored but not yet enforced by every page.
+
 ## 0.28.0 — 2026-09-24
 
 ### Added
