@@ -45,7 +45,7 @@ function context(over: Partial<BranchContext> = {}): BranchContext {
     attribution_options: ["username", "display_name", "anonymous"],
     limits: { choice_max: 120, title_max: 120, body_max: 20000, note_max: 1000 },
     ...over,
-  } as ContributionHistoryEntry;
+  };
 }
 
 function renderBranch() {
@@ -449,7 +449,7 @@ function historyEntry(over: Partial<ContributionHistoryEntry> = {}): Contributio
     source_scene_slug: "the-gate-at-dusk",
     source_scene_title: "The gate at dusk",
     ...over,
-  };
+  } as ContributionHistoryEntry;
 }
 
 describe("contribution history", () => {
