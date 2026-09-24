@@ -42,6 +42,7 @@ Everything else should be read-only to the web server.
 
 - Apache: `public/.htaccess` (rewrites) + `docs/deploy/apache.conf.example`
 - Nginx: `docs/deploy/nginx.conf.example`
+- Security headers: both examples send Content-Security-Policy (same-origin only), Permissions-Policy, X-Frame-Options, Referrer-Policy and nosniff. Apache needs `mod_headers`. HSTS is provided commented out: enable it only after HTTPS works for the whole domain, because browsers remember it for a year.
 - Cron: `docs/deploy/crontab.example` (email queue, digests, nightly backup, retention, weekly integrity check)
 
 ## First deployment
