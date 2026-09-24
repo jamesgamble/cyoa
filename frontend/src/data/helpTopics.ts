@@ -473,8 +473,8 @@ export const HELP_TOPICS: HelpTopic[] = [
       "Role changes, ownership transfers, email sign-in changes, maintenance mode, and destructive moderation (hiding content or suspending) ask for your password again first.",
       "The console never shows passwords, sign-in tokens, reset or verification links, the email server password, encryption keys, or where data is stored. The last administrator cannot be removed or suspended.",
     ],
-    related: ["reports-and-warnings", "email-preferences"],
-    match: { routes: [/^\/master/] },
+    related: ["moderation", "email-preferences"],
+    match: { routes: [/^\/master/], roles: ["master"] },
   },
   {
     slug: "revision-history",
