@@ -368,20 +368,14 @@ final class MasterService
     public function submissions(?int $actor, string $state = 'pending'): array
     {
         if ($g = $this->gate($actor, 'view_submissions')) return [$g, null];
-        $sql = 'SELECT s.id, s.state, s.created_at, s.choice_label, s.scene_title, a.slug, a.title AS adventure_title
+        $sql = 'SELECT s.id, s.state, s.created_at, s.choice_text AS choice_label, s.scene_title, a.slug, a.title AS adventure_title
                   FROM branch_submissions s JOIN adventures a ON a.id = s.adventure_id';
         $p = [];
         if ($state !== '' && $state !== 'all') { $sql .= ' WHERE s.state = :s'; $p[':s'] = $state; }
         $sql .= ' ORDER BY s.id DESC LIMIT 200';
-        try {
-            $st = $this->pdo->prepare($sql);
-            $st->execute($p);
-            $rows = $st->fetchAll();
-        } catch (\PDOException $e) {
-            $st = $this->pdo->prepare(str_replace(['s.choice_label, s.scene_title, '], [''], $sql));
-            $st->execute($p);
-            $rows = $st->fetchAll();
-        }
+        $st = $this->pdo->prepare($sql);
+        $st->execute($p);
+        $rows = $st->fetchAll();
         return [self::OK, ['submissions' => array_map(static fn ($r) => [
             'id' => (int) $r['id'], 'state' => (string) $r['state'], 'created_at' => (string) $r['created_at'],
             'choice_label' => $r['choice_label'] ?? null, 'scene_title' => $r['scene_title'] ?? null,
