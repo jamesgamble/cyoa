@@ -165,7 +165,7 @@ final class BPMasterTest
     {
         $this->reauthOk = false;
         $cur = (new \App\SmtpSettingsRepository($this->pdo))->loadForApi();
-        [$o] = $this->svc()->saveSmtp($this->u['admin'], 1, ['from_name' => 'Paths'] + $cur);
+        [$o] = $this->svc()->saveSmtp($this->u['admin'], 1, ['from_name' => 'Paths', 'from_email' => 'no-reply@example.com', 'host' => $cur['host'] ?: 'x'] + $cur);
         assert_same('ok', $o);
     }
 
