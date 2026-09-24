@@ -2,6 +2,23 @@
 
 All notable, public-safe changes to Branching Paths. Newest release first.
 
+## 0.25.0 — 2026-09-24
+
+### Added
+- Master administration (`App\MasterService`, migration `0014_master_administration.sql`): routes `/master`, `/master/users`, `/master/adventures`, `/master/submissions`, `/master/reports`, `/master/email-queue`, `/master/settings`, `/master/activity`.
+- Platform roles user / moderator / administrator, read only from `user_roles`. A single permission table drives the API and the console navigation.
+- API: `GET /api/master/{me,overview,users,adventures,submissions,reports,settings,activity}`; `POST /api/master/users/{id}/{role,suspend,restore,escalate,reset}`, `/adventures/{id}/{suspend,restore,transfer}`, `/reports/{id}/{dismiss,resolve,hide,restore}`, `/email-queue/{id}/{cancel,retry}`, `/activity/{id}/close`; `PUT /api/master/settings/{registration,anonymous,limits,maintenance}`.
+- `platform_activity` log with a security flag; maintenance mode blocks writes for everyone except administrators.
+- Help topic: master administration.
+- Tests: `tests/php/master_test.php` — the complete authorization matrix across administrator, moderator, user and signed-out callers, plus reauthentication, safeguards and redaction.
+
+### Changed
+- Master sign-in now uses a normal account session plus a platform-role check, so moderators can sign in and reauthentication applies.
+
+### Security
+- Recent reauthentication required for role changes, ownership transfer, SMTP credential changes, maintenance mode, and destructive moderation (hiding content, suspending adventures or users).
+- Suspending a user revokes all their sessions. Moderators never see email addresses or the security log. Reporter identities are never shown.
+
 ## 0.24.0 — 2026-09-24
 
 ### Added

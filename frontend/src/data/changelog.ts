@@ -22,6 +22,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.25.0",
+    date: "2026-09-24",
+    sections: {
+      Added: [
+        "Master administration with sections for users, adventures, submissions, reports, email queue, settings, and activity.",
+        "Platform roles: user, moderator, and administrator. Moderators review reports, hide or restore reported content, suspend or restore adventures, and escalate account issues.",
+        "Administrators can manage roles, suspend or restore accounts, configure registration, anonymous use, global limits, email sending and maintenance mode, manage the email queue, send reset emails, transfer ownership, and review security activity.",
+        "Help topic: master administration.",
+      ],
+      Security: [
+        "Role changes, ownership transfers, email credential changes, maintenance mode, and destructive moderation require recent password confirmation.",
+        "The console never displays passwords, tokens, email server secrets, encryption keys, or storage locations. The last administrator cannot be demoted or suspended.",
+      ],
+    },
+  },
+  {
     version: "0.24.0",
     date: "2026-09-24",
     sections: {
