@@ -121,7 +121,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     body: [
       "The reader lives at /adventure/<slug>/read/<scene>. Each scene shows the adventure title, an optional chapter label, the scene title, the story body, a scene number, and either a numbered set of choices or an ending panel.",
       "Choose a numbered option to move to the next scene. Use Back one scene to step back through your reading trail, or Restart to return to the first scene. The Story map action opens the branching diagram for the adventure.",
-      "Bookmark a scene to flag it for later; the bookmark is stored only in your browser. Add a branch appears when the adventure is accepting contributions; Report and Help are always available.",
+      "Bookmark a scene to flag it for later; the bookmark is stored only in your browser. Add a branch appears when the adventure is accepting contributions; Help is always available. Reading settings let you change text size, line spacing, column width, contrast, and motion; they are saved only in this browser.",
       "Reading progress, bookmarks, and discovered endings are per-adventure and per-browser. Clearing local progress from the reader erases every trace of your reading for that adventure and cannot be undone.",
       "When you reach an ending, the reader tells you how many endings you have discovered so far, offers Explore another path back to your most recent branching scene, and lets you restart from the beginning.",
     ],
@@ -220,15 +220,51 @@ export const HELP_TOPICS: HelpTopic[] = [
     slug: "moderation",
     title: "Moderation",
     summary:
-      "How master administrators will keep the library healthy, and how reports work.",
+      "How moderators and administrators keep the library healthy.",
     body: [
-      "Moderation is handled by master administrators from the Master area at /master. Today the area is a placeholder that describes the coming queues and actions.",
-      "Reports made from the reader will land in a moderation queue with the scene, the adventure, and the reason. Master administrators will be able to review the report, contact the creator, hide or remove the scene, and record the outcome.",
+      "Platform moderation is handled by moderators and administrators from the master console at /master. Adventure owners and editors moderate submissions to their own adventures from the manage page.",
+      "Reports appear in the Reports section of the master console with the adventure, the reason, and any details. Moderators can dismiss them, hide or restore the content, or escalate. Reports never remove content automatically.",
       "The community guidelines describe what is allowed: good-faith contributions, respect for other authors, no harassment, no illegal content, no impersonation, no spam, and clear attribution. Reports that describe violations of these guidelines are prioritised.",
       "Master credentials will never appear in a URL, in help content, or in any diagnostic surface. The Master login page is the only place they are entered.",
     ],
     related: ["managing-adventures", "privacy-and-security", "common-errors"],
     match: { routes: [/^\/master/], sections: ["master"], roles: ["master"] },
+  },
+  {
+    slug: "about",
+    title: "About Branching Paths",
+    summary: "What this library is and how it works.",
+    body: [
+      "Branching Paths is a collaborative library of choose-your-own-adventure stories. Anyone can read published adventures without an account.",
+      "Signed-in writers can begin their own adventures and, where an owner allows it, add new branches to someone else's story.",
+      "There are no likes, rankings, public ratings, comments, or follower counts. Stories are found by what they contain.",
+    ],
+    related: ["getting-started", "community-guidelines", "privacy"],
+    match: { routes: [/^\/$/] },
+  },
+  {
+    slug: "community-guidelines",
+    title: "Community guidelines",
+    summary: "What is welcome here and what is not.",
+    body: [
+      "Contribute in good faith and respect the adventure's writing guidelines and other authors' work.",
+      "Not allowed: harassment, hate or abuse, spam, sharing someone's personal information, impersonation, copyright infringement, illegal content, and explicit content outside an adventure's stated content rating.",
+      "Owners can reject or edit submissions to their adventures. Moderators and administrators can hide content or suspend adventures and accounts that break these guidelines.",
+    ],
+    related: ["contributing", "moderation"],
+    match: { routes: [/^\/register/, /^\/adventure\/[^/]+\/branch/] },
+  },
+  {
+    slug: "privacy",
+    title: "Privacy",
+    summary: "What Branching Paths stores and what stays in your browser.",
+    body: [
+      "Reading progress, bookmarks, discovered endings, and reading settings are stored only in your browser. Clearing them from the reader removes them.",
+      "An account stores your email address, username, display name, and a securely hashed password. Your email address is never shown publicly.",
+      "There is no advertising or third-party tracking. Email is used only for account, security, collaboration, and the notifications you choose.",
+    ],
+    related: ["privacy-and-security", "email-preferences"],
+    match: { routes: [/^\/account\/security/] },
   },
   {
     slug: "privacy-and-security",

@@ -242,7 +242,7 @@ describe("Reader — resume", () => {
 });
 
 describe("Reader — secondary actions", () => {
-  it("Story map, Add a branch (when open), Report, and Help are always available", () => {
+  it("Story map, Add a branch (when open), and Help are available", () => {
     renderAt(`/adventure/${SLUG}/read/${START.id}`);
     expect(screen.getByTestId("action-story-map")).toHaveAttribute(
       "href",
@@ -253,10 +253,7 @@ describe("Reader — secondary actions", () => {
       "href",
       `/adventure/${SLUG}/branch?from=${START.id}`,
     );
-    expect(screen.getByTestId("action-report")).toHaveAttribute(
-      "href",
-      expect.stringContaining(`adventure=${SLUG}`) as unknown as string,
-    );
+    expect(screen.queryByTestId("action-report")).toBeNull();
     expect(screen.getByTestId("action-help")).toHaveAttribute(
       "href",
       "/help/reading",
